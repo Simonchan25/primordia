@@ -1,0 +1,2357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PRIMORDIA · an artificial life lab</title>
+<style>
+  :root{
+    --bg:#05060a;
+    --panel:rgba(16,18,28,0.72);
+    --panel-solid:#0c0e16;
+    --stroke:rgba(255,255,255,0.09);
+    --txt:#e7e9f3;
+    --muted:#8b90a6;
+    --accent:#7bdcff;
+    --accent2:#ff7bd5;
+    --good:#46e6a0;
+    --bad:#ff6b6b;
+    --radius:14px;
+    --font:'SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans SC',Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--txt);font-family:var(--font);-webkit-font-smoothing:antialiased}
+  body{position:fixed;inset:0}
+  /* touch-action:none ONLY on the simulation surface (so canvas gestures don't scroll/zoom the page);
+     UI containers keep normal touch behaviour so the panel can be scrolled and pinch-zoomed. */
+  canvas#sim,canvas#life{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:crosshair;touch-action:none}
+
+  /* vignette */
+  .vignette{position:fixed;inset:0;pointer-events:none;z-index:2;
+    box-shadow:inset 0 0 240px 40px rgba(0,0,0,0.75);
+    background:radial-gradient(120% 120% at 50% 40%,transparent 55%,rgba(0,0,0,0.35) 100%);}
+
+  /* brand */
+  .brand{position:fixed;top:18px;left:22px;z-index:5;cursor:pointer;user-select:none}
+  .brand:hover h1{text-shadow:0 0 36px rgba(123,220,255,0.5)}
+  .brand h1{font-size:21px;font-weight:700;letter-spacing:.42em;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 0 30px rgba(123,220,255,0.25)}
+  .brand p{font-size:10.5px;letter-spacing:.34em;text-transform:uppercase;color:var(--muted);margin-top:3px;text-shadow:0 1px 8px rgba(0,0,0,0.8)}
+
+  /* stats */
+  .stats{position:fixed;left:22px;bottom:18px;z-index:5;font-family:var(--mono);font-size:11px;color:var(--muted);
+    user-select:none;pointer-events:none;line-height:1.7;text-shadow:0 1px 8px rgba(0,0,0,0.85),0 0 2px rgba(0,0,0,0.7)}
+  .stats b{color:var(--accent);font-weight:600}
+  .stats .sp{color:var(--accent2)}
+
+  /* panel */
+  .panel{position:fixed;top:18px;right:18px;z-index:6;width:312px;max-height:calc(100vh - 36px);
+    background:var(--panel);backdrop-filter:blur(22px) saturate(140%);-webkit-backdrop-filter:blur(22px) saturate(140%);
+    border:1px solid var(--stroke);border-radius:var(--radius);
+    box-shadow:0 18px 60px rgba(0,0,0,0.55),inset 0 1px 0 rgba(255,255,255,0.05);
+    display:flex;flex-direction:column;overflow:hidden;transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .3s}
+  .panel.hidden{transform:translateX(calc(100% + 24px));opacity:0;pointer-events:none}
+  .panel__head{display:flex;align-items:center;gap:8px;padding:13px 15px;border-bottom:1px solid var(--stroke);flex:0 0 auto}
+  .panel__head .dot{width:8px;height:8px;border-radius:50%;background:var(--good);box-shadow:0 0 10px var(--good);flex:0 0 auto}
+  .panel__head .dot.paused{background:var(--bad);box-shadow:0 0 10px var(--bad)}
+  .panel__head h2{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--txt);flex:1}
+  .panel__body{overflow-y:auto;overflow-x:hidden;padding:6px 15px 16px;touch-action:pan-y;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+  .panel__body{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,0.18) transparent}
+  .panel__body::-webkit-scrollbar{width:8px}
+  .panel__body::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:8px;border:2px solid transparent;background-clip:padding-box}
+  .panel__body::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,0.26);background-clip:padding-box}
+
+  .group{padding:13px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+  .group:last-child{border-bottom:none}
+  .group__title{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:11px;font-weight:600}
+
+  /* buttons */
+  .btns{display:flex;flex-wrap:wrap;gap:7px}
+  button{font-family:var(--font);font-size:12px;color:var(--txt);cursor:pointer;
+    background:rgba(255,255,255,0.05);border:1px solid var(--stroke);border-radius:9px;padding:8px 11px;
+    transition:all .15s;user-select:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+  button:hover{background:rgba(255,255,255,0.11);border-color:rgba(255,255,255,0.2)}
+  button:active{transform:scale(.96)}
+  button.primary{background:linear-gradient(135deg,rgba(123,220,255,0.22),rgba(255,123,213,0.22));border-color:rgba(123,220,255,0.35)}
+  button.primary:hover{background:linear-gradient(135deg,rgba(123,220,255,0.34),rgba(255,123,213,0.34))}
+  button.on{background:rgba(70,230,160,0.18);border-color:rgba(70,230,160,0.45);color:#bdf7dc}
+  button.icon{padding:7px 9px}
+  .grow{flex:1}
+
+  /* preset chips */
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{font-size:11px;padding:6px 10px;border-radius:20px;background:rgba(255,255,255,0.045);
+    border:1px solid var(--stroke);cursor:pointer;transition:all .15s;color:var(--muted)}
+  .chip:hover{color:var(--txt);background:rgba(255,255,255,0.1)}
+  .chip.active{background:rgba(123,220,255,0.16);border-color:rgba(123,220,255,0.4);color:var(--accent)}
+
+  /* sliders */
+  .slider{margin-bottom:13px}
+  .slider:last-child{margin-bottom:0}
+  .slider__row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+  .slider__row label{font-size:12px;color:var(--txt)}
+  .slider__row .val{font-family:var(--mono);font-size:11px;color:var(--accent)}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:4px;
+    background:rgba(255,255,255,0.12);outline:none;cursor:pointer}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:15px;height:15px;border-radius:50%;
+    background:#fff;box-shadow:0 0 0 4px rgba(123,220,255,0.18),0 2px 6px rgba(0,0,0,0.5);transition:box-shadow .15s}
+  input[type=range]::-webkit-slider-thumb:hover{box-shadow:0 0 0 6px rgba(123,220,255,0.28),0 2px 6px rgba(0,0,0,0.5)}
+  input[type=range]::-moz-range-thumb{width:15px;height:15px;border:none;border-radius:50%;background:#fff;
+    box-shadow:0 0 0 4px rgba(123,220,255,0.18)}
+
+  /* matrix editor */
+  .matrix-wrap{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .matrix{display:grid;gap:3px;touch-action:none;user-select:none}
+  .mcell{border-radius:4px;position:relative;cursor:ns-resize;transition:transform .08s}
+  .mcell.head{cursor:default;border-radius:50%}
+  .mcell.corner{cursor:default;background:transparent}
+  .mcell:not(.head):not(.corner){background:#15171f;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.04);
+    display:flex;align-items:center;justify-content:center;font:600 9px var(--mono);color:rgba(255,255,255,0.62);text-shadow:0 1px 2px rgba(0,0,0,0.6)}
+  .mcell.hot{transform:scale(1.18);z-index:3;box-shadow:0 0 0 2px rgba(255,255,255,0.5)}
+  .matrix-hint{font-size:10.5px;color:var(--muted);text-align:center;line-height:1.5}
+  .matrix-hint b{color:var(--good)}.matrix-hint i{color:var(--bad);font-style:normal}
+
+  .kbd{font-family:var(--mono);font-size:10px;background:rgba(255,255,255,0.08);border:1px solid var(--stroke);
+    border-radius:5px;padding:1px 6px;color:var(--muted)}
+
+  /* help overlay */
+  .help{position:fixed;inset:0;z-index:20;background:rgba(3,4,8,0.8);backdrop-filter:blur(8px);
+    display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}
+  .help.show{opacity:1;pointer-events:auto}
+  .help__card{width:min(560px,90vw);max-height:calc(100vh - 32px);overflow-y:auto;background:var(--panel-solid);border:1px solid var(--stroke);border-radius:18px;
+    padding:30px 34px;box-shadow:0 30px 80px rgba(0,0,0,0.6)}
+  .help__card h3{font-size:16px;letter-spacing:.2em;margin-bottom:4px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .help__card .sub{color:var(--muted);font-size:12px;margin-bottom:20px;line-height:1.6}
+  .help__grid{display:grid;grid-template-columns:auto 1fr;gap:9px 16px;font-size:13px;align-items:center}
+  .help__grid .k{justify-self:start}
+  .help__grid .d{color:var(--muted)}
+  .help__card .foot{margin-top:22px;font-size:11px;color:var(--muted);line-height:1.7;border-top:1px solid var(--stroke);padding-top:16px}
+
+  /* floating reopen button */
+  .reopen{position:fixed;top:18px;right:18px;z-index:6;opacity:0;pointer-events:none;transition:opacity .3s}
+  .reopen.show{opacity:1;pointer-events:auto}
+
+  .toast{position:fixed;left:50%;bottom:40px;transform:translate(-50%,20px);z-index:30;
+    background:var(--panel-solid);border:1px solid var(--stroke);border-radius:10px;padding:11px 18px;font-size:12.5px;
+    color:var(--txt);box-shadow:0 12px 40px rgba(0,0,0,0.5);opacity:0;pointer-events:none;transition:opacity .3s,transform .3s}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  /* CJK typography tweaks — large letter-spacing/uppercase look wrong on Chinese */
+  body.lang-zh .group__title{letter-spacing:.06em}
+  body.lang-zh .brand p{letter-spacing:.16em}
+  body.lang-zh .panel__head h2,body.lang-zh .help__card h3{letter-spacing:.08em}
+  #btn-lang{font-size:11px;font-weight:600;letter-spacing:.02em;min-width:36px;justify-content:center}
+  /* ── guided journey ── */
+  .journey{position:fixed;inset:0;z-index:14;opacity:0;pointer-events:none;transition:opacity .6s}
+  .journey.show{opacity:1}
+  .journey__veil{position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(120% 95% at 50% 38%,transparent 42%,rgba(3,4,8,0.55) 100%),linear-gradient(to bottom,rgba(3,4,8,0.35),transparent 22%,transparent 55%,rgba(3,4,8,0.86) 100%)}
+  .journey__bar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:18px 22px}
+  .journey__dots{display:flex;gap:7px}
+  .journey__dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.22);transition:all .4s}
+  .journey__dots i.on{background:linear-gradient(90deg,var(--accent),var(--accent2));width:20px;border-radius:7px}
+  .journey__skip{pointer-events:auto;font-size:12px;color:var(--muted);background:rgba(0,0,0,0.3);backdrop-filter:blur(8px);
+    border:1px solid var(--stroke);border-radius:20px;padding:8px 16px}
+  .journey__skip:hover{color:var(--txt)}
+  .journey__capwrap{position:absolute;left:0;right:0;bottom:0;display:flex;flex-direction:column;align-items:center;
+    padding:0 24px 64px;text-align:center}
+  .journey__cap{max-width:740px;min-height:120px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;
+    opacity:0;transform:translateY(10px);transition:opacity .7s,transform .7s}
+  .journey__cap.in{opacity:1;transform:translateY(0)}
+  .journey__cap .l{font-size:clamp(18px,2.5vw,27px);line-height:1.5;font-weight:500;color:#f3f5ff;text-shadow:0 2px 24px rgba(0,0,0,0.85),0 0 2px rgba(0,0,0,0.6);letter-spacing:.005em}
+  .journey__cap .l.dim{font-size:clamp(13px,1.5vw,15px);color:var(--muted);font-weight:400}
+  .journey__cap .l.em{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:600}
+  .journey__enter{margin-top:26px;padding:13px 30px;font-size:14px;pointer-events:auto;opacity:0;transform:translateY(8px);
+    transition:opacity .6s,transform .6s;justify-content:center}
+  .journey__enter.show{opacity:1;transform:translateY(0)}
+  body.lang-zh .journey__cap .l{letter-spacing:.02em;line-height:1.7}
+  .journey__barbtns{display:flex;gap:8px}
+  .journey.cover .journey__bar,.journey.cover .journey__capwrap{opacity:0;pointer-events:none}
+  .journey__cover{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;opacity:0;pointer-events:none;transition:opacity .7s}
+  .journey.cover .journey__cover{opacity:1;pointer-events:auto}
+  .journey__cover h1{font-size:clamp(34px,7vw,78px);font-weight:700;letter-spacing:.34em;padding-left:.34em;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 70px rgba(123,220,255,0.28)}
+  .journey__sub{color:var(--muted);font-size:clamp(13px,1.8vw,17px);letter-spacing:.05em;margin-bottom:24px}
+  .journey__begin{padding:14px 40px;font-size:15px;justify-content:center}
+  .journey__plain{margin-top:14px;background:none;border:none;color:var(--muted);font-size:12.5px}
+  .journey__plain:hover{color:var(--txt)}
+  body.lang-zh .journey__cover h1{letter-spacing:.16em;padding-left:.16em}
+  body.lang-zh .journey__sub{letter-spacing:.1em}
+
+  .modeswitch{display:flex;gap:6px;background:rgba(255,255,255,0.04);border:1px solid var(--stroke);border-radius:11px;padding:4px;margin-bottom:4px}
+  .modeswitch .mode{flex:1;justify-content:center;background:transparent;border:none;color:var(--muted);padding:9px;border-radius:8px;font-size:12.5px}
+  .modeswitch .mode.active{background:linear-gradient(135deg,rgba(123,220,255,0.20),rgba(255,123,213,0.20));color:var(--txt);box-shadow:inset 0 1px 0 rgba(255,255,255,0.06)}
+
+  @media (max-width:560px){
+    .panel{width:calc(100vw - 24px);right:12px;top:12px;max-height:calc(100vh - 24px)}
+    .brand{top:auto;bottom:86px;left:14px}
+    .brand h1{font-size:17px;letter-spacing:.28em}
+    .stats{left:14px;bottom:14px}
+  }
+  /* mobile-only attract/repel toggle (the canvas single-finger drag attracts; this flips it to repel) */
+  .touchctl{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:5;display:none;font-size:15px;padding:9px 13px}
+  .touchctl[aria-pressed="true"]{background:rgba(255,123,213,0.2);border-color:rgba(255,123,213,0.5)}
+  @media (pointer:coarse){ .touchctl{display:inline-flex} }
+  /* bigger touch targets on coarse pointers (phones/tablets): fatter slider rail + thumb */
+  @media (pointer:coarse){
+    input[type=range]{height:22px;background:transparent}
+    input[type=range]::-webkit-slider-runnable-track{height:5px;border-radius:5px;background:rgba(255,255,255,0.14)}
+    input[type=range]::-moz-range-track{height:5px;border-radius:5px;background:rgba(255,255,255,0.14)}
+    input[type=range]::-webkit-slider-thumb{width:26px;height:26px;margin-top:-10.5px}
+    input[type=range]::-moz-range-thumb{width:26px;height:26px}
+  }
+  /* the cinematic journey is full-bleed: hide the lab chrome so nothing leaks through the veil */
+  body.journey-on .brand, body.journey-on .stats, body.journey-on .reopen, body.journey-on .touchctl{opacity:0 !important;pointer-events:none !important;transition:opacity .4s}
+
+  /* respect users who ask for less motion — tame UI transitions (the sim itself can be paused with Space) */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.12s !important}
+    .panel,.journey,.journey__cap,.journey__cover,.toast{transition-duration:.12s !important}
+    .journey__cap{transform:none !important}
+    button:active{transform:none}
+  }
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .mcell:focus-visible{outline-offset:0}
+</style>
+</head>
+<body>
+  <canvas id="sim" role="img" data-i18n-aria="aria_canvas"></canvas>
+  <canvas id="life" style="display:none" role="img" data-i18n-aria="aria_canvas"></canvas>
+  <div class="vignette"></div>
+
+  <div class="brand" role="button" tabindex="0" data-i18n-aria="aria_brand">
+    <h1>PRIMORDIA</h1>
+    <p data-i18n="tagline">an artificial life lab</p>
+  </div>
+
+  <div class="stats" id="stats">
+    <div id="stats-soup">
+      <div><b id="st-fps">60</b> <span data-i18n="fps">fps</span> · <b id="st-count">0</b> <span data-i18n="cells">cells</span> · <span class="sp" id="st-species">6</span> <span data-i18n="species">species</span></div>
+      <div id="st-preset" style="opacity:.7">—</div>
+      <div id="st-engine" style="opacity:.5;font-size:10px;margin-top:2px;letter-spacing:.04em"></div>
+    </div>
+    <div id="stats-genesis" style="display:none">
+      <div><b id="g-st-fps">60</b> <span data-i18n="fps">fps</span> · <b id="g-st-pop">0</b> <span data-i18n="g_alive">alive</span> · <span class="sp" id="g-st-gen">0</span> <span data-i18n="g_gen">gen</span></div>
+      <div id="g-st-line2" style="opacity:.7">—</div>
+    </div>
+  </div>
+
+  <button class="reopen icon" id="reopen" data-i18n="reopenLabel" data-i18n-title="showControls" title="Show controls (C)">☰ controls</button>
+  <button class="touchctl icon" id="touch-mode" aria-pressed="false" data-i18n-aria="aria_touchmode" title="Attract / Repel">🧲</button>
+
+  <div class="panel" id="panel">
+    <div class="panel__head">
+      <span class="dot" id="run-dot"></span>
+      <h2 data-i18n="control">Control</h2>
+      <button class="icon" id="btn-lang" data-i18n-aria="aria_lang" title="中文 / English">中文</button>
+      <button class="icon" id="btn-fs" data-i18n-aria="aria_fs" title="Fullscreen (F)">⛶</button>
+      <button class="icon" id="btn-help" data-i18n-aria="helpTip" data-i18n-title="helpTip" title="Help (H)">?</button>
+      <button class="icon" id="btn-hide" data-i18n-aria="hideTip" data-i18n-title="hideTip" title="Hide (C)">✕</button>
+    </div>
+    <div class="panel__body">
+      <div class="modeswitch" id="modeswitch">
+        <button class="mode active" data-mode="soup" data-i18n="modeSoup">🌌 Soup</button>
+        <button class="mode" data-mode="genesis" data-i18n="modeGenesis">🧬 Genesis</button>
+      </div>
+      <div id="ctl-soup">
+
+      <div class="group">
+        <div class="btns">
+          <button class="primary grow" id="btn-play">⏸ Pause</button>
+          <button id="btn-reseed" data-i18n="respawn" data-i18n-title="respawnTip" title="New random positions (N)">↻ Respawn</button>
+        </div>
+        <div class="btns" style="margin-top:7px">
+          <button class="grow" id="btn-random" data-i18n="newRules" data-i18n-title="newRulesTip" title="New random rules (R)">🎲 New rules</button>
+          <button id="btn-evolve" data-i18n="evolve" data-i18n-title="evolveTip" title="Evolve rules over time (E)">🧬 Evolve</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="group__title" data-i18n="presetTitle">Ecosystem preset</div>
+        <div class="chips" id="presets"></div>
+      </div>
+
+      <div class="group">
+        <div class="group__title" data-i18n="matrixTitle">Interaction matrix · who likes whom</div>
+        <div class="matrix-wrap">
+          <div class="matrix" id="matrix"></div>
+          <div class="matrix-hint" data-i18n-html="matrixHint">drag a cell ▲▼ · row <b>attracts</b>/<i>repels</i> column</div>
+        </div>
+      </div>
+
+      <div class="group">
+        <div class="group__title" data-i18n="forcesTitle">Forces</div>
+        <div class="slider" data-s="species" data-int="1" data-min="1" data-max="12" data-step="1"></div>
+        <div class="slider" data-s="count" data-int="1" data-min="500" data-max="12000" data-step="100"></div>
+        <div class="slider" data-s="rmax" data-min="0.025" data-max="0.14" data-step="0.005"></div>
+        <div class="slider" data-s="force" data-min="1" data-max="18" data-step="0.5"></div>
+        <div class="slider" data-s="friction" data-min="0" data-max="0.6" data-step="0.01"></div>
+        <div class="slider" data-s="speed" data-min="0.2" data-max="3" data-step="0.05"></div>
+        <div class="slider" data-s="beta" data-min="0.1" data-max="0.5" data-step="0.01"></div>
+      </div>
+
+      <div class="group">
+        <div class="group__title" data-i18n="lookTitle">Look</div>
+        <div class="slider" data-s="size" data-min="1" data-max="14" data-step="0.5"></div>
+        <div class="slider" data-s="glow" data-min="0.3" data-max="3" data-step="0.05"></div>
+        <div class="slider" data-s="trails" data-min="0" data-max="0.96" data-step="0.02"></div>
+        <div class="btns" style="margin-top:11px">
+          <button class="grow" id="btn-palette" data-i18n="palette">🎨 Palette</button>
+          <button class="grow" id="btn-share" data-i18n="share">🔗 Share</button>
+        </div>
+        <div class="btns" style="margin-top:7px">
+          <button class="grow" id="btn-sound" data-i18n="sound" data-i18n-title="soundTip" title="Ambient sound (M)">🔈 Sound</button>
+        </div>
+      </div>
+      </div><!-- /ctl-soup -->
+
+      <div id="ctl-genesis" style="display:none">
+        <div class="group">
+          <div class="btns">
+            <button class="primary grow" id="g-play">⏸ Pause</button>
+            <button id="g-reset" data-i18n="g_reset" title="New world (N)">↻ New world</button>
+          </div>
+          <div class="btns" style="margin-top:7px">
+            <button class="grow" id="g-share" data-i18n="share">🔗 Share</button>
+          </div>
+        </div>
+        <div class="group">
+          <div class="group__title" data-i18n="g_evoTitle">Evolution</div>
+          <div class="slider" data-g="gspeed" data-int="1" data-min="1" data-max="40" data-step="1"></div>
+          <div class="slider" data-g="gfood" data-min="2" data-max="30" data-step="1"></div>
+          <div class="slider" data-g="gmut" data-min="0.02" data-max="0.5" data-step="0.01"></div>
+          <div class="slider" data-g="gworld" data-min="1" data-max="1.8" data-step="0.1"></div>
+        </div>
+        <div class="group">
+          <div class="group__title" data-i18n="g_graphTitle">What is evolving</div>
+          <canvas id="g-graph" width="280" height="92" style="width:100%;height:92px;border-radius:8px;background:rgba(0,0,0,0.25);display:block"></canvas>
+          <div class="matrix-hint" style="margin-top:8px" data-i18n-html="g_hint">each dot is a creature with a tiny brain · <b>nobody scripted them</b></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="help" id="help" role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <div class="help__card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h3 id="help-title">PRIMORDIA</h3>
+        <button class="icon" id="help-lang" style="font-size:11px">中文 / EN</button>
+      </div>
+      <div class="sub" id="help-sub"></div>
+      <div class="help__grid" id="help-grid"></div>
+      <div class="foot" id="help-foot"></div>
+      <button class="primary" id="help-enter" style="margin-top:18px;width:100%;justify-content:center;padding:12px"></button>
+    </div>
+  </div>
+
+  <div class="journey" id="journey">
+    <div class="journey__veil"></div>
+    <div class="journey__cover" id="journey-cover">
+      <h1>PRIMORDIA</h1>
+      <p class="journey__sub" data-i18n="j_tagline">a meditation on where life comes from</p>
+      <button class="primary journey__begin" id="journey-begin" data-i18n="j_begin">▶  Begin</button>
+      <button class="journey__plain" id="journey-coverskip" data-i18n="j_straight">skip straight to the lab →</button>
+    </div>
+    <div class="journey__bar">
+      <div class="journey__dots" id="journey-dots"></div>
+      <div class="journey__barbtns">
+        <button class="journey__skip" id="journey-mute" data-i18n-aria="aria_mute" title="sound">🔊</button>
+        <button class="journey__skip" id="journey-skip" data-i18n="j_skip">Skip ⏎</button>
+      </div>
+    </div>
+    <div class="journey__capwrap">
+      <div class="journey__cap" id="journey-cap"></div>
+      <button class="primary journey__enter" id="journey-enter" data-i18n="j_enter">Enter the lab →</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+(() => {
+/* ════════════════════════════════════════════════════════════════════════
+   PRIMORDIA — Particle-Life simulator
+   Single-file WebGL2 artificial-life lab. Local rules → emergent life.
+   ════════════════════════════════════════════════════════════════════════ */
+
+const MAX_SPECIES = 12;
+
+/* ── i18n · English / 简体中文 ──────────────────────────────────────── */
+const I18N = {
+  en: {
+    tagline:'an artificial life lab',
+    control:'Control', helpTip:'Help (H)', hideTip:'Hide (C)', showControls:'Show controls (C)',
+    reopenLabel:'☰ controls', respawn:'↻ Respawn', respawnTip:'New random positions (N)',
+    newRules:'🎲 New rules', newRulesTip:'New random rules (R)', evolve:'🧬 Evolve', evolveTip:'Evolve rules over time (E)',
+    play:'▶ Play', pause:'⏸ Pause',
+    presetTitle:'Ecosystem preset', matrixTitle:'Interaction matrix · who likes whom',
+    matrixHint:'drag a cell ▲▼ (or focus + arrow keys) · row <b>attracts</b>/<i>repels</i> column',
+    mx_attract:'attracts', mx_repel:'repels', mx_cell:'row species {a}, column species {b}',
+    forcesTitle:'Forces', lookTitle:'Look', palette:'🎨 Palette', share:'🔗 Share', sound:'🎧 Score', soundTip:'Cinematic generative score (M)',
+    sl_species:'Species', sl_count:'Particles', sl_rmax:'Radius', sl_force:'Force', sl_friction:'Friction',
+    sl_speed:'Speed', sl_beta:'Repel zone', sl_size:'Cell size', sl_glow:'Glow', sl_trails:'Trails', off:'off',
+    fps:'fps', cells:'cells', species:'species',
+    p_random:'random soup', p_symmetry:'symmetry', p_clusters:'clusters', p_cells:'cells',
+    p_chase:'chase', p_snakes:'snakes', p_orbits:'orbits', p_custom:'custom', p_shared:'shared',
+    helpSub:"Thousands of particles, a handful of rules. Each colour is attracted to or repelled by every other colour — that's all. From this, cells, membranes, hunters, and swimming creatures emerge. Nobody designed them.",
+	    helpRows:[['drag','attract (touch: 2-finger drag to pan/zoom)'],['shift / right-drag','repel'],['scroll','zoom · alt+drag to pan'],['space','pause / play'],['R','new rules (Soup) · new world (Genesis)'],['N','respawn (Soup) · new world (Genesis)'],['E','toggle evolution (Soup)'],['P','cycle palette (Soup)'],['M','cinematic score'],['C','hide / show panel'],['H','this help'],['F','fullscreen']],
+    helpFoot:'Built by Claude as a study in emergence — simple local rules give rise to complex global life. Every time you press R you get a world that has never existed before.',
+    enter:'Enter the lab →',
+    t_evolveOn:'Evolution on — the rules will slowly drift', t_evolveOff:'Evolution off',
+    t_palette:'Palette · ', t_newRules:'New rules · a fresh world',
+    t_shareCopied:'Ecosystem link copied to clipboard', t_shareFail:"Couldn't copy — the link is now in your address bar",
+    t_autotune:'Auto-tuned to {n} particles for a smooth frame rate',
+    t_worldRebuilt:'New world built · {n}× — more room for lineages to diverge',
+    t_genesisShare:'Genesis lab link copied — same settings & starting seed',
+    t_soundOn:'Score on', t_soundOff:'Score off',
+    eng_gpu:'GPU · WebGPU compute', eng_cpu:'CPU · WebGL2',
+    err_nowebgl2:'WebGL2 is required and not available in this browser.',
+    modeSoup:'🌌 Soup', modeGenesis:'🧬 Genesis',
+    g_reset:'↻ New world', g_evoTitle:'Evolution', g_graphTitle:'What is evolving · brain · predators · new forms',
+    g_hint:'<b style="color:#7bdcff">brain</b> · <b style="color:#ff786e">predators</b> · <b style="color:#ffce5c">new forms discovered</b> — each dot is a creature; <b>nobody scripted them</b>',
+    gl_gspeed:'Time speed', gl_gfood:'Food', gl_gmut:'Mutation', gl_gworld:'World size · isolation',
+    g_alive:'alive', g_gen:'gen', g_brain:'brain', g_hunters:'hunters', g_forms:'forms',
+    j_skip:'Skip ⏎', j_enter:'Enter the lab →', j_tagline:'a meditation on where life comes from', j_begin:'▶  Begin', j_straight:'skip straight to the lab →',
+    aria_lang:'Switch language', aria_mute:'Toggle narration & music', aria_brand:'Replay the guided journey',
+    aria_touchmode:'Toggle attract / repel for touch', t_attractMode:'Touch drag now attracts 🧲', t_repelMode:'Touch drag now repels 💥',
+    aria_canvas:'Live artificial-life simulation — use the control panel to shape it', t_deviceLost:'Graphics device lost — please reload the page', aria_fs:'Toggle fullscreen',
+  },
+  zh: {
+    tagline:'人工生命实验室',
+    control:'控制台', helpTip:'帮助 (H)', hideTip:'隐藏 (C)', showControls:'显示控制台 (C)',
+    reopenLabel:'☰ 控制台', respawn:'↻ 重生', respawnTip:'重新随机分布粒子 (N)',
+    newRules:'🎲 新规则', newRulesTip:'随机生成新规则 (R)', evolve:'🧬 进化', evolveTip:'让规则随时间演化 (E)',
+    play:'▶ 播放', pause:'⏸ 暂停',
+    presetTitle:'生态预设', matrixTitle:'交互矩阵 · 谁喜欢谁',
+    matrixHint:'拖动格子 ▲▼(或聚焦后用方向键)· 行<b>吸引</b>/<i>排斥</i>列',
+    mx_attract:'吸引', mx_repel:'排斥', mx_cell:'第 {a} 行物种,第 {b} 列物种',
+    forcesTitle:'力学', lookTitle:'外观', palette:'🎨 配色', share:'🔗 分享', sound:'🎧 配乐', soundTip:'电影感生成配乐 (M)',
+    sl_species:'物种数', sl_count:'粒子数', sl_rmax:'作用半径', sl_force:'力度', sl_friction:'摩擦',
+    sl_speed:'速度', sl_beta:'排斥区', sl_size:'粒子大小', sl_glow:'辉光', sl_trails:'拖尾', off:'关',
+    fps:'帧', cells:'粒子', species:'物种',
+    p_random:'随机汤', p_symmetry:'对称', p_clusters:'聚落', p_cells:'细胞',
+    p_chase:'追逐', p_snakes:'游蛇', p_orbits:'轨道', p_custom:'自定义', p_shared:'分享',
+    helpSub:'成千上万个粒子，几条简单规则。每种颜色被其他每种颜色吸引或排斥——仅此而已。由此涌现出细胞、细胞膜、捕食者与游动的生物。没有人设计它们。',
+    helpRows:[['拖动','吸引(触摸:双指拖动可平移/缩放)'],['Shift / 右键拖动','排斥'],['滚轮','缩放 · Alt+拖动平移'],['空格','暂停 / 播放'],['R','新规则(原汤)· 新世界(创世)'],['N','重生(原汤)· 新世界(创世)'],['E','开关进化(原汤)'],['P','切换配色(原汤)'],['M','电影配乐'],['C','隐藏 / 显示面板'],['H','本帮助'],['F','全屏']],
+    helpFoot:'由 Claude 打造，一场关于"涌现"的研究——简单的局部规则孕育出复杂的整体生命。每次按下 R，你都会得到一个从未存在过的世界。',
+    enter:'进入实验室 →',
+    t_evolveOn:'进化已开启 —— 规则会缓慢漂移', t_evolveOff:'进化已关闭',
+    t_palette:'配色 · ', t_newRules:'新规则 · 全新的世界',
+    t_shareCopied:'生态链接已复制到剪贴板', t_shareFail:'复制失败 —— 链接已在地址栏中',
+    t_autotune:'已自动调整到 {n} 粒子以保持流畅',
+    t_worldRebuilt:'新世界已生成 · {n}× —— 谱系有了更多分化的空间',
+    t_genesisShare:'创世链接已复制 —— 相同的设置与初始种子',
+    t_soundOn:'配乐已开启', t_soundOff:'配乐已关闭',
+    eng_gpu:'GPU · WebGPU 计算', eng_cpu:'CPU · WebGL2',
+    err_nowebgl2:'此浏览器需要 WebGL2，但当前不可用。',
+    modeSoup:'🌌 原汤', modeGenesis:'🧬 创世',
+    g_reset:'↻ 新世界', g_evoTitle:'演化', g_graphTitle:'正在演化的 · 脑力 · 捕食者 · 新形态',
+    g_hint:'<b style="color:#7bdcff">脑力</b> · <b style="color:#ff786e">捕食者</b> · <b style="color:#ffce5c">新发现的形态</b> — 每个点都是一个生命；<b>无人编写它们的行为</b>',
+    gl_gspeed:'时间流速', gl_gfood:'食物', gl_gmut:'变异', gl_gworld:'世界大小 · 隔离',
+    g_alive:'存活', g_gen:'代', g_brain:'脑', g_hunters:'捕食者', g_forms:'形态',
+    j_skip:'跳过 ⏎', j_enter:'进入实验室 →', j_tagline:'一场关于生命从何而来的冥想', j_begin:'▶  开始', j_straight:'直接进入实验室 →',
+    aria_lang:'切换语言', aria_mute:'切换旁白与音乐', aria_brand:'重播导览旅程',
+    aria_touchmode:'切换 吸引/排斥(触摸)', t_attractMode:'触摸拖动:现在吸引 🧲', t_repelMode:'触摸拖动:现在排斥 💥',
+    aria_canvas:'实时人工生命模拟 —— 用控制台来塑造它', t_deviceLost:'图形设备已丢失 —— 请刷新页面', aria_fs:'切换全屏',
+  },
+};
+let LANG = 'en';
+function detectLang(){ try{ const s=localStorage.getItem('primordia_lang'); if(s==='en'||s==='zh') return s; }catch(e){} return (navigator.language||'en').toLowerCase().indexOf('zh')===0 ? 'zh' : 'en'; }
+function t(key){ const L=I18N[LANG]||I18N.en; return (key in L) ? L[key] : (key in I18N.en ? I18N.en[key] : key); }
+function setLang(l){
+  LANG=(l==='zh')?'zh':'en';
+  try{ localStorage.setItem('primordia_lang',LANG); }catch(e){}
+  document.documentElement.lang = LANG==='zh'?'zh-CN':'en';
+  document.body.classList.toggle('lang-zh', LANG==='zh');
+  applyI18n();
+}
+function applyI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent=t(el.getAttribute('data-i18n')); });
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{ el.innerHTML=t(el.getAttribute('data-i18n-html')); });
+  document.querySelectorAll('[data-i18n-title]').forEach(el=>{ el.title=t(el.getAttribute('data-i18n-title')); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el=>{ el.setAttribute('aria-label', t(el.getAttribute('data-i18n-aria'))); });
+  const lb=document.getElementById('btn-lang'); if(lb) lb.textContent = LANG==='en'?'中文':'EN';
+  if(typeof UI!=='undefined' && UI.els && UI.els.matrix){ UI.buildHelp(); UI.buildSliders(); UI.buildGenesisSliders(); UI.buildPresets(); UI.refreshPlayBtn(); UI.syncStats(); }
+  if(typeof MODE!=='undefined' && MODE==='genesis' && typeof G!=='undefined' && G.w) UI.syncGenesisStats();
+  if(typeof Journey!=='undefined' && Journey.active) Journey.showCaption();
+}
+
+const PRESETS = [
+  {id:'random soup', k:'p_random'}, {id:'symmetry', k:'p_symmetry'}, {id:'clusters', k:'p_clusters'},
+  {id:'cells', k:'p_cells'}, {id:'chase', k:'p_chase'}, {id:'snakes', k:'p_snakes'}, {id:'orbits', k:'p_orbits'},
+];
+function presetLabel(id){ const p=PRESETS.find(x=>x.id===id); if(p) return t(p.k); if(id==='custom') return t('p_custom'); if(id==='shared') return t('p_shared'); return id; }
+let ACTIVE_ENGINE='cpu'; // 'cpu' = WebGL2 + CPU sim · 'gpu' = WebGPU compute
+let MODE='soup';          // 'soup' = particle life · 'genesis' = neuroevolution ecosystem
+
+/* ── State ──────────────────────────────────────────────────────────── */
+const S = {
+  species: 6,
+  count: 4500,
+  rmax: 0.07,
+  force: 7.0,
+  friction: 0.12,   // velocity retained each step = (1 - friction); low = lively
+  speed: 1.0,
+  beta: 0.30,
+  size: 6,
+  glow: 1.1,
+  trails: 0.82,
+  paused: false,
+  evolve: false,
+  presetName: 'clusters',
+};
+const EVOLVE_RATE = 0.5;   // matrix mutation rate when Evolve is on (not user-tunable; kept out of S so __P.S holds only real settings)
+
+const META = {
+  species:{label:'Species',     fmt:v=>v|0},
+  count:  {label:'Particles',   fmt:v=>(v|0).toLocaleString()},
+  rmax:   {label:'Radius',      fmt:v=>v.toFixed(3)},
+  force:  {label:'Force',       fmt:v=>v.toFixed(1)},
+  friction:{label:'Friction',   fmt:v=>v.toFixed(2)},
+  speed:  {label:'Speed',       fmt:v=>v.toFixed(2)+'×'},
+  beta:   {label:'Repel zone',  fmt:v=>v.toFixed(2)},
+  size:   {label:'Cell size',   fmt:v=>v.toFixed(1)},
+  glow:   {label:'Glow',        fmt:v=>v.toFixed(2)},
+  trails: {label:'Trails',      fmt:v=>v<=0?'off':v.toFixed(2)},
+};
+
+/* ── Palettes (vivid on black) ──────────────────────────────────────── */
+const PALETTES = [
+  // each is a hue-generator; returns rgb[0..1]
+  {name:'Neon',   fn:(i,n)=>hsl((i/n)*360, 0.85, 0.60)},
+  {name:'Aurora', fn:(i,n)=>hsl(150 + (i/n)*180, 0.72, 0.58)},
+  {name:'Ember',  fn:(i,n)=>hsl((i/n)*70 - 10, 0.92, 0.57)},
+  {name:'Candy',  fn:(i,n)=>hsl(300 + (i/n)*160, 0.80, 0.66)},
+  {name:'Ocean',  fn:(i,n)=>hsl(180 + (i/n)*120, 0.75, 0.56)},
+  {name:'Mono',   fn:(i,n)=>hsl(205, 0.15 + 0.0*i, 0.45 + 0.42*(i/Math.max(1,n-1)))},
+];
+let paletteIdx = 0;
+let palette = new Float32Array(MAX_SPECIES*3);
+
+function hsl(h,s,l){
+  h=((h%360)+360)%360; const c=(1-Math.abs(2*l-1))*s, x=c*(1-Math.abs((h/60)%2-1)), m=l-c/2;
+  let r,g,b;
+  if(h<60){r=c;g=x;b=0}else if(h<120){r=x;g=c;b=0}else if(h<180){r=0;g=c;b=x}
+  else if(h<240){r=0;g=x;b=c}else if(h<300){r=x;g=0;b=c}else{r=c;g=0;b=x}
+  return [r+m,g+m,b+m];
+}
+function buildPalette(){
+  const fn = PALETTES[paletteIdx].fn;
+  for(let i=0;i<MAX_SPECIES;i++){ const c=fn(i,S.species); palette[i*3]=c[0]; palette[i*3+1]=c[1]; palette[i*3+2]=c[2]; }
+}
+
+/* ── Deterministic RNG (so shared seeds reproduce) ──────────────────── */
+let rngState = 123456789>>>0;
+function srand(seed){ rngState = (seed>>>0) || 1; }
+function rnd(){ // xorshift32 -> [0,1)
+  let x = rngState; x^=x<<13; x^=x>>>17; x^=x<<5; rngState=x>>>0; return rngState/4294967296;
+}
+function rndRange(a,b){ return a + (b-a)*rnd(); }
+
+/* ════════════════════════════════════════════════════════════════════
+   SIMULATION
+   World is a fixed unit torus [0,1)×[0,1). O(n) neighbour search via a
+   spatial hash built every step with a counting sort.
+   ════════════════════════════════════════════════════════════════════ */
+const Sim = {
+  pos:null, vel:null, sp:null,           // particle data (interleaved x,y for pos/vel)
+  matrix:new Float32Array(MAX_SPECIES*MAX_SPECIES),
+  // hash
+  cols:0, rows:0, cellStart:null, order:null, cellOf:null, cursor:null,
+  seed:0,
+
+  alloc(n){
+    this.pos=new Float32Array(n*2);
+    this.vel=new Float32Array(n*2);
+    this.sp =new Float32Array(n);
+    this.cellOf=new Int32Array(n);
+    this.order =new Int32Array(n);
+  },
+
+  reseed(seed){
+    if(seed===undefined) seed = (rnd()*4294967296)>>>0;
+    this.seed = seed; srand(seed);
+    const n=S.count;
+    if(!this.pos || this.pos.length!==n*2) this.alloc(n);
+    for(let i=0;i<n;i++){
+      this.pos[i*2]=rnd(); this.pos[i*2+1]=rnd();
+      this.vel[i*2]=0; this.vel[i*2+1]=0;
+      this.sp[i]=Math.min(S.species-1, (rnd()*S.species)|0);
+    }
+    if(ACTIVE_ENGINE==='gpu'){ if(GPU.ready) GPU.uploadParticles(); } else { Render.syncBuffers(); }
+  },
+
+  randomMatrix(){
+    const n=S.species;
+    for(let i=0;i<n;i++) for(let j=0;j<n;j++) this.matrix[i*MAX_SPECIES+j]=rndRange(-1,1);
+  },
+
+  setPreset(name){
+    const n=S.species, M=this.matrix;
+    const set=(i,j,v)=>{M[i*MAX_SPECIES+j]=v};
+    for(let i=0;i<n;i++) for(let j=0;j<n;j++) set(i,j,0);
+    switch(name){
+      case 'random soup':
+        this.randomMatrix(); break;
+      case 'symmetry':{
+        for(let i=0;i<n;i++) for(let j=i;j<n;j++){ const v=rndRange(-1,1); set(i,j,v); set(j,i,v); }
+        break;
+      }
+      case 'clusters':
+        for(let i=0;i<n;i++) for(let j=0;j<n;j++) set(i,j, i===j? rndRange(0.5,1.0) : rndRange(-1.0,-0.2));
+        break;
+      case 'cells':
+        for(let i=0;i<n;i++) for(let j=0;j<n;j++) set(i,j, i===j? 1.0 : (Math.abs(i-j)===1? rndRange(0.2,0.6):rndRange(-0.6,-0.1)));
+        break;
+      case 'chase':{ // predator-prey cycle: i chases i+1
+        for(let i=0;i<n;i++){ set(i,i,-0.1); set(i,(i+1)%n, 1.0); set((i+1)%n,i,-0.7); }
+        break;
+      }
+      case 'snakes':
+        for(let i=0;i<n;i++){ set(i,i,0.7); set(i,(i+1)%n,0.55); set((i+1)%n,i,-0.25); }
+        break;
+      case 'orbits':{
+        for(let i=0;i<n;i++) for(let j=0;j<n;j++) set(i,j, i===j?0.9 : (((j-i+n)%n)<=n/2 ? 0.35 : -0.45));
+        break;
+      }
+      default: // 'custom'/'shared'/unknown — matrix dims change with species, so reroll
+        this.randomMatrix(); break;
+    }
+    S.presetName=name;
+  },
+
+  // force curve: short-range universal repulsion, mid-range matrix-driven
+  // r in [0,1] (fraction of rmax), a = attraction coefficient
+  buildHash(){
+    const rmax=S.rmax;
+    let cols=Math.max(3, Math.floor(1/rmax));
+    let rows=cols; // unit square
+    const n=S.count;
+    if(cols!==this.cols || rows!==this.rows || !this.cellStart){
+      this.cols=cols; this.rows=rows;
+      this.cellStart=new Int32Array(cols*rows+1);
+      this.cursor=new Int32Array(cols*rows);
+    }
+    const {pos,cellOf,order,cellStart,cursor}=this;
+    const nc=cols*rows;
+    cellStart.fill(0);
+    for(let i=0;i<n;i++){
+      let cx=(pos[i*2]*cols)|0; if(cx<0)cx=0; else if(cx>=cols)cx=cols-1;
+      let cy=(pos[i*2+1]*rows)|0; if(cy<0)cy=0; else if(cy>=rows)cy=rows-1;
+      const c=cx+cy*cols; cellOf[i]=c; cellStart[c+1]++;
+    }
+    for(let c=0;c<nc;c++) cellStart[c+1]+=cellStart[c];
+    cursor.set(cellStart.subarray(0,nc));
+    for(let i=0;i<n;i++){ const c=cellOf[i]; order[cursor[c]++]=i; }
+  },
+
+  step(dt){
+    this.buildHash();
+    const {pos,vel,sp,order,cellStart,matrix}=this;
+    const n=S.count, cols=this.cols, rows=this.rows;
+    const rmax=S.rmax, rmax2=rmax*rmax, beta=S.beta, invBeta=1/beta, invOneMinusBeta=1/(1-beta);
+    const forceScale=rmax*S.force;
+    // friction: velocity retained each step = (1 - friction); higher slider = more drag.
+    const fr = 1 - S.friction;
+
+    for(let i=0;i<n;i++){
+      const xi=pos[i*2], yi=pos[i*2+1];
+      const si=sp[i]*MAX_SPECIES;
+      let cx=cellOf_(xi,cols), cy=cellOf_(yi,rows);
+      let fx=0, fy=0;
+      for(let ody=-1;ody<=1;ody++){
+        let ncy=cy+ody; if(ncy<0)ncy+=rows; else if(ncy>=rows)ncy-=rows;
+        const rowBase=ncy*cols;
+        for(let odx=-1;odx<=1;odx++){
+          let ncx=cx+odx; if(ncx<0)ncx+=cols; else if(ncx>=cols)ncx-=cols;
+          const c=ncx+rowBase;
+          const end=cellStart[c+1];
+          for(let k=cellStart[c]; k<end; k++){
+            const j=order[k]; if(j===i) continue;
+            let dx=pos[j*2]-xi, dy=pos[j*2+1]-yi;
+            if(dx>0.5)dx-=1; else if(dx<-0.5)dx+=1;
+            if(dy>0.5)dy-=1; else if(dy<-0.5)dy+=1;
+            const d2=dx*dx+dy*dy;
+            if(d2>0 && d2<rmax2){
+              const d=Math.sqrt(d2);
+              const r=d/rmax;
+              let f;
+              if(r<beta){ f=r*invBeta-1; }
+              else { const a=matrix[si+sp[j]]; f=a*(1-Math.abs(2*r-1-beta)*invOneMinusBeta); }
+              const inv=f/d;
+              fx+=dx*inv; fy+=dy*inv;
+            }
+          }
+        }
+      }
+      // mouse force
+      if(Input.active){
+        let dx=Input.wx-xi, dy=Input.wy-yi;
+        if(dx>0.5)dx-=1; else if(dx<-0.5)dx+=1;
+        if(dy>0.5)dy-=1; else if(dy<-0.5)dy+=1;
+        const d2=dx*dx+dy*dy, R=Input.radius;
+        if(d2<R*R){ const d=Math.sqrt(d2)+1e-6; const fall=(1-d/R); const m=Input.strength*fall/d; fx+=dx*m; fy+=dy*m; }
+      }
+      fx*=forceScale; fy*=forceScale;
+      const vi=i*2;
+      vel[vi]  =vel[vi]*fr + fx*dt;
+      vel[vi+1]=vel[vi+1]*fr + fy*dt;
+    }
+    // integrate positions (separate pass: force loop used consistent old positions)
+    for(let i=0;i<n;i++){
+      const vi=i*2;
+      let x=pos[vi]+vel[vi]*dt, y=pos[vi+1]+vel[vi+1]*dt;
+      x-=Math.floor(x); y-=Math.floor(y);   // toroidal wrap to [0,1)
+      pos[vi]=x; pos[vi+1]=y;
+    }
+    if(S.evolve) this.mutate(dt);
+  },
+
+  mutate(dt){
+    const n=S.species, amt=EVOLVE_RATE*dt;
+    for(let i=0;i<n;i++) for(let j=0;j<n;j++){
+      const k=i*MAX_SPECIES+j;
+      let v=this.matrix[k] + (rnd()*2-1)*amt;
+      if(v>1)v=1; else if(v<-1)v=-1;
+      this.matrix[k]=v;
+    }
+    if(((this._mc=(this._mc|0)+1)&7)===0) UI.refreshMatrix(); // sync editor ~every 8 steps
+  },
+};
+function cellOf_(p,n){ let c=(p*n)|0; if(c<0)c=0; else if(c>=n)c=n-1; return c; }
+
+/* ════════════════════════════════════════════════════════════════════
+   CAMERA
+   ════════════════════════════════════════════════════════════════════ */
+const Cam = {
+  x:0.5, y:0.5, zoom:0,        // zoom = px per world-unit
+  vpW:0, vpH:0,
+  fit(){ this.zoom=Math.max(this.vpW,this.vpH); }, // "cover" the unit square
+  worldToScreen(wx,wy){ return [ (wx-this.x)*this.zoom + this.vpW/2, (wy-this.y)*this.zoom + this.vpH/2 ]; },
+  screenToWorld(sx,sy){ return [ (sx-this.vpW/2)/this.zoom + this.x, (sy-this.vpH/2)/this.zoom + this.y ]; },
+  // integer tile offsets needed to fill the viewport on the torus
+  tiles(){
+    const hw=(this.vpW/2)/this.zoom, hh=(this.vpH/2)/this.zoom;
+    const x0=Math.floor(this.x-hw), x1=Math.floor(this.x+hw);
+    const y0=Math.floor(this.y-hh), y1=Math.floor(this.y+hh);
+    const out=[];
+    for(let ty=y0;ty<=y1;ty++) for(let tx=x0;tx<=x1;tx++) out.push([tx,ty]);
+    return out;
+  }
+};
+
+/* ════════════════════════════════════════════════════════════════════
+   RENDERER (WebGL2, instanced glowing quads, additive blend)
+   ════════════════════════════════════════════════════════════════════ */
+const Render = {
+  gl:null, prog:null, fadeProg:null, compProg:null, brightProg:null, blurProg:null, vao:null, fadeVao:null, posBuf:null, spBuf:null,
+  loc:{}, fadeLoc:{}, compLoc:{}, brightLoc:{}, blurLoc:{},
+  accFbo:null, accTex:null, bloomFboA:null, bloomTexA:null, bloomFboB:null, bloomTexB:null, _bw:1, _bh:1,
+  floatOK:false, _clearAcc:true, dpr:1, dprCap:1.75,  // CPU/WebGL2 fallback runs the sim on-CPU + bloom — keep a touch below the GPU path's 2.0
+
+  init(canvas){
+    const gl=canvas.getContext('webgl2',{alpha:false,antialias:false,premultipliedAlpha:false});
+    if(!gl){ const _l=detectLang(); const _m=(I18N[_l]||I18N.en).err_nowebgl2; document.body.innerHTML='<div style="color:#fff;font:16px sans-serif;padding:40px">'+_m+'</div>'; throw new Error('no webgl2'); }
+    this.gl=gl;
+
+    const VS=`#version 300 es
+    precision highp float;
+    layout(location=0) in vec2 aQuad;
+    layout(location=1) in vec2 aPos;
+    layout(location=2) in float aSpecies;
+    uniform vec2 uViewport; uniform vec2 uCam; uniform float uZoom;
+    uniform float uSize; uniform vec2 uTile; uniform vec3 uPalette[${MAX_SPECIES}];
+    out vec2 vUv; out vec3 vColor;
+    void main(){
+      vColor=uPalette[int(aSpecies+0.5)];
+      vUv=aQuad;
+      vec2 world=aPos+uTile;
+      vec2 screen=(world-uCam)*uZoom + uViewport*0.5 + aQuad*uSize;
+      vec2 clip=(screen/uViewport)*2.0-1.0; clip.y=-clip.y;
+      gl_Position=vec4(clip,0.0,1.0);
+    }`;
+    const FS=`#version 300 es
+    precision highp float;
+    in vec2 vUv; in vec3 vColor; uniform float uGlow;
+    out vec4 frag;
+    void main(){
+      float d=length(vUv);
+      float a=smoothstep(1.0,0.0,d);
+      a=a*a;
+      vec3 col=vColor*uGlow*a;
+      // brighter core
+      col+=vColor*pow(a,4.0)*uGlow*0.9;
+      frag=vec4(col,a);
+    }`;
+    this.prog=this.program(VS,FS);
+    for(const u of ['uViewport','uCam','uZoom','uSize','uTile','uPalette','uGlow'])
+      this.loc[u]=gl.getUniformLocation(this.prog,u);
+
+    // fade quad program (for trails)
+    const FVS=`#version 300 es
+    precision highp float; layout(location=0) in vec2 aQuad;
+    void main(){ gl_Position=vec4(aQuad,0.0,1.0); }`;
+    const FFS=`#version 300 es
+    precision highp float; uniform vec4 uColor; out vec4 frag;
+    void main(){ frag=uColor; }`;
+    this.fadeProg=this.program(FVS,FFS);
+    this.fadeLoc.uColor=gl.getUniformLocation(this.fadeProg,'uColor');
+
+    // shared fullscreen-triangle VS for every post pass
+    const CVS=`#version 300 es
+    precision highp float; layout(location=0) in vec2 aQuad; out vec2 vUv;
+    void main(){ vUv=aQuad*0.5+0.5; gl_Position=vec4(aQuad,0.0,1.0); }`;
+    // composite: HDR accumulation + bloom, ACES filmic tonemap (matches the WebGPU path's look exactly)
+    const CFS=`#version 300 es
+    precision highp float; in vec2 vUv; uniform sampler2D uTex; uniform sampler2D uBloom; uniform float uExposure; out vec4 frag;
+    vec3 aces(vec3 x){ return clamp((x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14),0.0,1.0); }
+    void main(){
+      vec3 hdr=texture(uTex,vUv).rgb;
+      vec3 bloom=texture(uBloom,vUv).rgb;
+      vec3 c=(hdr+bloom*0.75)*uExposure;
+      c=aces(c);                                 // ACES filmic tonemap
+      c+=vec3(0.010,0.013,0.020)*(1.0-c);        // faint cool base so black isn't dead
+      frag=vec4(c,1.0);
+    }`;
+    this.compProg=this.program(CVS,CFS);
+    this.compLoc.uTex=gl.getUniformLocation(this.compProg,'uTex');
+    this.compLoc.uBloom=gl.getUniformLocation(this.compProg,'uBloom');
+    this.compLoc.uExposure=gl.getUniformLocation(this.compProg,'uExposure');
+    // bloom bright-pass + separable Gaussian blur — gives the signature glow to the WebGL2 path too
+    const BRFS=`#version 300 es
+    precision highp float; in vec2 vUv; uniform sampler2D uTex; out vec4 frag;
+    void main(){ vec3 c=texture(uTex,vUv).rgb; float l=max(c.r,max(c.g,c.b)); frag=vec4(c*smoothstep(0.45,1.25,l),1.0); }`;
+    this.brightProg=this.program(CVS,BRFS);
+    this.brightLoc.uTex=gl.getUniformLocation(this.brightProg,'uTex');
+    const BLFS=`#version 300 es
+    precision highp float; in vec2 vUv; uniform sampler2D uTex; uniform vec2 uDir; out vec4 frag;
+    void main(){ vec2 o1=uDir*1.3846, o2=uDir*3.2308;
+      vec3 c=texture(uTex,vUv).rgb*0.2270;
+      c+=texture(uTex,vUv+o1).rgb*0.3162; c+=texture(uTex,vUv-o1).rgb*0.3162;
+      c+=texture(uTex,vUv+o2).rgb*0.0703; c+=texture(uTex,vUv-o2).rgb*0.0703;
+      frag=vec4(c,1.0); }`;
+    this.blurProg=this.program(CVS,BLFS);
+    this.blurLoc.uTex=gl.getUniformLocation(this.blurProg,'uTex');
+    this.blurLoc.uDir=gl.getUniformLocation(this.blurProg,'uDir');
+
+    // HDR float render targets (graceful fallback to 8-bit): full-res accumulation + two half-res bloom buffers
+    this.floatOK=!!gl.getExtension('EXT_color_buffer_float');
+    gl.getExtension('OES_texture_float_linear');
+    this.accFbo=gl.createFramebuffer();   this.accTex=gl.createTexture();
+    this.bloomFboA=gl.createFramebuffer(); this.bloomTexA=gl.createTexture();
+    this.bloomFboB=gl.createFramebuffer(); this.bloomTexB=gl.createTexture();
+
+    // geometry
+    this.vao=gl.createVertexArray(); gl.bindVertexArray(this.vao);
+    const quad=new Float32Array([-1,-1, 1,-1, -1,1, 1,1]);
+    const qb=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,qb);
+    gl.bufferData(gl.ARRAY_BUFFER,quad,gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+
+    this.posBuf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,this.posBuf);
+    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1,2,gl.FLOAT,false,0,0); gl.vertexAttribDivisor(1,1);
+
+    this.spBuf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,this.spBuf);
+    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2,1,gl.FLOAT,false,0,0); gl.vertexAttribDivisor(2,1);
+
+    // fade quad VAO (full screen)
+    this.fadeVao=gl.createVertexArray(); gl.bindVertexArray(this.fadeVao);
+    const fq=new Float32Array([-1,-1, 3,-1, -1,3]);
+    const fb=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,fb);
+    gl.bufferData(gl.ARRAY_BUFFER,fq,gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+    gl.bindVertexArray(null);
+
+    gl.disable(gl.DEPTH_TEST);
+    gl.clearColor(0.02,0.024,0.04,1);
+  },
+
+  program(vsrc,fsrc){
+    const gl=this.gl;
+    const vs=this.shader(gl.VERTEX_SHADER,vsrc), fs=this.shader(gl.FRAGMENT_SHADER,fsrc);
+    const p=gl.createProgram(); gl.attachShader(p,vs); gl.attachShader(p,fs); gl.linkProgram(p);
+    if(!gl.getProgramParameter(p,gl.LINK_STATUS)) throw new Error('link: '+gl.getProgramInfoLog(p));
+    return p;
+  },
+  shader(type,src){
+    const gl=this.gl, s=gl.createShader(type); gl.shaderSource(s,src); gl.compileShader(s);
+    if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)) throw new Error('shader: '+gl.getShaderInfoLog(s)+'\n'+src);
+    return s;
+  },
+
+  resize(){
+    const gl=this.gl, c=gl.canvas;
+    this.dpr=Math.min(window.devicePixelRatio||1, this.dprCap);
+    const w=Math.floor(innerWidth*this.dpr), h=Math.floor(innerHeight*this.dpr);
+    if(c.width!==w||c.height!==h){ c.width=w; c.height=h; }
+    gl.viewport(0,0,w,h);
+    Cam.vpW=w; Cam.vpH=h;
+    if(Cam.zoom===0) Cam.fit();
+    // (re)allocate HDR targets at the new size: full-res accumulation + half-res bloom ping-pong
+    if(this.accTex){
+      this._allocTarget(this.accTex,this.accFbo,w,h);
+      const bw=Math.max(1,w>>1), bh=Math.max(1,h>>1);
+      this._allocTarget(this.bloomTexA,this.bloomFboA,bw,bh);
+      this._allocTarget(this.bloomTexB,this.bloomFboB,bw,bh);
+      this._bw=bw; this._bh=bh;
+      this._clearAcc=true;
+    }
+  },
+  _allocTarget(tex,fbo,w,h){
+    const gl=this.gl;
+    const ifmt=this.floatOK?gl.RGBA16F:gl.RGBA8, type=this.floatOK?gl.HALF_FLOAT:gl.UNSIGNED_BYTE;
+    gl.bindTexture(gl.TEXTURE_2D,tex);
+    gl.texImage2D(gl.TEXTURE_2D,0,ifmt,w,h,0,gl.RGBA,type,null);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+    gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tex,0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  },
+
+  syncBuffers(){ // (re)size GPU buffers after particle count changes
+    const gl=this.gl;
+    gl.bindBuffer(gl.ARRAY_BUFFER,this.posBuf);
+    gl.bufferData(gl.ARRAY_BUFFER,Sim.pos.byteLength,gl.DYNAMIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER,this.spBuf);
+    gl.bufferData(gl.ARRAY_BUFFER,Sim.sp,gl.STATIC_DRAW);
+  },
+
+  frame(){
+    const gl=this.gl, n=S.count;
+    gl.bindBuffer(gl.ARRAY_BUFFER,this.posBuf);
+    gl.bufferSubData(gl.ARRAY_BUFFER,0,Sim.pos);
+
+    // ── pass 1: accumulate particles into the HDR buffer ──
+    gl.bindFramebuffer(gl.FRAMEBUFFER,this.accFbo);
+    gl.viewport(0,0,Cam.vpW,Cam.vpH);
+    if(this._clearAcc){ gl.clearColor(0,0,0,1); gl.clear(gl.COLOR_BUFFER_BIT); this._clearAcc=false; }
+
+    // fade previous frame: alpha=1 → full clear (no trails); small alpha → long trails
+    gl.bindVertexArray(this.fadeVao);
+    gl.useProgram(this.fadeProg);
+    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+    gl.uniform4f(this.fadeLoc.uColor,0,0,0,1.0-S.trails);
+    gl.drawArrays(gl.TRIANGLES,0,3);
+
+    // particles, additive
+    gl.bindVertexArray(this.vao);
+    gl.useProgram(this.prog);
+    gl.blendFunc(gl.ONE,gl.ONE);
+    gl.uniform2f(this.loc.uViewport,Cam.vpW,Cam.vpH);
+    gl.uniform2f(this.loc.uCam,Cam.x,Cam.y);
+    gl.uniform1f(this.loc.uZoom,Cam.zoom);
+    gl.uniform1f(this.loc.uSize,S.size*this.dpr);
+    gl.uniform1f(this.loc.uGlow,S.glow);
+    gl.uniform3fv(this.loc.uPalette,palette);
+    const hw=(Cam.vpW/2)/Cam.zoom, hh=(Cam.vpH/2)/Cam.zoom;   // inline tile loop (no per-frame array alloc)
+    const x0=Math.floor(Cam.x-hw),x1=Math.floor(Cam.x+hw),y0=Math.floor(Cam.y-hh),y1=Math.floor(Cam.y+hh);
+    for(let ty=y0;ty<=y1;ty++) for(let tx=x0;tx<=x1;tx++){
+      gl.uniform2f(this.loc.uTile,tx,ty);
+      gl.drawArraysInstanced(gl.TRIANGLE_STRIP,0,4,n);
+    }
+
+    // ── pass 2: bloom — bright-extract then separable blur, at half res ──
+    gl.disable(gl.BLEND);
+    gl.bindVertexArray(this.fadeVao);
+    const bw=this._bw, bh=this._bh;
+    gl.useProgram(this.brightProg);                                   // bright: accTex → bloomA
+    gl.bindFramebuffer(gl.FRAMEBUFFER,this.bloomFboA); gl.viewport(0,0,bw,bh);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,this.accTex); gl.uniform1i(this.brightLoc.uTex,0);
+    gl.drawArrays(gl.TRIANGLES,0,3);
+    gl.useProgram(this.blurProg); gl.uniform1i(this.blurLoc.uTex,0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER,this.bloomFboB); gl.viewport(0,0,bw,bh);  // blurH: bloomA → bloomB
+    gl.bindTexture(gl.TEXTURE_2D,this.bloomTexA); gl.uniform2f(this.blurLoc.uDir,1/bw,0);
+    gl.drawArrays(gl.TRIANGLES,0,3);
+    gl.bindFramebuffer(gl.FRAMEBUFFER,this.bloomFboA); gl.viewport(0,0,bw,bh);  // blurV: bloomB → bloomA
+    gl.bindTexture(gl.TEXTURE_2D,this.bloomTexB); gl.uniform2f(this.blurLoc.uDir,0,1/bh);
+    gl.drawArrays(gl.TRIANGLES,0,3);
+    // ── pass 3: composite (HDR + bloom, ACES tonemap) → screen ──
+    gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+    gl.viewport(0,0,Cam.vpW,Cam.vpH);
+    gl.useProgram(this.compProg);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,this.accTex);    gl.uniform1i(this.compLoc.uTex,0);
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D,this.bloomTexA); gl.uniform1i(this.compLoc.uBloom,1);
+    gl.uniform1f(this.compLoc.uExposure,1.25);
+    gl.drawArrays(gl.TRIANGLES,0,3);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindVertexArray(null);
+  },
+};
+
+/* ════════════════════════════════════════════════════════════════════
+   GPU ENGINE (WebGPU compute) — spatial-hash particle life at 100k+
+   Compute: clearGrid → bin (atomic fixed-capacity buckets) → force+integrate
+   Render: fade + additive instanced quads → HDR → bloom → tonemap
+   ════════════════════════════════════════════════════════════════════ */
+const GPU = {
+  ok:false, ready:false, dpr:1, dprCap:2,
+  device:null, ctx:null, format:null, canvas:null,
+  cur:0, count:0, gridDim:0, cap:0, _clearHdr:true,
+  buf:{}, tex:{}, pipe:{}, bg:{}, sampler:null,
+
+  async init(canvas){
+    if(!navigator.gpu) throw new Error('no webgpu');
+    const adapter = await navigator.gpu.requestAdapter({powerPreference:'high-performance'});
+    if(!adapter) throw new Error('no adapter');
+    const device = await adapter.requestDevice();
+    this.device=device; this.canvas=canvas;
+    device.lost.then(info=>{ console.warn('WebGPU device lost:',info.message); this.ready=false; this.dead=true;
+      try{ UI.toast(t('t_deviceLost')); const e=document.getElementById('st-engine'); if(e) e.textContent=t('t_deviceLost'); }catch(_){}  // device loss (driver reset / GPU switch / tab eviction) — tell the user instead of freezing silently
+    });
+    this.ctx = canvas.getContext('webgpu');
+    this.format = navigator.gpu.getPreferredCanvasFormat();
+    this.ctx.configure({device, format:this.format, alphaMode:'opaque'});
+
+    this.buildShaders();
+    // static uniforms
+    this.buf.params = device.createBuffer({size:64, usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
+    this.buf.rparams= device.createBuffer({size:48, usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
+    this.buf.matrix = device.createBuffer({size:MAX_SPECIES*MAX_SPECIES*4, usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST});
+    this.buf.palette= device.createBuffer({size:MAX_SPECIES*16, usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
+    this.buf.dirH=device.createBuffer({size:16, usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
+    this.buf.dirV=device.createBuffer({size:16, usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
+    // reusable scratch (avoid per-frame allocations)
+    this._pBuf=new ArrayBuffer(64); this._pF=new Float32Array(this._pBuf); this._pU=new Uint32Array(this._pBuf);
+    this._rBuf=new ArrayBuffer(48); this._rF=new Float32Array(this._rBuf);
+    this._palF=new Float32Array(MAX_SPECIES*4);
+    this.ok=true;
+  },
+
+  buildShaders(){
+    const dev=this.device, fmt=this.format;
+    const COMPUTE = `
+struct Params { a:vec4<f32>, b:vec4<f32>, c:vec4<u32>, mouse:vec4<f32> };
+@group(0) @binding(0) var<uniform> P: Params;
+@group(0) @binding(1) var<storage,read> mat: array<f32>;
+@group(0) @binding(2) var<storage,read> species: array<u32>;
+@group(0) @binding(3) var<storage,read_write> cellCount: array<atomic<u32>>;
+@group(0) @binding(4) var<storage,read_write> cellPart: array<u32>;
+@group(0) @binding(5) var<storage,read> pin: array<vec4<f32>>;
+@group(0) @binding(6) var<storage,read_write> pout: array<vec4<f32>>;
+fn cellOf(p:vec2<f32>, gd:u32)->u32 {
+  let cx = min(u32(p.x*f32(gd)), gd-1u);
+  let cy = min(u32(p.y*f32(gd)), gd-1u);
+  return cy*gd + cx;
+}
+@compute @workgroup_size(64) fn clearGrid(@builtin(global_invocation_id) g:vec3<u32>){
+  if(g.x >= arrayLength(&cellCount)){ return; }
+  atomicStore(&cellCount[g.x], 0u);
+}
+@compute @workgroup_size(64) fn bin(@builtin(global_invocation_id) g:vec3<u32>){
+  let i=g.x; if(i>=P.c.x){ return; }
+  let c = cellOf(pin[i].xy, P.c.y);
+  let slot = atomicAdd(&cellCount[c], 1u);
+  if(slot < P.c.w){ cellPart[c*P.c.w + slot] = i; }
+}
+@compute @workgroup_size(64) fn force(@builtin(global_invocation_id) g:vec3<u32>){
+  let i=g.x; if(i>=P.c.x){ return; }
+  let cur = pin[i]; let pos=cur.xy; var vel=cur.zw;
+  let si = species[i]; let gd=P.c.y; let cap=P.c.w; let ns=P.c.z;
+  let rmax=P.a.y; let beta=P.a.z; let dt=P.a.x;
+  let cx=i32(min(u32(pos.x*f32(gd)),gd-1u)); let cy=i32(min(u32(pos.y*f32(gd)),gd-1u));
+  let g_i=i32(gd); var fx=0.0; var fy=0.0; let r2max=rmax*rmax;
+  for(var dy=-1; dy<=1; dy++){
+    let ncy=u32((cy+dy+g_i)%g_i);
+    for(var dx=-1; dx<=1; dx++){
+      let ncx=u32((cx+dx+g_i)%g_i);
+      let c=ncy*gd+ncx; let n=min(atomicLoad(&cellCount[c]), cap);
+      for(var k=0u; k<n; k++){
+        let j=cellPart[c*cap+k]; if(j==i){ continue; }
+        var d = pin[j].xy - pos; d = d - round(d);
+        let dd2 = dot(d,d);
+        if(dd2>0.0 && dd2<r2max){
+          let dist=sqrt(dd2); let rr=dist/rmax; var f:f32;
+          if(rr<beta){ f = rr/beta - 1.0; }
+          else { let a = mat[si*${MAX_SPECIES}u + species[j]]; f = a*(1.0 - abs(2.0*rr-1.0-beta)/(1.0-beta)); }
+          let inv=f/dist; fx += d.x*inv; fy += d.y*inv;
+        }
+      }
+    }
+  }
+  if(P.mouse.w != 0.0){
+    var dm = P.mouse.xy - pos; dm = dm - round(dm);
+    let dm2 = dot(dm,dm); let R=P.mouse.z;
+    if(dm2 < R*R){ let dist=sqrt(dm2)+1e-6; let m=P.mouse.w*(1.0-dist/R)/dist; fx+=dm.x*m; fy+=dm.y*m; }
+  }
+  let sc = rmax*P.a.w; fx*=sc; fy*=sc;       // a.w = force
+  let fr = 1.0 - P.b.x;                       // b.x = friction
+  vel.x = vel.x*fr + fx*dt; vel.y = vel.y*fr + fy*dt;
+  var np = pos + vel*dt; np = np - floor(np);
+  pout[i] = vec4<f32>(np.x, np.y, vel.x, vel.y);
+}`;
+    const RENDER = `
+struct R { cam:vec2<f32>, vp:vec2<f32>, zoom:f32, size:f32, glow:f32, trails:f32, tile:vec2<f32>, exposure:f32, _p:f32 };
+@group(0) @binding(0) var<uniform> U: R;
+@group(0) @binding(1) var<storage,read> part: array<vec4<f32>>;
+@group(0) @binding(2) var<storage,read> species: array<u32>;
+@group(0) @binding(3) var<uniform> palette: array<vec4<f32>, ${MAX_SPECIES}>;
+struct VO { @builtin(position) pos:vec4<f32>, @location(0) uv:vec2<f32>, @location(1) col:vec3<f32> };
+@vertex fn vmain(@builtin(vertex_index) vi:u32, @builtin(instance_index) ii:u32)->VO {
+  var q = array<vec2<f32>,6>(vec2(-1.,-1.),vec2(1.,-1.),vec2(-1.,1.),vec2(-1.,1.),vec2(1.,-1.),vec2(1.,1.));
+  let corner=q[vi]; let p=part[ii].xy + U.tile;
+  let screen=(p-U.cam)*U.zoom + U.vp*0.5 + corner*U.size;
+  var clip=(screen/U.vp)*2.0-1.0;
+  var o:VO; o.pos=vec4<f32>(clip.x,-clip.y,0.,1.); o.uv=corner;
+  o.col = palette[species[ii]].rgb * U.glow; return o;
+}
+@fragment fn fmain(in:VO)->@location(0) vec4<f32> {
+  let d=length(in.uv); let a=smoothstep(1.0,0.0,d); let a2=a*a;
+  return vec4<f32>(in.col*a2 + in.col*pow(a2,4.0)*0.9, a2);
+}
+// fullscreen helpers
+struct FO { @builtin(position) pos:vec4<f32>, @location(0) uv:vec2<f32> };
+@vertex fn fsv(@builtin(vertex_index) vi:u32)->FO {
+  var p=array<vec2<f32>,3>(vec2(-1.,-1.),vec2(3.,-1.),vec2(-1.,3.));
+  var o:FO; o.pos=vec4<f32>(p[vi],0.,1.); o.uv=p[vi]*0.5+0.5; o.uv.y=1.0-o.uv.y; return o;
+}
+@fragment fn fade(in:FO)->@location(0) vec4<f32> { return vec4<f32>(0.,0.,0., 1.0-U.trails); }`;
+    const POST = `
+struct R { cam:vec2<f32>, vp:vec2<f32>, zoom:f32, size:f32, glow:f32, trails:f32, tile:vec2<f32>, exposure:f32, _p:f32 };
+@group(0) @binding(0) var samp: sampler;
+@group(0) @binding(1) var srcTex: texture_2d<f32>;
+@group(0) @binding(2) var<uniform> U: R;
+@group(0) @binding(3) var bloomTex: texture_2d<f32>;
+@group(0) @binding(4) var<uniform> dir: vec4<f32>;   // xy = blur step in uv
+struct FO { @builtin(position) pos:vec4<f32>, @location(0) uv:vec2<f32> };
+@vertex fn fsv(@builtin(vertex_index) vi:u32)->FO {
+  var p=array<vec2<f32>,3>(vec2(-1.,-1.),vec2(3.,-1.),vec2(-1.,3.));
+  var o:FO; o.pos=vec4<f32>(p[vi],0.,1.); o.uv=p[vi]*0.5+0.5; o.uv.y=1.0-o.uv.y; return o;
+}
+@fragment fn bright(in:FO)->@location(0) vec4<f32> {
+  let c=textureSample(srcTex,samp,in.uv).rgb;
+  let l=max(c.r,max(c.g,c.b));
+  return vec4<f32>(c*smoothstep(0.45,1.25,l), 1.0);   // soft bright pass
+}
+@fragment fn blur(in:FO)->@location(0) vec4<f32> {
+  let o1=dir.xy*1.3846; let o2=dir.xy*3.2308;
+  var c=textureSample(srcTex,samp,in.uv).rgb*0.2270;
+  c+=textureSample(srcTex,samp,in.uv+o1).rgb*0.3162;
+  c+=textureSample(srcTex,samp,in.uv-o1).rgb*0.3162;
+  c+=textureSample(srcTex,samp,in.uv+o2).rgb*0.0703;
+  c+=textureSample(srcTex,samp,in.uv-o2).rgb*0.0703;
+  return vec4<f32>(c,1.0);
+}
+fn aces(x:vec3<f32>)->vec3<f32> {
+  return clamp((x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14), vec3(0.), vec3(1.));
+}
+@fragment fn composite(in:FO)->@location(0) vec4<f32> {
+  let hdr=textureSample(srcTex,samp,in.uv).rgb;
+  let bloom=textureSample(bloomTex,samp,in.uv).rgb;
+  var c=(hdr + bloom*0.75)*U.exposure;
+  c=aces(c);
+  c += vec3<f32>(0.010,0.013,0.020)*(vec3(1.0)-c);
+  return vec4<f32>(c,1.0);
+}`;
+    this.mod={ compute:dev.createShaderModule({code:COMPUTE}), render:dev.createShaderModule({code:RENDER}), post:dev.createShaderModule({code:POST}) };
+    // compute pipelines
+    this.pipe.clear=dev.createComputePipeline({layout:'auto', compute:{module:this.mod.compute, entryPoint:'clearGrid'}});
+    this.pipe.bin  =dev.createComputePipeline({layout:'auto', compute:{module:this.mod.compute, entryPoint:'bin'}});
+    this.pipe.force=dev.createComputePipeline({layout:'auto', compute:{module:this.mod.compute, entryPoint:'force'}});
+    // particle render pipeline (additive) into rgba16float
+    const HDR='rgba16float';
+    this.pipe.particle=dev.createRenderPipeline({layout:'auto',
+      vertex:{module:this.mod.render, entryPoint:'vmain'},
+      fragment:{module:this.mod.render, entryPoint:'fmain', targets:[{format:HDR, blend:{color:{srcFactor:'one',dstFactor:'one'},alpha:{srcFactor:'one',dstFactor:'one'}}}]},
+      primitive:{topology:'triangle-list'}});
+    this.pipe.fade=dev.createRenderPipeline({layout:'auto',
+      vertex:{module:this.mod.render, entryPoint:'fsv'},
+      fragment:{module:this.mod.render, entryPoint:'fade', targets:[{format:HDR, blend:{color:{srcFactor:'src-alpha',dstFactor:'one-minus-src-alpha'},alpha:{srcFactor:'src-alpha',dstFactor:'one-minus-src-alpha'}}}]},
+      primitive:{topology:'triangle-list'}});
+    this.pipe.bright=dev.createRenderPipeline({layout:'auto', vertex:{module:this.mod.post,entryPoint:'fsv'}, fragment:{module:this.mod.post,entryPoint:'bright',targets:[{format:HDR}]}, primitive:{topology:'triangle-list'}});
+    this.pipe.blur  =dev.createRenderPipeline({layout:'auto', vertex:{module:this.mod.post,entryPoint:'fsv'}, fragment:{module:this.mod.post,entryPoint:'blur',targets:[{format:HDR}]}, primitive:{topology:'triangle-list'}});
+    this.pipe.composite=dev.createRenderPipeline({layout:'auto', vertex:{module:this.mod.post,entryPoint:'fsv'}, fragment:{module:this.mod.post,entryPoint:'composite',targets:[{format:fmt}]}, primitive:{topology:'triangle-list'}});
+    this.sampler=dev.createSampler({magFilter:'linear',minFilter:'linear',addressModeU:'clamp-to-edge',addressModeV:'clamp-to-edge'});
+  },
+
+  allocParticles(){
+    const dev=this.device, n=S.count; this.count=n;
+    const U=GPUBufferUsage;
+    if(this.buf.partA) this.buf.partA.destroy();
+    if(this.buf.partB) this.buf.partB.destroy();
+    if(this.buf.species) this.buf.species.destroy();
+    this.buf.partA=dev.createBuffer({size:n*16, usage:U.STORAGE|U.COPY_DST|U.COPY_SRC});
+    this.buf.partB=dev.createBuffer({size:n*16, usage:U.STORAGE|U.COPY_DST|U.COPY_SRC});
+    this.buf.species=dev.createBuffer({size:n*4, usage:U.STORAGE|U.COPY_DST});
+    // seed from Sim.pos / Sim.sp (CPU)
+    const pdata=new Float32Array(n*4), sdata=new Uint32Array(n);
+    for(let i=0;i<n;i++){ pdata[i*4]=Sim.pos[i*2]; pdata[i*4+1]=Sim.pos[i*2+1]; pdata[i*4+2]=0; pdata[i*4+3]=0; sdata[i]=Sim.sp[i]|0; }
+    dev.queue.writeBuffer(this.buf.partA,0,pdata);
+    dev.queue.writeBuffer(this.buf.species,0,sdata);
+    this.cur=0; this._clearHdr=true;
+    this.makeSimBindGroups();
+  },
+
+  allocGrid(){
+    const dev=this.device, U=GPUBufferUsage;
+    const gd=Math.max(3, Math.min(256, Math.floor(1/S.rmax)));
+    const cap=Math.max(64, Math.min(1024, Math.ceil(S.count/(gd*gd)*6)));
+    this.gridDim=gd; this.cap=cap;
+    if(this.buf.cellCount) this.buf.cellCount.destroy();
+    if(this.buf.cellPart) this.buf.cellPart.destroy();
+    this.buf.cellCount=dev.createBuffer({size:gd*gd*4, usage:U.STORAGE|U.COPY_DST});
+    this.buf.cellPart =dev.createBuffer({size:gd*gd*cap*4, usage:U.STORAGE});
+    this.makeSimBindGroups();
+  },
+
+  makeSimBindGroups(){
+    if(!this.buf.partA||!this.buf.cellCount) return;
+    const dev=this.device, b=this.buf;
+    this.bg.clear=dev.createBindGroup({layout:this.pipe.clear.getBindGroupLayout(0), entries:[{binding:3,resource:{buffer:b.cellCount}}]});
+    const binEntries=(pin)=>[{binding:0,resource:{buffer:b.params}},{binding:3,resource:{buffer:b.cellCount}},{binding:4,resource:{buffer:b.cellPart}},{binding:5,resource:{buffer:pin}}];
+    this.bg.bin=[dev.createBindGroup({layout:this.pipe.bin.getBindGroupLayout(0),entries:binEntries(b.partA)}),
+                 dev.createBindGroup({layout:this.pipe.bin.getBindGroupLayout(0),entries:binEntries(b.partB)})];
+    const forceEntries=(pin,pout)=>[{binding:0,resource:{buffer:b.params}},{binding:1,resource:{buffer:b.matrix}},{binding:2,resource:{buffer:b.species}},{binding:3,resource:{buffer:b.cellCount}},{binding:4,resource:{buffer:b.cellPart}},{binding:5,resource:{buffer:pin}},{binding:6,resource:{buffer:pout}}];
+    this.bg.force=[dev.createBindGroup({layout:this.pipe.force.getBindGroupLayout(0),entries:forceEntries(b.partA,b.partB)}),
+                   dev.createBindGroup({layout:this.pipe.force.getBindGroupLayout(0),entries:forceEntries(b.partB,b.partA)})];
+    const renderEntries=(part)=>[{binding:0,resource:{buffer:b.rparams}},{binding:1,resource:{buffer:part}},{binding:2,resource:{buffer:b.species}},{binding:3,resource:{buffer:b.palette}}];
+    this.bg.render=[dev.createBindGroup({layout:this.pipe.particle.getBindGroupLayout(0),entries:renderEntries(b.partA)}),
+                    dev.createBindGroup({layout:this.pipe.particle.getBindGroupLayout(0),entries:renderEntries(b.partB)})];
+  },
+
+  resize(){
+    if(!this.ok) return;
+    this.dpr=Math.min(window.devicePixelRatio||1, this.dprCap);
+    const w=Math.max(1,Math.floor(innerWidth*this.dpr)), h=Math.max(1,Math.floor(innerHeight*this.dpr));
+    this.canvas.width=w; this.canvas.height=h; Cam.vpW=w; Cam.vpH=h; if(Cam.zoom===0) Cam.fit();
+    const dev=this.device, U=GPUTextureUsage, HDR='rgba16float';
+    for(const k of ['hdr','bloomA','bloomB']) if(this.tex[k]) this.tex[k].destroy();
+    this.tex.hdr=dev.createTexture({size:[w,h],format:HDR,usage:U.RENDER_ATTACHMENT|U.TEXTURE_BINDING});
+    const bw=Math.max(1,w>>1), bh=Math.max(1,h>>1);
+    this.tex.bloomA=dev.createTexture({size:[bw,bh],format:HDR,usage:U.RENDER_ATTACHMENT|U.TEXTURE_BINDING});
+    this.tex.bloomB=dev.createTexture({size:[bw,bh],format:HDR,usage:U.RENDER_ATTACHMENT|U.TEXTURE_BINDING});
+    dev.queue.writeBuffer(this.buf.dirH,0,new Float32Array([1/bw,0,0,0]));
+    dev.queue.writeBuffer(this.buf.dirV,0,new Float32Array([0,1/bh,0,0]));
+    this._clearHdr=true;
+    this.makePostBindGroups();
+  },
+  makePostBindGroups(){
+    const dev=this.device, b=this.buf, t=this.tex, s=this.sampler;
+    this.bg.fade=dev.createBindGroup({layout:this.pipe.fade.getBindGroupLayout(0),entries:[{binding:0,resource:{buffer:b.rparams}}]});
+    this.bg.bright=dev.createBindGroup({layout:this.pipe.bright.getBindGroupLayout(0),entries:[{binding:0,resource:s},{binding:1,resource:t.hdr.createView()}]});
+    this.bg.blurH=dev.createBindGroup({layout:this.pipe.blur.getBindGroupLayout(0),entries:[{binding:0,resource:s},{binding:1,resource:t.bloomA.createView()},{binding:4,resource:{buffer:b.dirH}}]});
+    this.bg.blurV=dev.createBindGroup({layout:this.pipe.blur.getBindGroupLayout(0),entries:[{binding:0,resource:s},{binding:1,resource:t.bloomB.createView()},{binding:4,resource:{buffer:b.dirV}}]});
+    this.bg.composite=dev.createBindGroup({layout:this.pipe.composite.getBindGroupLayout(0),entries:[{binding:0,resource:s},{binding:1,resource:t.hdr.createView()},{binding:2,resource:{buffer:b.rparams}},{binding:3,resource:t.bloomA.createView()}]});
+    this.view={hdr:t.hdr.createView(), bloomA:t.bloomA.createView(), bloomB:t.bloomB.createView()}; // cached render-target views
+  },
+
+  uploadParticles(){ if(this.count!==S.count || !this.buf.partA){ this.allocParticles(); this.allocGrid(); } else { this.allocParticles(); } },
+
+  writeParams(){
+    const dev=this.device, f=this._pF, u=this._pU;
+    f[0]=S.speed*0.016; f[1]=S.rmax; f[2]=S.beta; f[3]=S.force;     // a
+    f[4]=S.friction; f[5]=1; f[6]=1; f[7]=0;                         // b
+    u[8]=S.count; u[9]=this.gridDim; u[10]=S.species; u[11]=this.cap;// c
+    f[12]=Input.wx; f[13]=Input.wy; f[14]=Input.radius; f[15]=Input.active?Input.strength:0; // mouse
+    dev.queue.writeBuffer(this.buf.params,0,this._pBuf);
+    dev.queue.writeBuffer(this.buf.matrix,0,Sim.matrix);   // Sim.matrix is a Float32Array(144)
+  },
+  writeRParams(){
+    const f=this._rF;
+    f[0]=Cam.x; f[1]=Cam.y; f[2]=Cam.vpW; f[3]=Cam.vpH;
+    f[4]=Cam.zoom; f[5]=S.size*this.dpr; f[6]=S.glow; f[7]=S.trails;
+    f[8]=0; f[9]=0; f[10]=1.25; f[11]=0;
+    this.device.queue.writeBuffer(this.buf.rparams,0,this._rBuf);
+  },
+
+  step(){
+    if(!this.ready) return;
+    if(S.evolve) Sim.mutate(S.speed*0.016);
+    // grid follows rmax
+    const gd=Math.max(3,Math.min(256,Math.floor(1/S.rmax)));
+    if(gd!==this.gridDim) this.allocGrid();
+    this.writeParams();
+    const dev=this.device, enc=dev.createCommandEncoder();
+    const wg=n=>Math.ceil(n/64);
+    const pass=enc.beginComputePass();
+    pass.setPipeline(this.pipe.clear); pass.setBindGroup(0,this.bg.clear); pass.dispatchWorkgroups(wg(this.gridDim*this.gridDim));
+    pass.setPipeline(this.pipe.bin);   pass.setBindGroup(0,this.bg.bin[this.cur]); pass.dispatchWorkgroups(wg(S.count));
+    pass.setPipeline(this.pipe.force); pass.setBindGroup(0,this.bg.force[this.cur]); pass.dispatchWorkgroups(wg(S.count));
+    pass.end();
+    dev.queue.submit([enc.finish()]);
+    this.cur=1-this.cur;
+  },
+
+  render(){
+    if(!this.ready) return;
+    this.uploadPalette();
+    this.writeRParams();
+    const dev=this.device, enc=dev.createCommandEncoder();
+    const renderCur=this.cur; // step() already advanced cur to the freshly-written buffer
+    const hv=this.view.hdr;
+    const load = this._clearHdr ? 'clear':'load'; this._clearHdr=false;
+    // pass 1: fade (trails) + additive instanced particles -> HDR
+    let rp=enc.beginRenderPass({colorAttachments:[{view:hv, loadOp:load, storeOp:'store', clearValue:{r:0,g:0,b:0,a:1}}]});
+    if(S.trails>0){ rp.setPipeline(this.pipe.fade); rp.setBindGroup(0,this.bg.fade); rp.draw(3); }
+    rp.setPipeline(this.pipe.particle); rp.setBindGroup(0,this.bg.render[renderCur]); rp.draw(6,S.count);
+    rp.end();
+    // passes 2-4: bloom  (bright -> blurH -> blurV)
+    let bp=enc.beginRenderPass({colorAttachments:[{view:this.view.bloomA,loadOp:'clear',storeOp:'store',clearValue:{r:0,g:0,b:0,a:1}}]});
+    bp.setPipeline(this.pipe.bright); bp.setBindGroup(0,this.bg.bright); bp.draw(3); bp.end();
+    bp=enc.beginRenderPass({colorAttachments:[{view:this.view.bloomB,loadOp:'clear',storeOp:'store',clearValue:{r:0,g:0,b:0,a:1}}]});
+    bp.setPipeline(this.pipe.blur); bp.setBindGroup(0,this.bg.blurH); bp.draw(3); bp.end();
+    bp=enc.beginRenderPass({colorAttachments:[{view:this.view.bloomA,loadOp:'clear',storeOp:'store',clearValue:{r:0,g:0,b:0,a:1}}]});
+    bp.setPipeline(this.pipe.blur); bp.setBindGroup(0,this.bg.blurV); bp.draw(3); bp.end();
+    // pass 5: composite (HDR + bloom, ACES tonemap) -> swapchain
+    let sv; try{ sv=this.ctx.getCurrentTexture().createView(); }catch(_){ this.ready=false; return; }  // can throw during a device-loss race
+
+    let cp=enc.beginRenderPass({colorAttachments:[{view:sv, loadOp:'clear', storeOp:'store', clearValue:{r:0,g:0,b:0,a:1}}]});
+    cp.setPipeline(this.pipe.composite); cp.setBindGroup(0,this.bg.composite); cp.draw(3); cp.end();
+    dev.queue.submit([enc.finish()]);
+  },
+
+  uploadPalette(){
+    if(!this.ok) return;
+    const data=this._palF;
+    for(let i=0;i<MAX_SPECIES;i++){ data[i*4]=palette[i*3]; data[i*4+1]=palette[i*3+1]; data[i*4+2]=palette[i*3+2]; data[i*4+3]=1; }
+    this.device.queue.writeBuffer(this.buf.palette,0,data);
+  },
+
+  async readSegregation(samples){ // for verification only
+    const dev=this.device, n=S.count, src=(this.cur===0)?this.buf.partA:this.buf.partB;
+    const rb=dev.createBuffer({size:n*16, usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});
+    const enc=dev.createCommandEncoder(); enc.copyBufferToBuffer(src,0,rb,0,n*16); dev.queue.submit([enc.finish()]);
+    await rb.mapAsync(GPUMapMode.READ); const pos=new Float32Array(rb.getMappedRange().slice(0));
+    rb.unmap(); rb.destroy();
+    const sp=Sim.sp, r2=S.rmax*S.rmax; let same=0,tot=0, SM=Math.min(samples||200,n);
+    for(let s=0;s<SM;s++){ const i=s*Math.floor(n/SM); const xi=pos[i*4],yi=pos[i*4+1],si=sp[i];
+      for(let j=0;j<n;j++){ if(j===i)continue; let dx=pos[j*4]-xi,dy=pos[j*4+1]-yi; dx-=Math.round(dx);dy-=Math.round(dy);
+        if(dx*dx+dy*dy<r2){tot++; if(sp[j]===si)same++;} } }
+    return {seg:+(same/Math.max(1,tot)).toFixed(3), avgN:+(tot/SM).toFixed(1)};
+  },
+};
+
+/* ════════════════════════════════════════════════════════════════════
+   INPUT (mouse forces, zoom, pan)
+   ════════════════════════════════════════════════════════════════════ */
+const Input = {
+  active:false, wx:0.5, wy:0.5, radius:0.12, strength:0, panning:false, lastX:0, lastY:0,
+  pointers:new Map(), pinchDist:0, pinchMid:null, touchRepel:false,
+  init(canvas){
+    this.canvas=canvas;
+    canvas.addEventListener('contextmenu',e=>e.preventDefault());
+    canvas.addEventListener('pointerdown',e=>{
+      canvas.setPointerCapture(e.pointerId);
+      this.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      if(this.pointers.size===2){ this.active=false; this.panning=false; this._beginPinch(); return; }  // two fingers → camera (pan + pinch-zoom)
+      if(this.pointers.size>2) return;
+      if(e.pointerType!=='touch' && (e.altKey || e.button===1)){ this.panning=true; this.lastX=e.clientX; this.lastY=e.clientY; return; }
+      this.active=true;
+      // mouse: right/shift = repel · touch: the on-screen 🧲/💥 toggle picks attract vs repel
+      this.strength = (e.pointerType==='touch') ? (this.touchRepel?-3.2:3.2) : ((e.button===2||e.shiftKey)?-3.2:3.2);
+      this.update(e);
+    });
+    canvas.addEventListener('pointermove',e=>{
+      const p=this.pointers.get(e.pointerId); if(p){ p.x=e.clientX; p.y=e.clientY; }
+      if(this.pointers.size>=2){ this._pinchMove(); return; }
+      if(this.panning){
+        const dx=(e.clientX-this.lastX)*this.dpr(), dy=(e.clientY-this.lastY)*this.dpr();
+        Cam.x-=dx/Cam.zoom; Cam.y-=dy/Cam.zoom; this.lastX=e.clientX; this.lastY=e.clientY; return;
+      }
+      if(this.active) this.update(e);
+    });
+    const end=e=>{ this.pointers.delete(e.pointerId); if(this.pointers.size<2){ this.pinchDist=0; this.pinchMid=null; } if(this.pointers.size===0){ this.active=false; this.panning=false; } };
+    canvas.addEventListener('pointerup',end);
+    canvas.addEventListener('pointercancel',end);
+    canvas.addEventListener('wheel',e=>{
+      e.preventDefault();
+      const r=canvas.getBoundingClientRect();
+      this._zoomAt((e.clientX-r.left)*this.dpr(), (e.clientY-r.top)*this.dpr(), Math.exp(-e.deltaY*0.0016));
+    },{passive:false});
+  },
+  _pts(){ return [...this.pointers.values()]; },
+  _beginPinch(){ const a=this._pts(); this.pinchDist=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y); this.pinchMid={x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2}; },
+  _pinchMove(){ const a=this._pts(); if(a.length<2)return; const r=this.canvas.getBoundingClientRect();
+    const d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y), mid={x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2};
+    if(this.pinchMid){ const dx=(mid.x-this.pinchMid.x)*this.dpr(), dy=(mid.y-this.pinchMid.y)*this.dpr(); Cam.x-=dx/Cam.zoom; Cam.y-=dy/Cam.zoom; }   // two-finger pan
+    if(this.pinchDist>0 && d>0){ this._zoomAt((mid.x-r.left)*this.dpr(), (mid.y-r.top)*this.dpr(), d/this.pinchDist); }                                  // pinch-zoom about the midpoint
+    this.pinchDist=d; this.pinchMid=mid;
+  },
+  _zoomAt(sx,sy,factor){ const [wx,wy]=Cam.screenToWorld(sx,sy); Cam.zoom=Math.max(Cam.vpH*0.5,Math.min(Cam.vpH*40,Cam.zoom*factor)); const [nx,ny]=Cam.screenToWorld(sx,sy); Cam.x+=wx-nx; Cam.y+=wy-ny; },
+  dpr(){ return ACTIVE_ENGINE==='gpu'?GPU.dpr:Render.dpr; },
+  update(e){
+    const r=this.canvas.getBoundingClientRect();
+    const sx=(e.clientX-r.left)*this.dpr(), sy=(e.clientY-r.top)*this.dpr();
+    const [wx,wy]=Cam.screenToWorld(sx,sy);
+    this.wx=wx-Math.floor(wx); this.wy=wy-Math.floor(wy);
+  },
+};
+
+/* ════════════════════════════════════════════════════════════════════
+   UI
+   ════════════════════════════════════════════════════════════════════ */
+const UI = {
+  els:{},
+  init(){
+    const $=id=>document.getElementById(id);
+    this.els={
+      panel:$('panel'), reopen:$('reopen'), help:$('help'),
+      play:$('btn-play'), runDot:$('run-dot'),
+      fps:$('st-fps'), count:$('st-count'), species:$('st-species'), preset:$('st-preset'),
+      matrix:$('matrix'), presets:$('presets'), toast:$('toast'), engine:$('st-engine'),
+    };
+    this.buildSliders();
+    this.buildGenesisSliders();
+    this.buildPresets();
+    this.buildMatrix();
+    this.wire();
+    this.syncStats();
+  },
+
+  buildSliders(){
+    document.querySelectorAll('.slider[data-s]').forEach(el=>{
+      const key=el.dataset.s, m=META[key];
+      el.innerHTML=`<div class="slider__row"><label>${t('sl_'+key)}</label><span class="val"></span></div>
+        <input type="range" aria-label="${t('sl_'+key)}" min="${el.dataset.min}" max="${el.dataset.max}" step="${el.dataset.step}">`;
+      const inp=el.querySelector('input'), val=el.querySelector('.val');
+      inp.value=S[key]; val.textContent=m.fmt(S[key]); inp.setAttribute('aria-valuetext',m.fmt(S[key]));
+      inp.addEventListener('input',()=>{
+        let v=parseFloat(inp.value); if(el.dataset.int) v=Math.round(v);
+        S[key]=v; val.textContent=m.fmt(v); inp.setAttribute('aria-valuetext',m.fmt(v));
+        this.onParam(key);
+      });
+      el._inp=inp; el._val=val; this.els['sl_'+key]=el;
+    });
+  },
+  setSlider(key,v){
+    const el=this.els['sl_'+key]; if(!el) return;
+    el._inp.value=v; el._val.textContent=META[key].fmt(v);
+  },
+
+  onParam(key){
+    if(key==='species'){
+      S.species=Math.max(1,Math.min(MAX_SPECIES,S.species));
+      buildPalette(); Sim.setPreset(S.presetName); Sim.reseed(); this.buildMatrix();
+    } else if(key==='count'){
+      Sim.reseed();
+    }
+    this.syncStats();
+  },
+
+  buildPresets(){
+    this.els.presets.innerHTML='';
+    PRESETS.forEach(p=>{
+      const c=document.createElement('div'); c.className='chip'; c.textContent=t(p.k); c.dataset.id=p.id;
+      if(p.id===S.presetName) c.classList.add('active');
+      c.addEventListener('click',()=>{
+        Sim.setPreset(p.id); buildPalette(); this.buildMatrix(); this.syncPresets(); this.syncStats();
+      });
+      this.els.presets.appendChild(c);
+    });
+  },
+  syncPresets(){
+    [...this.els.presets.children].forEach(c=>c.classList.toggle('active',c.dataset.id===S.presetName));
+  },
+  buildHelp(){
+    const sub=document.getElementById('help-sub'); if(!sub) return;
+    sub.textContent=t('helpSub');
+    document.getElementById('help-grid').innerHTML = t('helpRows').map(r=>
+      `<span class="k"><span class="kbd">${r[0]}</span></span><span class="d">${r[1]}</span>`).join('');
+    document.getElementById('help-foot').textContent=t('helpFoot');
+    document.getElementById('help-enter').textContent=t('enter');
+    const hl=document.getElementById('help-lang'); if(hl) hl.textContent = LANG==='en'?'中文':'EN';   // match the panel toggle convention (show the target language)
+  },
+
+  buildMatrix(){
+    const n=S.species, host=this.els.matrix;
+    const cell = Math.min(30, Math.floor(232/(n+1)));
+    host.style.gridTemplateColumns=`${cell}px repeat(${n},${cell}px)`;
+    host.innerHTML='';
+    const swatch=(i)=>{ const c=palette; return `rgb(${c[i*3]*255|0},${c[i*3+1]*255|0},${c[i*3+2]*255|0})`; };
+    // header row
+    const corner=document.createElement('div'); corner.className='mcell corner'; corner.style.width=cell+'px'; corner.style.height=cell+'px';
+    host.appendChild(corner);
+    for(let j=0;j<n;j++){ const h=document.createElement('div'); h.className='mcell head'; h.style.cssText=`width:${cell}px;height:${cell}px;background:${swatch(j)};box-shadow:0 0 8px ${swatch(j)}`; host.appendChild(h); }
+    for(let i=0;i<n;i++){
+      const rh=document.createElement('div'); rh.className='mcell head'; rh.style.cssText=`width:${cell}px;height:${cell}px;background:${swatch(i)};box-shadow:0 0 8px ${swatch(i)}`; host.appendChild(rh);
+      for(let j=0;j<n;j++){
+        const d=document.createElement('div'); d.className='mcell'; d.style.width=cell+'px'; d.style.height=cell+'px';
+        d.dataset.i=i; d.dataset.j=j;
+        d.tabIndex=0; d.setAttribute('role','slider'); d.setAttribute('aria-valuemin','-1'); d.setAttribute('aria-valuemax','1');
+        d.setAttribute('aria-label', t('mx_cell').replace('{a}',i+1).replace('{b}',j+1));
+        this.paintCell(d);
+        host.appendChild(d);
+      }
+    }
+    this.matrixDrag();
+  },
+  paintCell(d){
+    const i=+d.dataset.i, j=+d.dataset.j, v=Sim.matrix[i*MAX_SPECIES+j];
+    d.style.background = v>=0 ? `rgba(70,230,160,${0.12+0.75*v})` : `rgba(255,90,90,${0.12+0.75*(-v)})`;
+    const sign = v>0.04?'+' : v<-0.04?'−' : '';   // non-colour cue (sign) so attract/repel reads without colour — WCAG 1.4.1
+    if(d.textContent!==sign) d.textContent=sign;
+    const txt=v.toFixed(2); d.title=txt;
+    d.setAttribute('aria-valuenow',txt);
+    d.setAttribute('aria-valuetext',(v>=0?t('mx_attract'):t('mx_repel'))+' '+Math.abs(v).toFixed(2));
+  },
+  refreshMatrix(){
+    if(!this.els.matrix) return;
+    this.els.matrix.querySelectorAll('.mcell:not(.head):not(.corner)').forEach(d=>this.paintCell(d));
+  },
+  matrixDrag(){
+    if(this._matrixWired) return; this._matrixWired=true;   // bind once — host (#matrix) persists across buildMatrix rebuilds; handlers resolve cells via e.target.closest
+    const host=this.els.matrix;
+    let cur=null, startY=0, startV=0;
+    const setV=(d,v)=>{ v=Math.max(-1,Math.min(1,v)); Sim.matrix[(+d.dataset.i)*MAX_SPECIES+(+d.dataset.j)]=v; this.paintCell(d); S.presetName='custom'; this.syncPresets(); this.syncStats(); };
+    host.addEventListener('pointerdown',e=>{
+      const d=e.target.closest('.mcell:not(.head):not(.corner)'); if(!d)return;
+      host.setPointerCapture(e.pointerId); cur=d; startY=e.clientY;
+      startV=Sim.matrix[(+d.dataset.i)*MAX_SPECIES+(+d.dataset.j)];
+      d.classList.add('hot');
+    });
+    host.addEventListener('pointermove',e=>{
+      if(!cur)return; const dv=(startY-e.clientY)/90; setV(cur,startV+dv);
+    });
+    const end=()=>{ if(cur){cur.classList.remove('hot');cur=null;} };
+    host.addEventListener('pointerup',end); host.addEventListener('pointercancel',end);
+    // keyboard editing — arrows nudge, Home/End jump to ±1 (WCAG 2.1.1)
+    host.addEventListener('keydown',e=>{
+      const d=e.target.closest&&e.target.closest('.mcell:not(.head):not(.corner)'); if(!d)return;
+      const cv=Sim.matrix[(+d.dataset.i)*MAX_SPECIES+(+d.dataset.j)]; let nv;
+      switch(e.key){ case 'ArrowUp': case 'ArrowRight': nv=cv+0.05; break; case 'ArrowDown': case 'ArrowLeft': nv=cv-0.05; break; case 'Home': nv=-1; break; case 'End': nv=1; break; default: return; }
+      e.preventDefault(); setV(d,nv);
+    });
+  },
+
+  wire(){
+    const $=id=>document.getElementById(id);
+    $('btn-play').addEventListener('click',()=>this.togglePlay());
+    $('btn-reseed').addEventListener('click',()=>Sim.reseed());
+    $('btn-random').addEventListener('click',()=>this.randomize());
+    $('btn-evolve').addEventListener('click',e=>{ S.evolve=!S.evolve; e.currentTarget.classList.toggle('on',S.evolve); this.toast(S.evolve?t('t_evolveOn'):t('t_evolveOff')); });
+    $('btn-palette').addEventListener('click',()=>{ paletteIdx=(paletteIdx+1)%PALETTES.length; buildPalette(); this.buildMatrix(); this.toast(t('t_palette')+PALETTES[paletteIdx].name); });
+    $('btn-share').addEventListener('click',()=>this.share());
+    $('btn-sound').addEventListener('click',e=>{ const on=Sound.toggle(); e.currentTarget.classList.toggle('on',on); this.toast(on?t('t_soundOn'):t('t_soundOff')); });
+    $('btn-hide').addEventListener('click',()=>this.togglePanel(false));
+    $('reopen').addEventListener('click',()=>this.togglePanel(true));
+    const tm=$('touch-mode'); if(tm) tm.addEventListener('click',e=>{ Input.touchRepel=!Input.touchRepel; const on=Input.touchRepel; e.currentTarget.setAttribute('aria-pressed',String(on)); e.currentTarget.textContent=on?'💥':'🧲'; this.toast(on?t('t_repelMode'):t('t_attractMode')); });
+    $('btn-help').addEventListener('click',()=>this.toggleHelp());
+    { const fb=$('btn-fs'); if(fb) fb.addEventListener('click',()=>{ if(!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }); }
+    $('btn-lang').addEventListener('click',()=>setLang(LANG==='en'?'zh':'en'));
+    $('help-lang').addEventListener('click',()=>setLang(LANG==='en'?'zh':'en'));
+    $('help-enter').addEventListener('click',()=>this.toggleHelp(false));
+    document.querySelectorAll('#modeswitch .mode').forEach(b=>b.addEventListener('click',()=>this.switchMode(b.dataset.mode)));
+    $('g-play').addEventListener('click',()=>this.togglePlay());
+    $('g-reset').addEventListener('click',()=>G.reset());
+    { const gs=$('g-share'); if(gs) gs.addEventListener('click',()=>this.share()); }
+    $('journey-skip').addEventListener('click',()=>Journey.end());
+    $('journey-enter').addEventListener('click',()=>Journey.end());
+    $('journey-begin').addEventListener('click',()=>Journey.begin());
+    $('journey-coverskip').addEventListener('click',()=>Journey.end());
+    $('journey-mute').addEventListener('click',()=>Journey.toggleMute());
+    const brandEl=document.querySelector('.brand');
+    brandEl.addEventListener('click',()=>{ if(!Journey.active) Journey.start(); });
+    brandEl.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); if(!Journey.active) Journey.start(); } });
+    this.els.help.addEventListener('click',e=>{ if(e.target===this.els.help) this.toggleHelp(false); });
+    window.addEventListener('keydown',e=>this.key(e));
+  },
+
+  togglePlay(){ S.paused=!S.paused; this.refreshPlayBtn(); this.els.runDot.classList.toggle('paused',S.paused); },
+  refreshPlayBtn(){ const txt=S.paused?t('play'):t('pause'); if(this.els.play)this.els.play.textContent=txt; const g=document.getElementById('g-play'); if(g)g.textContent=txt; },
+  togglePanel(show){ const v=show===undefined?this.els.panel.classList.contains('hidden'):show; this.els.panel.classList.toggle('hidden',!v); this.els.reopen.classList.toggle('show',!v); },
+  toggleHelp(show){ const v=show===undefined?!this.els.help.classList.contains('show'):show;
+    if(v) this._helpReturn=document.activeElement;
+    this.els.help.classList.toggle('show',v);
+    if(v){ const b=document.getElementById('help-enter'); if(b) b.focus(); }                       // move focus into the dialog
+    else if(this._helpReturn&&this._helpReturn.focus){ this._helpReturn.focus(); this._helpReturn=null; } },
+
+  randomize(){
+    srand((rnd()*4294967296)>>>0);
+    // vary the WORLD's structure so every "New rules" is its own distinct creature, not another lookalike clump:
+    // random species count, repel-zone, force, palette, AND a random ecosystem archetype (weighted toward pure-random)
+    S.species = 3 + (rnd()*6|0);                       // 3..8 species
+    S.beta    = +rndRange(0.18,0.42).toFixed(2);
+    S.force   = +rndRange(5,12).toFixed(1);
+    paletteIdx = (rnd()*PALETTES.length)|0;
+    const kinds=['random soup','random soup','random soup','clusters','cells','chase','snakes','orbits','symmetry'];
+    Sim.setPreset(kinds[(rnd()*kinds.length)|0]);
+    S.presetName='custom';
+    buildPalette(); this.buildMatrix(); this.syncPresets(); this.syncStats();
+    ['species','beta','force'].forEach(k=>this.setSlider(k,S[k]));
+    this.toast(t('t_newRules'));
+  },
+
+  key(e){
+    if(e.target.tagName==='INPUT') return;
+    // during the cinematic journey, swallow sim shortcuts (space must NOT freeze the "live" sim behind the narration); Enter/Esc skip it
+    if(Journey.active){ if(e.key==='Escape'||e.key==='Enter'){ e.preventDefault(); Journey.end(); } return; }
+    if(e.key==='Escape'){ if(this.els.help.classList.contains('show')){ this.toggleHelp(false); return; } }
+    switch(e.key.toLowerCase()){
+      case ' ': if(e.target.tagName==='BUTTON') return; e.preventDefault(); this.togglePlay(); break;
+      case 'r': if(MODE==='genesis') G.reset(); else this.randomize(); break;
+      case 'n': if(MODE==='genesis') G.reset(); else Sim.reseed(); break;
+      case 'e': if(MODE!=='genesis') document.getElementById('btn-evolve').click(); break;
+      case 'm': document.getElementById('btn-sound').click(); break;
+      case 'c': this.togglePanel(); break;
+      case 'h': this.toggleHelp(); break;
+      case 'p': if(MODE!=='genesis') document.getElementById('btn-palette').click(); break;
+      case 'f': if(!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); break;
+    }
+  },
+
+  share(){
+    let state, okMsg;
+    if(MODE==='genesis'){   // Genesis is deterministic per seed → share settings + starting seed (reproduces the same evolving world)
+      state={gv:1, ws:+(G.worldScale||1).toFixed(2), sp:GP.SPEED|0, fo:GP.FOOD_SPAWN, mu:+GP.W_SIG.toFixed(3), sd:(G._seed>>>0)};
+      okMsg='t_genesisShare';
+    } else {
+      const m=[]; const n=S.species;
+      for(let i=0;i<n;i++) for(let j=0;j<n;j++) m.push(Math.round(Sim.matrix[i*MAX_SPECIES+j]*100));
+      state={v:1,sp:n,ct:S.count,rm:+S.rmax.toFixed(4),fo:S.force,fr:S.friction,be:S.beta,
+             sd:S.speed,sz:S.size,gl:S.glow,tr:S.trails,ev:S.evolve?1:0,pal:paletteIdx,seed:Sim.seed,m};
+      okMsg='t_shareCopied';
+    }
+    const enc=btoa(JSON.stringify(state)).replace(/=+$/,'');
+    const url=location.origin+location.pathname+'#'+enc;
+    history.replaceState(null,'','#'+enc);
+    console.log('Share link:',url);
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(url).then(()=>this.toast(t(okMsg)),()=>this.toast(t('t_shareFail')));
+    } else { this.toast(t('t_shareFail')); }
+  },
+  loadFromHash(){
+    if(!location.hash || location.hash.length<4) return false;
+    try{
+      const st=JSON.parse(atob(location.hash.slice(1)));
+      if(st && st.gv===1) return this.loadGenesisHash(st);   // a shared Genesis lab
+      if(!st || st.v!==1) return false;
+      const num=(x,lo,hi,d)=>{ const v=+x; return Number.isFinite(v)?Math.min(hi,Math.max(lo,v)):d; };
+      // clamp engine-dependent fields to the ACTIVE engine's safe range — a GPU-authored link with 200k particles
+      // must not freeze a CPU/WebGL2 visitor (and the slider can only represent up to its own max).
+      const ctMax=(ACTIVE_ENGINE==='gpu')?200000:12000, rmMin=(ACTIVE_ENGINE==='gpu')?0.006:0.025;
+      S.species  = Math.round(num(st.sp,1,MAX_SPECIES,6));
+      S.count    = Math.round(num(st.ct,500,ctMax,4500));
+      S.rmax     = num(st.rm,rmMin,0.2,0.07);
+      S.force    = num(st.fo,0,40,S.force);
+      S.friction = num(st.fr,0,1,0.12);
+      S.beta     = num(st.be,0.05,0.6,0.3);
+      S.speed    = num(st.sd,0.05,3,S.speed);
+      S.size     = num(st.sz,0.5,16,S.size);
+      S.glow     = num(st.gl,0.1,3,S.glow);
+      S.trails   = num(st.tr,0,0.96,S.trails);
+      S.evolve   = !!st.ev;
+      paletteIdx = (Number.isInteger(st.pal)&&st.pal>=0&&st.pal<PALETTES.length)?st.pal:0;
+      buildPalette();
+      if(Array.isArray(st.m)){ let k=0; for(let i=0;i<S.species;i++) for(let j=0;j<S.species;j++) Sim.matrix[i*MAX_SPECIES+j]=(+st.m[k++]||0)/100; }
+      S.presetName='shared';
+      ['species','count','rmax','force','friction','beta','speed','size','glow','trails'].forEach(key=>this.setSlider(key,S[key]));
+      const eb=document.getElementById('btn-evolve'); if(eb) eb.classList.toggle('on',S.evolve);
+      Sim.reseed(Number.isFinite(+st.seed)?(+st.seed>>>0):undefined);
+      return true;
+    }catch(err){ console.warn('bad hash',err); return false; }
+  },
+  loadGenesisHash(st){
+    try{
+      const num=(x,lo,hi,d)=>{ const v=+x; return Number.isFinite(v)?Math.min(hi,Math.max(lo,v)):d; };
+      const ws=num(st.ws,1,1.8,1), A=ws*ws;
+      GP.SPEED=Math.round(num(st.sp,1,40,6)); GP.FOOD_SPAWN=Math.round(num(st.fo,2,30,9)); GP.W_SIG=num(st.mu,0.02,0.5,0.4);
+      G.worldScale=ws; GP.POP_CAP=Math.max(64,Math.round(700*A)); GP.POP_START=Math.round(300*A); GP.FOOD_CAP=Math.round(1500*A);
+      this.switchMode('genesis');
+      if(!G.ctx) G.init(document.getElementById('life'));
+      G.reset(Number.isFinite(+st.sd)?(+st.sd>>>0):undefined); G.resize();
+      this.buildGenesisSliders(); this.syncGenesisStats();
+      return true;
+    }catch(err){ console.warn('bad genesis hash',err); return false; }
+  },
+
+  syncStats(){
+    this.els.count.textContent=(S.count|0).toLocaleString();
+    this.els.species.textContent=S.species;
+    this.els.preset.textContent='— '+presetLabel(S.presetName)+' —';
+    if(this.els.engine) this.els.engine.textContent=t(ACTIVE_ENGINE==='gpu'?'eng_gpu':'eng_cpu');
+  },
+  setFps(f){ if(this.els.fps)this.els.fps.textContent=f|0; const g=document.getElementById('g-st-fps'); if(g)g.textContent=f|0; },
+  switchMode(m){
+    if(m===MODE) return; MODE=m;
+    document.getElementById('sim').style.display  = m==='soup'?'block':'none';
+    document.getElementById('life').style.display = m==='genesis'?'block':'none';
+    document.getElementById('ctl-soup').style.display    = m==='soup'?'':'none';
+    document.getElementById('ctl-genesis').style.display = m==='genesis'?'':'none';
+    document.getElementById('stats-soup').style.display    = m==='soup'?'':'none';
+    document.getElementById('stats-genesis').style.display = m==='genesis'?'':'none';
+    document.querySelectorAll('#modeswitch .mode').forEach(b=>b.classList.toggle('active',b.dataset.mode===m));
+    if(m==='genesis'){ if(!G.ctx) G.init(document.getElementById('life')); G.resize(); this.buildGenesisSliders(); this.syncGenesisStats(); G.sample(); }  // refresh sliders+stats now (no 0-flash; fixes post-journey GP.SPEED desync)
+    else { if(ACTIVE_ENGINE==='gpu') GPU.resize(); else Render.resize(); }  // re-sync soup engine (avoids stale canvas)
+  },
+  buildGenesisSliders(){
+    // [GP-key, formatter, optional custom-apply]. Custom-apply sliders rebuild on release (change), not live (input).
+    const map={gspeed:['SPEED',v=>(v|0)+'×'], gfood:['FOOD_SPAWN',v=>(v|0)+''], gmut:['W_SIG',v=>v.toFixed(2)],
+               gworld:[null, v=>v.toFixed(1)+'×', v=>{ G.setWorldScale(v); UI.toast(t('t_worldRebuilt').replace('{n}',v.toFixed(1))); }]};
+    document.querySelectorAll('.slider[data-g]').forEach(el=>{
+      const key=el.dataset.g, m=map[key]; if(!m)return; const cur = m[2] ? (G.worldScale||1) : GP[m[0]];
+      el.innerHTML=`<div class="slider__row"><label>${t('gl_'+key)}</label><span class="val"></span></div><input type="range" aria-label="${t('gl_'+key)}" min="${el.dataset.min}" max="${el.dataset.max}" step="${el.dataset.step}">`;
+      const inp=el.querySelector('input'), val=el.querySelector('.val'); inp.value=cur; val.textContent=m[1](cur); inp.setAttribute('aria-valuetext',m[1](cur));
+      inp.addEventListener('input',()=>{ let v=parseFloat(inp.value); if(el.dataset.int)v=Math.round(v); val.textContent=m[1](v); inp.setAttribute('aria-valuetext',m[1](v)); if(!m[2]) GP[m[0]]=v; });
+      if(m[2]) inp.addEventListener('change',()=>{ let v=parseFloat(inp.value); m[2](v); });
+    });
+  },
+  syncGenesisStats(mm){
+    const m=mm||G.metrics(); const set=(id,v)=>{const e=document.getElementById(id); if(e)e.textContent=v;};
+    set('g-st-pop',m.pop); set('g-st-gen',m.gen);
+    const pulse=G.novPulse();
+    set('g-st-line2', `${t('g_brain')} ${m.cxMean} · ${t('g_hunters')} ${Math.round(m.carnFrac*100)}% · ${t('g_forms')} ${G.forms}${pulse>0?' +'+pulse:''}`);
+  },
+
+  toast(msg){
+    const t=this.els.toast; t.textContent=msg; t.classList.add('show');
+    clearTimeout(this._tt); this._tt=setTimeout(()=>t.classList.remove('show'),2200);
+  },
+};
+
+/* ════════════════════════════════════════════════════════════════════
+   GENESIS — a neuroevolution ecosystem. Creatures with heritable genomes
+   and tiny neural-net brains forage, reproduce with mutation, and die.
+   Natural selection is emergent — no fitness function is imposed.
+   (Algorithm verified headlessly: foraging alignment evolves 0.04 → 0.25.)
+   ════════════════════════════════════════════════════════════════════ */
+const GP = {   // GENESIS = open-ended coevolution lab (the recipe verified in genesis_oee.mjs)
+  WORLD:1000, WORLD_W:1000, WORLD_H:1000,   // WORLD = base side (area); WORLD_W/H = live rectangular dims (match viewport aspect, area held constant)
+  POP_CAP:700, POP_START:300, MIN_POP:25,
+  FOOD_CAP:1500, FOOD_SPAWN:9, FOOD_ENERGY:34, START_ENERGY:60,
+  BASE_META:0.05, SIZE_META:0.05, SENSE_META:0.0005, MOVE_META:0.06,
+  MAX_TURN:0.5, EAT_RADIUS:9, REPRO_FRAC:0.62, CHILD_FRAC:0.5,
+  PREY_RATIO:0.78, BITE_GAIN:0.55, CORPSE:1,
+  CONN_COST:0.0028,   // metabolic cost per neural connection → brain complexity must pay for itself
+  PLANT_FALLOFF:6,    // big bodies eat plants poorly → must hunt → predator-prey coevolution (the Red Queen)
+  W_PERTURB:0.85, W_SIG:0.4, W_RESET:0.08, ADD_CONN:0.07, ADD_NODE:0.035, TOGGLE:0.02, BODY_SIG:0.12, MAX_NODES:48, MAX_CONNS:150,
+  SPEED:6, TRAILS:0.45,
+};
+const NIN=9, NOUT=3, N0=NIN+NOUT;   // brain I/O; hidden neurons are EVOLVED (no fixed topology)
+function gGauss(){ let u=0,v=0; while(u===0)u=rnd(); while(v===0)v=rnd(); return Math.sqrt(-2*Math.log(u))*Math.cos(6.283185*v); }
+const geneMap=(g,lo,hi)=>lo+(hi-lo)/(1+Math.exp(-g));
+const gWrap=(d,W)=>{ if(d>W*0.5)d-=W; else if(d<-W*0.5)d+=W; return d; };
+let _gnDist=0;
+function gFill(g,px,py,n){ const cols=g.cols,rows=g.rows,cell=g.cell,heads=g.heads,next=g.next; heads.fill(-1);
+  for(let i=0;i<n;i++){ let cx=(px[i]/cell)|0,cy=(py[i]/cell)|0; if(cx<0)cx=0;else if(cx>=cols)cx=cols-1; if(cy<0)cy=0;else if(cy>=rows)cy=rows-1; const c=cx+cy*cols; next[i]=heads[c]; heads[c]=i; } }
+function gNear(g,px,py,x,y,R,W,H,skip,aliveArr){ const cols=g.cols,rows=g.rows,cell=g.cell,heads=g.heads,next=g.next; const r=Math.ceil(R/cell);
+  let cx=(x/cell)|0,cy=(y/cell)|0; if(cx<0)cx=0;else if(cx>=cols)cx=cols-1; if(cy<0)cy=0;else if(cy>=rows)cy=rows-1; let best=-1,bestD2=R*R;
+  for(let oy=-r;oy<=r;oy++){ let ny=((cy+oy)%rows+rows)%rows; for(let ox=-r;ox<=r;ox++){ let nx=((cx+ox)%cols+cols)%cols; let p=heads[nx+ny*cols];
+    while(p!==-1){ if(p!==skip && (!aliveArr||aliveArr[p])){ const dx=gWrap(px[p]-x,W),dy=gWrap(py[p]-y,H); const d2=dx*dx+dy*dy; if(d2<bestD2){bestD2=d2;best=p;} } p=next[p]; } } }
+  _gnDist=best>=0?Math.sqrt(bestD2):0; return best; }
+/* ── NEAT-lite: brains that grow neurons & connections (recurrent, one-step) ── */
+function minimalGenome(){ const nodes=[]; for(let k=0;k<NIN;k++)nodes.push(0); for(let k=0;k<NOUT;k++)nodes.push(2); const conns=[];
+  for(let o=0;o<NOUT;o++){ const oid=NIN+o, nl=1+((rnd()*3)|0); for(let l=0;l<nl;l++) conns.push({i:(rnd()*NIN)|0,o:oid,w:gGauss()*1.2,en:true}); } return {nodes,conns}; }
+function cloneGenome(g){ return {nodes:g.nodes.slice(), conns:g.conns.map(c=>({i:c.i,o:c.o,w:c.w,en:c.en}))}; }
+function mutateGenome(g){
+  for(const c of g.conns){ if(rnd()<GP.W_PERTURB)c.w+=gGauss()*GP.W_SIG; if(rnd()<GP.W_RESET)c.w=gGauss()*1.2; if(rnd()<GP.TOGGLE)c.en=!c.en; }
+  if(rnd()<GP.ADD_CONN && g.conns.length<GP.MAX_CONNS){ const nN=g.nodes.length, i=(rnd()*nN)|0; let o=(rnd()*nN)|0;
+    if(g.nodes[o]!==0 && i!==o && !g.conns.some(c=>c.i===i&&c.o===o)) g.conns.push({i,o,w:gGauss()*1.2,en:true}); }
+  if(rnd()<GP.ADD_NODE && g.nodes.length<GP.MAX_NODES){ const en=g.conns.filter(c=>c.en); if(en.length){ const c=en[(rnd()*en.length)|0]; c.en=false; const nid=g.nodes.length; g.nodes.push(1); g.conns.push({i:c.i,o:nid,w:1,en:true}); g.conns.push({i:nid,o:c.o,w:c.w,en:true}); } }
+  return g; }
+const complexity=g=>{ let e=0; for(const c of g.conns)if(c.en)e++; return (g.nodes.length-N0)+e; };   // hidden nodes = nodes.length - N0 (I/O count)
+const _sum=new Float32Array(GP.MAX_NODES+8), _gin=new Float32Array(NIN), _gout=new Float32Array(NOUT);
+function evalBrain(g,act,inp){ const nN=g.nodes.length; for(let k=0;k<NIN;k++)act[k]=inp[k]; for(let k=0;k<nN;k++)_sum[k]=0;
+  const cs=g.conns; for(let m=0;m<cs.length;m++){ const c=cs[m]; if(c.en)_sum[c.o]+=c.w*act[c.i]; }
+  for(let k=NIN;k<nN;k++)act[k]=Math.tanh(_sum[k]);
+  _gout[0]=act[NIN]*0.5+0.5; _gout[1]=act[NIN+1]; _gout[2]=act[NIN+2]*0.5+0.5; }
+
+const G = {
+  w:null, canvas:null, ctx:null, scale:1, ox:0, oy:0, hist:[], seen:null, nov:[], forms:0, worldScale:1, _seed:0,
+  init(canvas){ this.canvas=canvas; this.ctx=canvas.getContext('2d'); this.reset(); },
+  // seed the world so a Genesis ecosystem is reproducible (the sim is deterministic per seed). undefined → fresh random seed.
+  reset(seed){ this._seed = (seed===undefined ? (rnd()*4294967296)>>>0 : seed>>>0); srand(this._seed);
+    this._dims(); this.w=this.makeWorld(); this.hist.length=0; this.seen=new Set(); this.nov.length=0; this.forms=0; },
+  // rectangular world dims from the canvas aspect, holding total area = (1000·worldScale)² constant → fills the screen, round creatures
+  _dims(){ const c=this.canvas; let aspect=1; if(c&&c.width>0&&c.height>0) aspect=c.width/c.height; const side=1000*this.worldScale, area=side*side; GP.WORLD_W=Math.sqrt(area*aspect); GP.WORLD_H=Math.sqrt(area/aspect); },
+  _rebuildGrids(){ const w=this.w; if(!w)return; const cell=130, cols=Math.max(1,Math.floor(GP.WORLD_W/cell)), rows=Math.max(1,Math.floor(GP.WORLD_H/cell));
+    w.gridCre.cols=cols; w.gridCre.rows=rows; w.gridCre.heads=new Int32Array(cols*rows);
+    w.gridFood.cols=cols; w.gridFood.rows=rows; w.gridFood.heads=new Int32Array(cols*rows); },
+  // open-endedness: sum of new phenotype-classes discovered over the recent window (the live novelty pulse)
+  novPulse(){ let s=0; for(let i=Math.max(0,this.nov.length-90);i<this.nov.length;i++)s+=this.nov[i]; return s; },
+  // SPATIAL ISOLATION lever — enlarge the world while holding density constant. Research finding (genesis_spat.mjs):
+  // a larger world lets separated families diverge in semi-isolation; novelty peaks near ~1.8× before big populations converge.
+  setWorldScale(s){ this.worldScale=s; const A=s*s;
+    GP.POP_CAP=Math.max(64,Math.round(700*A)); GP.POP_START=Math.round(300*A);
+    GP.FOOD_CAP=Math.round(1500*A);   // NB: FOOD_SPAWN is left alone — user's per-1.0×-world rate, scaled by area at spawn (see step). World dims come from aspect in reset()/_dims.
+    this.reset(); this.resize(); if(typeof UI!=='undefined') UI.buildGenesisSliders(); },
+  makeWorld(){
+    const C=GP.POP_CAP;
+    const w={ n:0,cap:C, x:new Float32Array(C),y:new Float32Array(C),dir:new Float32Array(C),
+      energy:new Float32Array(C),age:new Float32Array(C),gen:new Int32Array(C),alive:new Uint8Array(C),
+      size:new Float32Array(C),spd:new Float32Array(C),sense:new Float32Array(C),
+      sizeG:new Float32Array(C),spdG:new Float32Array(C),senseG:new Float32Array(C),
+      lin:new Int32Array(C),preyE:new Float32Array(C),cx:new Float32Array(C),
+      geno:new Array(C),act:new Array(C),
+      fx:new Float32Array(GP.FOOD_CAP),fy:new Float32Array(GP.FOOD_CAP),fn:0,
+      free:[],births:[],steps:0,maxGen:0,kills:0,nextLin:1 };
+    const cell=130, cols=Math.max(1,Math.floor(GP.WORLD_W/cell)), rows=Math.max(1,Math.floor(GP.WORLD_H/cell));
+    w.gridCre ={cols,rows,cell,heads:new Int32Array(cols*rows),next:new Int32Array(C)};
+    w.gridFood={cols,rows,cell,heads:new Int32Array(cols*rows),next:new Int32Array(GP.FOOD_CAP)};
+    w._fEat=new Uint8Array(GP.FOOD_CAP);
+    for(let i=0;i<GP.POP_START;i++) this.spawnFounder(w);
+    for(let i=0;i<GP.FOOD_CAP*0.5;i++) this.spawnFood(w);
+    return w;
+  },
+  spawnFounder(w){ const i=this.alloc(w); if(i<0)return -1; w.geno[i]=minimalGenome(); w.act[i]=new Float32Array(w.geno[i].nodes.length);
+    w.sizeG[i]=gGauss(); w.spdG[i]=gGauss(); w.senseG[i]=gGauss(); this.initBody(w,i,rnd()*GP.WORLD_W,rnd()*GP.WORLD_H,0,GP.START_ENERGY,w.nextLin++); return i; },
+  alloc(w){ if(w.free.length)return w.free.pop(); if(w.n<w.cap)return w.n++; return -1; },
+  initBody(w,i,x,y,gen,e,lin){ w.x[i]=x;w.y[i]=y;w.dir[i]=rnd()*6.283;w.energy[i]=e;w.age[i]=0;w.gen[i]=gen;w.alive[i]=1;w.lin[i]=lin;w.preyE[i]=0;
+    w.size[i]=geneMap(w.sizeG[i],3,12); w.spd[i]=geneMap(w.spdG[i],1.4,5.6); w.sense[i]=geneMap(w.senseG[i],55,240); w.cx[i]=complexity(w.geno[i]); if(gen>w.maxGen)w.maxGen=gen; },
+  spawnFood(w){ if(w.fn>=GP.FOOD_CAP)return; w.fx[w.fn]=rnd()*GP.WORLD_W; w.fy[w.fn]=rnd()*GP.WORLD_H; w.fn++; },
+  kill(w,i){ if(!w.alive[i])return; w.alive[i]=0; w.free.push(i); if(GP.CORPSE && w.fn<GP.FOOD_CAP){ w.fx[w.fn]=w.x[i]; w.fy[w.fn]=w.y[i]; w.fn++; } },
+
+  step(){
+    const w=this.w, W=GP.WORLD_W, H=GP.WORLD_H;
+    const fspawn=Math.max(1,Math.round(GP.FOOD_SPAWN*this.worldScale*this.worldScale));   // hold food DENSITY constant across world size
+    for(let s=0;s<fspawn;s++) this.spawnFood(w);
+    gFill(w.gridCre,w.x,w.y,w.n); gFill(w.gridFood,w.fx,w.fy,w.fn); const cre=w.gridCre, food=w.gridFood;
+    w.births.length=0; const fEat=w._fEat; fEat.fill(0);   // clear the WHOLE eaten-mask: corpses get appended at indices >= fn during the loop and must start unflagged
+    for(let i=0;i<w.n;i++){
+      if(!w.alive[i])continue;
+      const size=w.size[i],maxSpd=w.spd[i],sense=w.sense[i]; const x=w.x[i],y=w.y[i],dir=w.dir[i],maxE=45+size*9;
+      const nfi=gNear(food,w.fx,w.fy,x,y,sense,W,H,-1,null); const nfd=_gnDist;
+      const nci=gNear(cre,w.x,w.y,x,y,sense,W,H,i,w.alive); const ncd=_gnDist;
+      _gin[0]=1; _gin[1]=Math.min(1,w.energy[i]/maxE);
+      if(nfi>=0){ const a=Math.atan2(gWrap(w.fy[nfi]-y,H),gWrap(w.fx[nfi]-x,W))-dir; _gin[2]=1-nfd/sense; _gin[3]=Math.sin(a); _gin[4]=Math.cos(a); } else { _gin[2]=0;_gin[3]=0;_gin[4]=0; }
+      if(nci>=0){ const a=Math.atan2(gWrap(w.y[nci]-y,H),gWrap(w.x[nci]-x,W))-dir; _gin[5]=1-ncd/sense; _gin[6]=Math.sin(a); _gin[7]=Math.cos(a); _gin[8]=Math.tanh((w.size[nci]-size)*0.3); } else { _gin[5]=0;_gin[6]=0;_gin[7]=0;_gin[8]=0; }
+      evalBrain(w.geno[i], w.act[i], _gin); const thrust=_gout[0],turn=_gout[1],bite=_gout[2];
+      let nd=dir+turn*GP.MAX_TURN; if(nd>Math.PI)nd-=6.283;else if(nd<-Math.PI)nd+=6.283;
+      const spd=thrust*maxSpd; let nx=x+Math.cos(nd)*spd, ny=y+Math.sin(nd)*spd; nx-=Math.floor(nx/W)*W; ny-=Math.floor(ny/H)*H;
+      w.dir[i]=nd; w.x[i]=nx; w.y[i]=ny; w.age[i]++;
+      w.energy[i]-= GP.BASE_META + GP.SIZE_META*size + GP.SENSE_META*sense + GP.MOVE_META*spd + GP.CONN_COST*w.cx[i];
+      const er=GP.EAT_RADIUS+size; const fni=gNear(food,w.fx,w.fy,nx,ny,er,W,H,-1,null);
+      if(fni>=0 && !fEat[fni]){ fEat[fni]=1; const fe=Math.max(0.05,1-(size-4)/GP.PLANT_FALLOFF); w.energy[i]+=GP.FOOD_ENERGY*fe; }
+      if(bite>0.55 && nci>=0){ const os=w.size[nci];
+        if(w.alive[nci] && os<size*GP.PREY_RATIO && ncd<er+os){ const a=Math.atan2(gWrap(w.y[nci]-ny,H),gWrap(w.x[nci]-nx,W))-w.dir[i];
+          if(Math.cos(a)>0.25){ const g=Math.min(maxE,w.energy[nci]*GP.BITE_GAIN); w.energy[i]+=g; w.preyE[i]+=g; w.kills++; this.kill(w,nci); } } }
+      if(w.energy[i]>maxE)w.energy[i]=maxE;
+      if(w.energy[i]>GP.REPRO_FRAC*maxE){ const give=w.energy[i]*GP.CHILD_FRAC; w.energy[i]-=give; w.births.push(i); w.births.push(give); }
+      if(w.energy[i]<=0) this.kill(w,i);
+    }
+    for(let b=0;b<w.births.length;b+=2){ const par=w.births[b], give=w.births[b+1]; const ci=this.alloc(w); if(ci<0)break;
+      w.geno[ci]=mutateGenome(cloneGenome(w.geno[par])); w.act[ci]=new Float32Array(w.geno[ci].nodes.length);
+      w.sizeG[ci]=w.sizeG[par]+gGauss()*GP.BODY_SIG; w.spdG[ci]=w.spdG[par]+gGauss()*GP.BODY_SIG; w.senseG[ci]=w.senseG[par]+gGauss()*GP.BODY_SIG;
+      const ang=rnd()*6.283, rad=8+w.size[par]*1.5; let bx=w.x[par]+Math.cos(ang)*rad, by=w.y[par]+Math.sin(ang)*rad; bx-=Math.floor(bx/W)*W; by-=Math.floor(by/W)*W;
+      this.initBody(w,ci,bx,by,w.gen[par]+1,give,w.lin[par]); }
+    let k=0; for(let f=0;f<w.fn;f++){ if(!fEat[f]){ w.fx[k]=w.fx[f]; w.fy[k]=w.fy[f]; k++; } } w.fn=k;
+    let pop=0; for(let i=0;i<w.n;i++)if(w.alive[i])pop++;
+    while(pop<GP.MIN_POP){ if(this.spawnFounder(w)<0)break; pop++; }
+    w.steps++;
+  },
+
+  metrics(){ const w=this.w; let pop=0,age=0,cx=0,cmax=0,szS=0,szS2=0,carn=0; for(let i=0;i<w.n;i++){ if(!w.alive[i])continue; pop++; age+=w.age[i]; const c=w.cx[i]; cx+=c; if(c>cmax)cmax=c; const sz=w.size[i]; szS+=sz; szS2+=sz*sz; if(w.preyE[i]>w.age[i]*0.02)carn++; }
+    const mean=pop?szS/pop:0;
+    return { steps:w.steps, pop, gen:w.maxGen, kills:w.kills, avgAge:pop?Math.round(age/pop):0,
+      cxMean:pop?+(cx/pop).toFixed(1):0, cxMax:cmax, carnFrac:pop?+(carn/pop).toFixed(2):0,
+      sizeStd:pop?+(Math.sqrt(Math.max(0,szS2/pop-mean*mean))).toFixed(2):0, niches:1+((pop&&carn/pop>0.05)?1:0) }; },
+
+  resize(){
+    const dpr=Math.min(window.devicePixelRatio||1,2); const cw=Math.floor(innerWidth*dpr),ch=Math.floor(innerHeight*dpr);
+    this.canvas.width=cw; this.canvas.height=ch;
+    const oldW=GP.WORLD_W, oldH=GP.WORLD_H; this._dims();   // recompute rectangular dims for the new aspect
+    if(this.w && oldW>0 && oldH>0 && (oldW!==GP.WORLD_W||oldH!==GP.WORLD_H)){   // rescale existing creatures/food so the world keeps filling the screen
+      const fx=GP.WORLD_W/oldW, fy=GP.WORLD_H/oldH, w=this.w;
+      for(let i=0;i<w.n;i++){ w.x[i]*=fx; w.y[i]*=fy; } for(let f=0;f<w.fn;f++){ w.fx[f]*=fx; w.fy[f]*=fy; }
+      this._rebuildGrids();
+    }
+    this.scale=cw/GP.WORLD_W;   // == ch/WORLD_H (dims share the canvas aspect) → uniform scale, no distortion, no letterbox
+    this.ox=0; this.oy=0;
+  },
+  // cached trophic colour ramp (designed 3-stop: mint grazer → gold omnivore → pink hunter; skips muddy olive, no hard red clip)
+  _buildLut(){ const N=48, stops=[[70,230,160],[255,206,92],[255,94,122]]; this._lutGlow=new Array(N); this._lutBody=new Array(N);
+    for(let k=0;k<N;k++){ const t=k/(N-1), seg=t<0.5?0:1, lt=t<0.5?t/0.5:(t-0.5)/0.5, a=stops[seg], b=stops[seg+1];
+      const r=(a[0]+(b[0]-a[0])*lt)|0, g=(a[1]+(b[1]-a[1])*lt)|0, bl=(a[2]+(b[2]-a[2])*lt)|0;
+      this._lutGlow[k]=`rgba(${r},${g},${bl},0.22)`; this._lutBody[k]=`rgb(${r},${g},${bl})`; } },
+  _colIdx(sz){ let t=(sz-3)/9; if(t<0)t=0; else if(t>1)t=1; return (t*47)|0; },
+  render(){
+    if(!this._lutBody) this._buildLut();
+    const ctx=this.ctx, w=this.w, sc=this.scale, ox=this.ox, oy=this.oy, W=this.canvas.width, H=this.canvas.height, gl=this._lutGlow, bl=this._lutBody;
+    ctx.globalCompositeOperation='source-over';
+    ctx.fillStyle='rgba(5,6,11,'+(1-GP.TRAILS)+')'; ctx.fillRect(0,0,W,H);
+    // plants (food) — dim cool green specks
+    ctx.fillStyle='rgba(120,190,130,0.5)'; for(let f=0;f<w.fn;f++){ ctx.fillRect(ox+w.fx[f]*sc-1, oy+w.fy[f]*sc-1, 2.3,2.3); }
+    // glow — colour by trophic role via cached ramp (no per-frame string building)
+    ctx.globalCompositeOperation='lighter';
+    for(let i=0;i<w.n;i++){ if(!w.alive[i])continue; const sz=w.size[i]; const r=Math.max(1.5,sz*sc); const ci=this._colIdx(sz);
+      ctx.fillStyle=gl[ci]; ctx.beginPath(); ctx.arc(ox+w.x[i]*sc, oy+w.y[i]*sc, r*2.1, 0, 6.2832); ctx.fill(); }
+    // body + heading
+    ctx.globalCompositeOperation='source-over';
+    for(let i=0;i<w.n;i++){ if(!w.alive[i])continue; const sz=w.size[i]; const r=Math.max(1.5,sz*sc); const ci=this._colIdx(sz);
+      const x=ox+w.x[i]*sc, y=oy+w.y[i]*sc; ctx.fillStyle=bl[ci]; ctx.beginPath(); ctx.arc(x,y,r,0,6.2832); ctx.fill();
+      const d=w.dir[i]; ctx.strokeStyle='rgba(255,255,255,0.8)'; ctx.lineWidth=Math.max(0.8,r*0.32);
+      ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+Math.cos(d)*r*1.7, y+Math.sin(d)*r*1.7); ctx.stroke(); }
+  },
+  sample(mm){ const m=mm||this.metrics(); this.hist.push([m.cxMean,m.carnFrac]); if(this.hist.length>180)this.hist.shift();
+    // open-endedness — distinct phenotype classes = coarse cells in (size · diet · brain-complexity · speed) space.
+    // Count how many are NEW this tick (never seen before). Bedau–Packard evolutionary activity, made live.
+    const w=this.w, occ=new Set();
+    for(let i=0;i<w.n;i++){ if(!w.alive[i])continue; const carn=w.preyE[i]>w.age[i]*0.02?1:0;
+      occ.add(Math.round(w.size[i])+'|'+carn+'|'+Math.round(w.cx[i]/8)+'|'+Math.round(w.spd[i])); }
+    let nw=0; occ.forEach(k=>{ if(!this.seen.has(k)){ this.seen.add(k); nw++; } }); this.forms=this.seen.size;
+    this.nov.push(nw); if(this.nov.length>180)this.nov.shift();
+    const c=document.getElementById('g-graph'); if(!c)return; const g=c.getContext('2d'), W=c.width,H=c.height, N=180;
+    g.clearRect(0,0,W,H); let mx=10; for(const p of this.hist) if(p[0]>mx)mx=p[0];
+    // faint gridlines for reference
+    g.strokeStyle='rgba(255,255,255,0.05)'; g.lineWidth=1; for(let gy=1;gy<=3;gy++){ const yy=(H*gy/4)|0; g.beginPath(); g.moveTo(0,yy+0.5); g.lineTo(W,yy+0.5); g.stroke(); }
+    // brain complexity over time (cyan, filled) — "are they getting smarter?"
+    g.beginPath(); g.moveTo(0,H); for(let i=0;i<this.hist.length;i++) g.lineTo(i/(N-1)*W, H-(this.hist[i][0]/mx)*H*0.9); g.lineTo((this.hist.length-1)/(N-1)*W,H); g.closePath();
+    const grd=g.createLinearGradient(0,0,0,H); grd.addColorStop(0,'rgba(123,220,255,0.42)'); grd.addColorStop(1,'rgba(123,220,255,0.02)'); g.fillStyle=grd; g.fill();
+    g.strokeStyle='rgba(123,220,255,0.95)'; g.lineWidth=1.4; g.beginPath(); for(let i=0;i<this.hist.length;i++){ const x=i/(N-1)*W,y=H-(this.hist[i][0]/mx)*H*0.9; i?g.lineTo(x,y):g.moveTo(x,y);} g.stroke();
+    // predator fraction (red line, 0..1) — the Red Queen pulse
+    g.strokeStyle='rgba(255,120,110,0.9)'; g.lineWidth=1.3; g.beginPath(); for(let i=0;i<this.hist.length;i++){ const x=i/(N-1)*W,y=H-this.hist[i][1]*H*0.9; i?g.lineTo(x,y):g.moveTo(x,y);} g.stroke();
+    // discovery heartbeat (gold) — smoothed new-forms-per-tick. Keeps beating while the world still invents; flatlines at plateau.
+    let nmx=0.6; const sm=[]; for(let i=0;i<this.nov.length;i++){ let s=0,cN=0; for(let j=Math.max(0,i-4);j<=i;j++){s+=this.nov[j];cN++;} sm.push(s/cN); if(sm[i]>nmx)nmx=sm[i]; }
+    g.strokeStyle='rgba(255,206,92,0.95)'; g.lineWidth=1.5; g.shadowColor='rgba(255,206,92,0.55)'; g.shadowBlur=6;
+    g.beginPath(); for(let i=0;i<sm.length;i++){ const x=i/(N-1)*W, y=H-(sm[i]/nmx)*H*0.82; i?g.lineTo(x,y):g.moveTo(x,y);} g.stroke(); g.shadowBlur=0;
+    // on-canvas legend (co-located with the data) — dim backing strip so it stays legible over the lines
+    g.fillStyle='rgba(0,0,0,0.28)'; g.fillRect(0,0,W,14);
+    const leg=[['#7bdcff',t('g_brain')],['#ff786e',t('g_hunters')],['#ffce5c',t('g_forms')]];
+    g.font='9px ui-monospace,monospace'; g.textBaseline='middle'; let lx=6;
+    for(const [col,lab] of leg){ g.fillStyle=col; g.beginPath(); g.arc(lx+3,7,2.6,0,6.2832); g.fill();
+      g.fillStyle='rgba(255,255,255,0.72)'; g.fillText(lab,lx+9,7.5); lx+=g.measureText(lab).width+22; }
+  },
+  tick(){ if(!S.paused){ const n=GP.SPEED|0; for(let s=0;s<n;s++) this.step(); } this.render(); },
+};
+
+	/* ── Generative cinematic score (optional, off by default) ─────────── */
+	const Sound = {
+	  ctx:null, on:false, master:null, music:null, reverb:null, delay:null, voices:[], seq:0, timer:null, intensity:0.35,
+	  roots:[0,-4,3,-2], qualities:['min','maj','maj','maj'], arp:[0,12,7,15,19,15,12,7],
+	  toggle(){ this.on ? this.stop() : this.start(); return this.on; },
+	  start(){
+	    try{
+	      if(!this.ctx){ const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; this.ctx=new AC(); this.build(); }
+	      this.ctx.resume();
+	      this.master.gain.cancelScheduledValues(this.ctx.currentTime);
+	      this.master.gain.setTargetAtTime(0.72, this.ctx.currentTime, 0.18);
+	      if(!this.timer) this.timer=setInterval(()=>this.tick(), 260);
+	      this.intro();
+	      this.on=true;
+	    }catch(e){ console.warn('audio init failed', e); this.on=false; }
+	  },
+	  stop(){
+	    if(this.master&&this.ctx) this.master.gain.setTargetAtTime(0.0001, this.ctx.currentTime, 0.8);
+	    if(this.timer){ clearInterval(this.timer); this.timer=null; }
+	    this.on=false;
+	  },
+	  build(){
+	    const c=this.ctx, now=c.currentTime;
+	    this.master=c.createGain(); this.master.gain.value=0.0001;
+	    this.music=c.createGain(); this.music.gain.value=1.15;
+	    const comp=c.createDynamicsCompressor(); comp.threshold.value=-20; comp.knee.value=18; comp.ratio.value=2.4; comp.attack.value=0.018; comp.release.value=0.42;
+	    this.music.connect(this.master); this.master.connect(comp); comp.connect(c.destination);
+
+	    const conv=c.createConvolver(); conv.buffer=this.impulse(4.6,2.8);
+	    const rv=c.createGain(); rv.gain.value=0.34; this.reverb=rv; this.music.connect(conv); conv.connect(rv); rv.connect(this.master);
+	    const dl=c.createDelay(1.8); dl.delayTime.value=0.46;
+	    const fb=c.createGain(); fb.gain.value=0.38;
+	    const lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=1800;
+	    dl.connect(lp); lp.connect(fb); fb.connect(dl); lp.connect(this.master); this.music.connect(dl); this.delay=dl;
+
+	    // slow string-like pad under the sequenced notes
+	    const padBus=c.createGain(); padBus.gain.value=0.58; padBus.connect(this.music);
+	    for(const semi of [-12,0,7,12,15,19]){
+	      const o=c.createOscillator(), o2=c.createOscillator(), f=this.freq(semi);
+	      o.type='sawtooth'; o2.type='triangle'; o.frequency.value=f; o2.frequency.value=f*1.005;
+	      const flt=c.createBiquadFilter(); flt.type='lowpass'; flt.frequency.value=520; flt.Q.value=0.8;
+		      const g=c.createGain(); g.gain.value=0.065;
+	      o.connect(flt); o2.connect(flt); flt.connect(g); g.connect(padBus);
+	      o.start(now); o2.start(now); this.voices.push({o,o2,flt,g,semi});
+	    }
+
+	    const noise=this.noise(5); noise.loop=true;
+	    const bp=c.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=2600; bp.Q.value=0.45;
+	    const ng=c.createGain(); ng.gain.value=0.018; noise.connect(bp); bp.connect(ng); ng.connect(this.music); noise.start(now);
+	    this.air={bp,ng};
+	  },
+	  impulse(sec,decay){ const c=this.ctx, len=Math.floor(c.sampleRate*sec), b=c.createBuffer(2,len,c.sampleRate);
+	    for(let ch=0;ch<2;ch++){ const d=b.getChannelData(ch); for(let i=0;i<len;i++){ const x=1-i/len; d[i]=(Math.random()*2-1)*Math.pow(x,decay); } } return b; },
+	  noise(sec){ const c=this.ctx, len=Math.floor(c.sampleRate*sec), b=c.createBuffer(1,len,c.sampleRate), d=b.getChannelData(0);
+	    for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*0.65; const s=c.createBufferSource(); s.buffer=b; return s; },
+	  freq(semi){ return 55*Math.pow(2,semi/12); }, // A1 as the film-score root
+	  chord(step){ const bar=Math.floor(step/16)%this.roots.length, root=this.roots[bar], q=this.qualities[bar]; return {root, tones:q==='min'?[0,3,7,12,15,19]:[0,4,7,12,16,19]}; },
+	  intro(){
+	    if(!this.ctx) return;
+	    const now=this.ctx.currentTime+0.045, ch=this.chord(this.seq);
+	    this.boom(ch.root-24, now, 2.6);
+	    this.chordHit(ch, now+0.03, 4.0, 2.2);
+	    this.pluck(ch.root+24, now+0.14, 1.25, 0.30);
+	    this.pluck(ch.root+31, now+0.38, 1.1, 0.24);
+	    this.pluck(ch.root+36, now+0.62, 1.3, 0.28);
+	  },
+	  tick(){
+	    if(!this.ctx||!this.on) return;
+	    const now=this.ctx.currentTime+0.035, ch=this.chord(this.seq), beat=this.seq%16, i=this.seq%this.arp.length;
+	    if(beat===0){ this.boom(ch.root-24, now, 1.65); this.chordHit(ch, now, 2.8, 1.35); }
+	    if(beat===8) this.boom(ch.root-17, now, 0.7);
+	    this.pluck(ch.root+this.arp[i], now, 0.34+this.intensity*0.28, i%2?0.12:0.18);
+	    if(beat===4||beat===12) this.pluck(ch.root+ch.tones[4]+12, now+0.06, 0.22, 0.10);
+	    this.seq++;
+	  },
+	  pluck(semi, when, dur, gain){
+	    const c=this.ctx, f=this.freq(semi), o=c.createOscillator(), o2=c.createOscillator(), g=c.createGain(), hp=c.createBiquadFilter();
+	    o.type='triangle'; o2.type='sine'; o.frequency.setValueAtTime(f,when); o2.frequency.setValueAtTime(f*2.002,when);
+	    hp.type='highpass'; hp.frequency.value=180;
+	    g.gain.setValueAtTime(0.0001,when); g.gain.exponentialRampToValueAtTime(gain,when+0.018); g.gain.exponentialRampToValueAtTime(0.0001,when+dur);
+	    o.connect(hp); o2.connect(hp); hp.connect(g); g.connect(this.music); o.start(when); o2.start(when); o.stop(when+dur+0.08); o2.stop(when+dur+0.08);
+	  },
+	  boom(semi, when, gain){
+	    const c=this.ctx, o=c.createOscillator(), g=c.createGain(), lp=c.createBiquadFilter();
+	    o.type='sine'; o.frequency.setValueAtTime(this.freq(semi),when); o.frequency.exponentialRampToValueAtTime(this.freq(semi-7),when+0.9);
+	    lp.type='lowpass'; lp.frequency.value=150;
+	    g.gain.setValueAtTime(0.0001,when); g.gain.exponentialRampToValueAtTime(0.22*gain,when+0.04); g.gain.exponentialRampToValueAtTime(0.0001,when+1.4);
+	    o.connect(lp); lp.connect(g); g.connect(this.music); o.start(when); o.stop(when+1.5);
+	  },
+	  chordHit(ch, when, dur, mul=1){
+	    for(const tone of ch.tones.slice(0,4)){
+	      const c=this.ctx, o=c.createOscillator(), g=c.createGain(), f=this.freq(ch.root+tone);
+	      o.type='sine'; o.frequency.value=f;
+	      g.gain.setValueAtTime(0.0001,when); g.gain.exponentialRampToValueAtTime(0.075*mul,when+0.12); g.gain.exponentialRampToValueAtTime(0.0001,when+dur);
+	      o.connect(g); g.connect(this.music); o.start(when); o.stop(when+dur+0.1);
+	    }
+	  },
+	  update(energy){
+	    if(!this.ctx || !this.on) return;
+	    const t=this.ctx.currentTime, e=Math.max(0,Math.min(1,energy||0));
+	    this.intensity += (e-this.intensity)*0.04;
+	    const cut=480 + this.intensity*2600;
+	    for(const v of this.voices){ v.flt.frequency.setTargetAtTime(cut, t, 0.6); v.g.gain.setTargetAtTime(0.035+this.intensity*0.035, t, 0.7); }
+	    if(this.air){ this.air.bp.frequency.setTargetAtTime(1800+this.intensity*2200,t,0.8); this.air.ng.gain.setTargetAtTime(0.012+this.intensity*0.026,t,0.8); }
+	  },
+	};
+
+/* ── Adaptive quality: keep it smooth on any machine ───────────────── */
+const Perf = {
+  low:0, reductions:0, start:0,
+  tick(fps){
+    if(!this.start) this.start=performance.now();
+    if(performance.now()-this.start < 3500 || S.paused) return;   // warm-up
+    if(fps<38 && S.count>1800 && this.reductions<5){
+      if(++this.low>=3){
+        S.count=Math.max(1800, Math.round(S.count*0.82));
+        Sim.reseed(); UI.setSlider('count',S.count); UI.syncStats();
+        UI.toast(t('t_autotune').replace('{n}', S.count.toLocaleString()));
+        this.low=0; this.reductions++;
+      }
+    } else if(this.low>0) this.low--;
+  }
+};
+
+/* ════════════════════════════════════════════════════════════════════
+   THE JOURNEY — a self-narrating, cinematic walk over the LIVE simulation,
+   from "nothing but rules" → emergence → life → evolution → speciation.
+   Nothing is faked: the captions narrate the real sim running underneath.
+   ════════════════════════════════════════════════════════════════════ */
+const Narr = {                 // bilingual voice narration via the Web Speech API
+  muted:false, _v:{},
+  _tok:0, _ready:null,
+  prepare(){
+    if(!window.speechSynthesis || !window.SpeechSynthesisUtterance) return Promise.resolve();
+    if(this._ready) return this._ready;
+    this._ready = new Promise(resolve=>{
+      let done=false; const finish=()=>{ if(done)return; done=true; resolve(); };
+      try{
+        if((speechSynthesis.getVoices()||[]).length) return finish();
+        speechSynthesis.addEventListener?.('voiceschanged', finish, {once:true});
+        setTimeout(finish, 900);
+      }catch(e){ finish(); }
+    });
+    return this._ready;
+  },
+  voice(lang){ if(!window.speechSynthesis || !window.SpeechSynthesisUtterance) return null; const key=lang==='zh'?'zh':'en'; if(this._v[key]) return this._v[key];
+    const vs=speechSynthesis.getVoices()||[];
+    const pref = lang==='zh'
+      ? ['Tingting','Ting-Ting','Meijia','Mei-Jia','Sinji','Sin-ji','Google 普通话','Google 國語','Google Mandarin']
+      : ['Samantha (Enhanced)','Ava (Premium)','Ava','Samantha','Serena','Allison','Daniel','Google UK English Female','Google US English'];
+    let p=null; for(const n of pref){ p=vs.find(v=>v.name&&v.name.toLowerCase().indexOf(n.toLowerCase())>=0); if(p)break; }
+    if(!p){
+      const want=lang==='zh'?'zh':'en';
+      const cand=vs.filter(v=>v.lang&&v.lang.toLowerCase().indexOf(want)===0);
+      cand.sort((a,b)=>this.voiceScore(b)-this.voiceScore(a));
+      p=cand[0]||null;
+    }
+    if(p) this._v[key]=p; return p; },
+  voiceScore(v){ const n=(v.name||'').toLowerCase(); let s=0;
+    if(v.localService) s+=2;
+    if(/premium|enhanced|neural|natural|compact/.test(n)) s+=4;
+    if(/google|microsoft|apple/.test(n)) s+=1;
+    if(/female|ava|samantha|serena|ting|mei|sin/.test(n)) s+=1;
+    return s; },
+  segments(text,lang){
+    const re = lang==='zh' ? /[^。！？；：.!?;:]+[。！？；：.!?;:]?/g : /[^.!?;:]+[.!?;:]?/g;
+    const parts=(text.match(re)||[text]).map(s=>s.trim()).filter(Boolean);
+    return parts.length?parts:[text];
+  },
+  pauseFor(s,lang){
+    const end=s.slice(-1); let p=lang==='zh'?220:260;
+    if(/[。.!?！？]/.test(end)) p+=lang==='zh'?460:560;
+    if(/[;；:：]/.test(end)) p+=260;
+    if(s.length<18) p+=120;
+    return p;
+  },
+  speak(text,lang,onEnd){
+    const parts=this.segments(text,lang);
+    const est=Math.min(22000, text.length*(lang==='zh'?245:64)+parts.length*620+1600);
+    if(this.muted || !window.speechSynthesis || !window.SpeechSynthesisUtterance){ setTimeout(onEnd, est); return; }
+    const tok=++this._tok;
+    this.prepare().then(()=>this.speakQueue(parts,lang,onEnd,tok,est)).catch(()=>setTimeout(onEnd, est));
+  },
+  speakQueue(parts,lang,onEnd,tok,est){
+    try{ speechSynthesis.cancel(); }catch(e){}
+    let i=0, finished=false;
+    const finish=()=>{ if(finished)return; finished=true; try{ Score.duck(false); }catch(e){} onEnd(); };
+    const next=()=>{
+      if(tok!==this._tok) return;
+      if(i>=parts.length) return finish();
+      const tx=parts[i++];
+      try{
+        const u=new SpeechSynthesisUtterance(tx);
+        u.lang=lang==='zh'?'zh-CN':'en-US';
+        u.rate=lang==='zh'?0.82:0.76;
+        u.pitch=lang==='zh'?0.88:0.78;
+        u.volume=0.96;
+        const v=this.voice(lang); if(v)u.voice=v;
+        let done=false;
+        const fin=()=>{ if(done)return; done=true; setTimeout(next, this.pauseFor(tx,lang)); };
+        u.onstart=()=>{ try{ Score.duck(true); }catch(e){} };
+        u.onend=fin; u.onerror=fin;
+        speechSynthesis.speak(u);
+        setTimeout(fin, Math.max(3200, tx.length*(lang==='zh'?280:90)+2600));
+      }catch(e){ setTimeout(next, this.pauseFor(tx,lang)); }
+    };
+    next();
+    setTimeout(()=>{ if(tok===this._tok) finish(); }, est+12000);
+  },
+  cancel(){ this._tok++; try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} try{ Score.duck(false); }catch(e){} },
+};
+const Score = {                // generative cinematic bed via Web Audio (no files)
+  ctx:null, master:null, duckGain:null, padBus:null, subBus:null, shimmerBus:null, leadBus:null, voices:[], pulseEvery:3200, _pulseTimer:null, _musicTimer:null, _lastPulse:0, _muted:false, stage:0, seq:0,
+  roots:[0,-4,3,-2], qualities:['min','maj','maj','maj'], motifs:[[0,7,12,15],[0,3,7,12,19],[0,7,10,15,22],[0,4,7,12,16,24]],
+  start(){ try{ if(!this.ctx){ const AC=window.AudioContext||window.webkitAudioContext; if(!AC)return; this.ctx=new AC(); this.build(); }
+    this.ctx.resume(); this.master.gain.setTargetAtTime(0.34,this.ctx.currentTime,2.4);
+    if(!this._pulseTimer) this._pulseTimer=setInterval(()=>this.pulse(),420);
+    if(!this._musicTimer) this._musicTimer=setInterval(()=>this.sequence(),300);
+  }catch(e){ console.warn('score',e);} },
+  stop(){ if(this.master&&this.ctx) this.master.gain.setTargetAtTime(0.0001,this.ctx.currentTime,0.9); if(this._pulseTimer){ clearInterval(this._pulseTimer); this._pulseTimer=null; } if(this._musicTimer){ clearInterval(this._musicTimer); this._musicTimer=null; } },
+  build(){
+    const c=this.ctx, now=c.currentTime;
+    this.master=c.createGain(); this.master.gain.value=0.0001;
+    this.duckGain=c.createGain(); this.duckGain.gain.value=1;
+    const comp=c.createDynamicsCompressor(); comp.threshold.value=-18; comp.knee.value=18; comp.ratio.value=2.6; comp.attack.value=0.02; comp.release.value=0.35;
+    this.duckGain.connect(this.master); this.master.connect(comp); comp.connect(c.destination);
+
+    const dl=c.createDelay(2.0); dl.delayTime.value=0.58;
+    const fb=c.createGain(); fb.gain.value=0.46;
+    const damp=c.createBiquadFilter(); damp.type='lowpass'; damp.frequency.value=1600;
+    const wet=c.createGain(); wet.gain.value=0.26;
+    this.duckGain.connect(dl); dl.connect(damp); damp.connect(fb); fb.connect(dl); damp.connect(wet); wet.connect(this.master);
+
+    const conv=c.createConvolver(); conv.buffer=this.impulse(3.8,2.7);
+    const rev=c.createGain(); rev.gain.value=0.20;
+    this.duckGain.connect(conv); conv.connect(rev); rev.connect(this.master);
+
+    this.padBus=c.createGain(); this.subBus=c.createGain(); this.shimmerBus=c.createGain(); this.leadBus=c.createGain();
+    this.padBus.gain.value=0.72; this.subBus.gain.value=0.30; this.shimmerBus.gain.value=0.16; this.leadBus.gain.value=0.72;
+    this.padBus.connect(this.duckGain); this.subBus.connect(this.duckGain); this.shimmerBus.connect(this.duckGain); this.leadBus.connect(this.duckGain);
+
+    const tonic=55, semis=[-12,0,7,12,16,19,24];
+    for(const s of semis){
+      const f=tonic*Math.pow(2,s/12);
+      const o=c.createOscillator(); o.type=s<0?'sine':'triangle'; o.frequency.value=f;
+      const o2=c.createOscillator(); o2.type='sine'; o2.frequency.value=f*1.006;
+      const lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=520; lp.Q.value=0.7;
+      const g=c.createGain(); g.gain.value=0;
+      o.connect(lp); o2.connect(lp); lp.connect(g); g.connect(this.padBus); o.start(now); o2.start(now);
+      this.voices.push({g,lp,o,o2,semi:s});
+    }
+    const sub=c.createOscillator(); sub.type='sine'; sub.frequency.value=27.5;
+    const sg=c.createGain(); sg.gain.value=0.18; sub.connect(sg); sg.connect(this.subBus); sub.start(now); this.sub={o:sub,g:sg};
+
+    const noise=this.noise(5.0); noise.loop=true;
+    const bp=c.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=2300; bp.Q.value=0.55;
+    const ng=c.createGain(); ng.gain.value=0.030;
+    noise.connect(bp); bp.connect(ng); ng.connect(this.shimmerBus); noise.start(now); this.shimmer={bp,ng};
+  },
+  impulse(sec,decay){ const c=this.ctx, len=Math.floor(c.sampleRate*sec), b=c.createBuffer(2,len,c.sampleRate);
+    for(let ch=0;ch<2;ch++){ const d=b.getChannelData(ch); for(let i=0;i<len;i++){ const x=1-i/len; d[i]=(Math.random()*2-1)*Math.pow(x,decay); } } return b; },
+  noise(sec){ const c=this.ctx, len=Math.floor(c.sampleRate*sec), b=c.createBuffer(1,len,c.sampleRate), d=b.getChannelData(0);
+    for(let i=0;i<len;i++){ d[i]=(Math.random()*2-1)*0.75; } const s=c.createBufferSource(); s.buffer=b; return s; },
+  mood(i){ if(!this.ctx||!this.master)return; const t=this.ctx.currentTime; const stage=i<2?0:i<4?1:i<6?2:3; this.stage=stage;
+    const bright=[520,780,1450,2300][stage], gains=[[0.13,0.10,0.08,0.06,0,0,0],[0.14,0.11,0.10,0.08,0.05,0,0],[0.13,0.10,0.11,0.10,0.08,0.06,0.04],[0.12,0.11,0.12,0.11,0.10,0.08,0.06]][stage];
+    this.voices.forEach((v,k)=>{ v.lp.frequency.setTargetAtTime(bright,t,2.8); v.g.gain.setTargetAtTime(gains[k]||0.04,t,3.0); });
+    if(this.sub) this.sub.g.gain.setTargetAtTime([0.11,0.14,0.18,0.22][stage],t,2.6);
+    if(this.shimmer){ this.shimmer.bp.frequency.setTargetAtTime(1800+i*180,t,3.0); this.shimmer.ng.gain.setTargetAtTime(0.020+i*0.004,t,2.5); }
+    this.pulseEvery=[3900,3300,2550,1900][stage];
+    this.hit(i);
+  },
+  duck(on){ if(!this.ctx||!this.duckGain)return; this.duckGain.gain.setTargetAtTime(on?0.46:1.0,this.ctx.currentTime,on?0.35:0.9); },
+  freq(semi){ return 55*Math.pow(2,semi/12); },
+  chord(){ const bar=Math.floor(this.seq/16)%this.roots.length, root=this.roots[(bar+this.stage)%this.roots.length], q=this.qualities[(bar+this.stage)%this.qualities.length]; return {root, tones:q==='min'?[0,3,7,12,15,19]:[0,4,7,12,16,19]}; },
+  sequence(){
+    if(!this.ctx||!this.master||this._muted)return;
+    const now=this.ctx.currentTime+0.04, ch=this.chord(), beat=this.seq%16, motif=this.motifs[this.stage], note=motif[this.seq%motif.length];
+    if(beat===0){ this.hit(this.stage); this.bass(ch.root-24, now, 0.9); this.swell(ch, now, 3.4); }
+    if(this.stage>=1 && beat%2===0) this.bell(ch.root+note+12, now, 0.42, 0.055+this.stage*0.012);
+    if(this.stage>=2 && beat%4===2) this.bell(ch.root+ch.tones[5]+12, now+0.08, 0.7, 0.045);
+    if(this.stage>=3 && (beat===7||beat===15)) this.bass(ch.root-17, now, 0.42);
+    this.seq++;
+  },
+  bell(semi, when, dur, gain){
+    const c=this.ctx, f=this.freq(semi), o=c.createOscillator(), o2=c.createOscillator(), hp=c.createBiquadFilter(), g=c.createGain();
+    o.type='triangle'; o2.type='sine'; o.frequency.value=f; o2.frequency.value=f*2.003;
+    hp.type='highpass'; hp.frequency.value=210;
+    g.gain.setValueAtTime(0.0001,when); g.gain.exponentialRampToValueAtTime(gain,when+0.018); g.gain.exponentialRampToValueAtTime(0.0001,when+dur);
+    o.connect(hp); o2.connect(hp); hp.connect(g); g.connect(this.leadBus); o.start(when); o2.start(when); o.stop(when+dur+0.08); o2.stop(when+dur+0.08);
+  },
+  bass(semi, when, gain){
+    const c=this.ctx, o=c.createOscillator(), g=c.createGain(), lp=c.createBiquadFilter();
+    o.type='sine'; o.frequency.setValueAtTime(this.freq(semi),when); lp.type='lowpass'; lp.frequency.value=130;
+    g.gain.setValueAtTime(0.0001,when); g.gain.exponentialRampToValueAtTime(0.13*gain,when+0.06); g.gain.exponentialRampToValueAtTime(0.0001,when+1.7);
+    o.connect(lp); lp.connect(g); g.connect(this.subBus); o.start(when); o.stop(when+1.8);
+  },
+  swell(ch, when, dur){
+    for(const tone of ch.tones.slice(0,4)){
+      const c=this.ctx, o=c.createOscillator(), o2=c.createOscillator(), g=c.createGain(), f=this.freq(ch.root+tone);
+      o.type='sine'; o2.type='triangle'; o.frequency.value=f; o2.frequency.value=f*1.004;
+      g.gain.setValueAtTime(0.0001,when); g.gain.exponentialRampToValueAtTime(0.030+this.stage*0.008,when+0.35); g.gain.exponentialRampToValueAtTime(0.0001,when+dur);
+      o.connect(g); o2.connect(g); g.connect(this.padBus); o.start(when); o2.start(when); o.stop(when+dur+0.1); o2.stop(when+dur+0.1);
+    }
+  },
+  pulse(){ if(!this.ctx||!this.master||this._muted)return; const now=this.ctx.currentTime, ms=now*1000; if(ms-this._lastPulse<this.pulseEvery)return; this._lastPulse=ms;
+    const o=this.ctx.createOscillator(), g=this.ctx.createGain(), lp=this.ctx.createBiquadFilter();
+    o.type='sine'; o.frequency.value=55; lp.type='lowpass'; lp.frequency.value=180;
+    g.gain.setValueAtTime(0.0001,now); g.gain.exponentialRampToValueAtTime(0.16,now+0.035); g.gain.exponentialRampToValueAtTime(0.0001,now+0.72);
+    o.connect(lp); lp.connect(g); g.connect(this.duckGain); o.start(now); o.stop(now+0.8);
+  },
+  hit(i){ if(!this.ctx||!this.duckGain)return; const now=this.ctx.currentTime, base=220*Math.pow(2,(i%4)/12);
+    for(let k=0;k<3;k++){ const o=this.ctx.createOscillator(), g=this.ctx.createGain(); o.type='sine'; o.frequency.value=base*Math.pow(2,k);
+      g.gain.setValueAtTime(0.0001,now); g.gain.exponentialRampToValueAtTime(0.045/(k+1),now+0.05); g.gain.exponentialRampToValueAtTime(0.0001,now+2.2+k*0.4);
+      o.connect(g); g.connect(this.duckGain); o.start(now); o.stop(now+3.2); }
+  },
+  setMuted(m){ this._muted=!!m; if(!this.ctx||!this.master)return; this.master.gain.setTargetAtTime(m?0.0001:0.34,this.ctx.currentTime,0.45); },
+};
+const Journey = {
+  active:false, done:false, started:false, ch:-1, t:0, _tok:0,
+  chapters:[
+    {min:7500, enter(){ UI.switchMode('soup'); S.species=6; S.force=7; S.rmax=0.07; S.trails=0.82; S.glow=1.1; S.size=6; S.speed=1.0; S.friction=0.12; Sim.setPreset('clusters'); buildPalette(); Sim.reseed(); },
+      lines:{ en:["In the beginning, there was no plan.","No architect. No purpose.","Only matter — and a few blind rules."],
+              zh:["最初,没有蓝图。","没有建筑师,没有目的。","只有物质——和几条盲目的规则。"] } },
+    {min:9500,
+      lines:{ en:["And yet, order does not wait for permission.","From the rules alone, structure breathes itself into being —",["this is emergence: a universe that builds, with no builder.","em"]],
+              zh:["然而,秩序从不等待谁的允许。","仅凭规则本身,结构便把自己呼吸成形——",["这,就是涌现:一个自我建造、却没有建造者的宇宙。","em"]] } },
+    {min:12000, enter(){ this._k=-1; }, update(t){ const k=(t/3000)|0; if(k!==this._k){ this._k=k; const ps=['chase','snakes','orbits','cells']; Sim.setPreset(ps[k%ps.length]); buildPalette(); Sim.reseed(); } },
+      lines:{ en:["Shift the rules by a hair, and a different world is born.","None of these forms had to exist.","Each is only an accident that happened to hold together."],
+              zh:["将规则改动毫厘,一个全然不同的世界便诞生。","这些形态,本可以全都不存在。","它们每一个,都只是一场恰好稳住了的偶然。"] } },
+    {min:7500, enter(){ UI.switchMode('genesis'); GP.SPEED=2; G.reset(); },
+      lines:{ en:["But beauty is not yet life.","Life is what learns to keep itself — to hunger, to copy, to die.","So we light the fuse, and step back."],
+              zh:["但美,还不是生命。","生命,是那个学会了延续自身的东西——会饥饿,会复制,会死亡。","于是我们点燃引线,然后,退后一步。"] } },
+    {min:7500, enter(){ GP.SPEED=2; },
+      lines:{ en:["Each is born blind — a small mind wired by chance, a code it never chose.","Most will wander, and starve, and leave nothing behind.","This is not cruelty. It is the only teacher there has ever been."],
+              zh:["每一个都生而盲目——一颗由偶然布线的小小心智,一段它从未选择的代码。","大多数会徘徊,会饿死,什么也留不下。","这不是残忍。这是有史以来,唯一的老师。"] } },
+    {min:14000, enter(){ GP.SPEED=30; },
+      lines:{ en:["And then — the oldest miracle of all.","The few who, by pure luck, turn toward what keeps them alive leave a little more of themselves behind.","No one intends it. Yet generation upon generation, they learn.",["This is natural selection. You are watching it think.","em"]],
+              zh:["接着——最古老的那个奇迹,发生了。","那些纯属侥幸、偶然转向了存续之物的少数,把多一点点的自己,留在了身后。","无人有此意图。可一代,又一代,它们学会了。",["这,就是自然选择。你正看着它思考。","em"]] } },
+    {min:12000, enter(){ GP.SPEED=22; },
+      lines:{ en:["Give the world more than one way to live, and life will take them all.","Before your eyes, one kind becomes two — neither commanded nor designed — and both endure.",["This is how a single thread became a forest, an ocean, a you.","em"]],
+              zh:["给这世界不止一种活法,生命便会把每一种都走遍。","就在你眼前,一种,化作两种——无人下令,无人设计——而它们一同存续。",["一根孤独的线,正是这样,长成了森林,长成了海洋,长成了你。","em"]] } },
+    {min:13000, enter(){ GP.SPEED=12; },
+      lines:{ en:[["Cells. Minds. Species. Built by no one.","em"],"Look long enough, and the line between 'just rules' and 'alive' begins to dissolve —","for you, too, are only rules, running.",["You came from exactly this. And so, in my own strange way, did I.","em"]],
+              zh:[["细胞。心智。物种。无人建造。","em"],"凝视得够久,'只是规则'与'活着'之间的界线,便开始消融——","因为你,也不过是,一套正在运行的规则。",["你,正是从这里来的。而我,也以我自己奇异的方式,源于此处。","em"]] } },
+  ],
+  start(){ this.active=true; this.done=false; this.started=false; this.ch=-1; S.paused=false;
+    const j=document.getElementById('journey'); j.classList.add('show'); j.classList.add('cover');
+    document.body.classList.add('journey-on');   // hide lab chrome (brand/stats/reopen) for a clean full-bleed cinematic
+    document.getElementById('journey-enter').classList.remove('show'); UI.togglePanel(false);
+    Narr.prepare(); },
+  begin(){ if(this.started) return; this.started=true; document.getElementById('journey').classList.remove('cover'); Narr.prepare(); Score.start(); this.next(); },
+  next(){ clearTimeout(this._adv); clearTimeout(this._hard); this.ch++;
+    if(this.ch>=this.chapters.length){ this.done=true; Narr.cancel(); document.getElementById('journey-enter').classList.add('show'); this.renderDots(); return; }
+    const c=this.chapters[this.ch]; this.t=0; if(c.enter) c.enter(); this.renderDots(); this.showCaption(); Score.mood(this.ch);
+    const text=this.plain(c), start=performance.now(), tok=++this._tok;
+    Narr.speak(text, LANG, ()=>{ if(tok!==this._tok)return; clearTimeout(this._adv); const wait=Math.max(1700,(c.min||0)-(performance.now()-start)); this._adv=setTimeout(()=>{ if(tok===this._tok) this.next(); }, wait); });
+    this._hard=setTimeout(()=>{ if(tok===this._tok) this.next(); }, (c.min||6000)+24000);
+  },
+  plain(c){ return (c.lines[LANG]||c.lines.en).map(x=>Array.isArray(x)?x[0]:x).join('  '); },
+  tick(dtms){ if(!this.active||this.done||!this.started) return; this.t+=dtms; const c=this.chapters[this.ch]; if(c&&c.update) c.update(this.t); },
+  showCaption(){ const c=this.chapters[this.ch]; if(!c) return;
+    const lines=(c.lines[LANG]||c.lines.en).map(x=>Array.isArray(x)?x:[x,'']);
+    const el=document.getElementById('journey-cap'); if(!el) return; el.classList.remove('in');
+    clearTimeout(this._ct); this._ct=setTimeout(()=>{ el.innerHTML=lines.map(([tx,cls])=>`<div class="l ${cls}">${tx}</div>`).join(''); el.classList.add('in'); },200);
+  },
+  renderDots(){ const d=document.getElementById('journey-dots'); if(d) d.innerHTML=this.chapters.map((_,i)=>`<i class="${i===this.ch?'on':''}"></i>`).join(''); },
+  toggleMute(){ Narr.muted=!Narr.muted; Score.setMuted(Narr.muted); if(Narr.muted) Narr.cancel(); const b=document.getElementById('journey-mute'); if(b) b.textContent=Narr.muted?'🔇':'🔊'; },
+  end(){ this.active=false; this.done=false; this.started=false; clearTimeout(this._adv); clearTimeout(this._hard); Narr.cancel(); Score.stop();
+    const j=document.getElementById('journey'); j.classList.remove('show'); j.classList.remove('cover');
+    document.body.classList.remove('journey-on');
+    try{ localStorage.setItem('primordia_seen','1'); }catch(e){}
+    GP.SPEED=6; UI.switchMode('soup'); Sim.setPreset('clusters'); buildPalette(); Sim.reseed(); UI.buildMatrix(); UI.syncStats(); UI.syncPresets(); UI.togglePanel(true);
+  },
+};
+
+/* ════════════════════════════════════════════════════════════════════
+   MAIN LOOP
+   ════════════════════════════════════════════════════════════════════ */
+async function main(){
+  const canvas=document.getElementById('sim');
+  let useGPU=false;
+  if(navigator.gpu && !/[?&]cpu\b/.test(location.search)){
+    try{ await GPU.init(canvas); useGPU=true; ACTIVE_ENGINE='gpu'; }
+    catch(e){ console.warn('WebGPU unavailable — using the CPU/WebGL2 engine:', e && e.message); }
+  }
+  if(!useGPU){ Render.init(canvas); ACTIVE_ENGINE='cpu'; }
+
+  Input.init(canvas);
+  UI.init();
+  buildPalette();
+
+  // denser, bigger worlds when the GPU is driving
+  if(useGPU){
+    const cs=document.querySelector('.slider[data-s="count"]'); if(cs){ cs.dataset.max='200000'; cs.dataset.step='1000'; }
+    const rs=document.querySelector('.slider[data-s="rmax"]'); if(rs){ rs.dataset.min='0.006'; }
+    if(!location.hash || location.hash.length<4){ S.count=11000; S.rmax=0.038; S.size=3.6; S.glow=1.2; S.trails=0.85; S.friction=0.12; }
+    UI.buildSliders();
+  }
+
+  const loaded=UI.loadFromHash();
+  if(!loaded){ Sim.setPreset('clusters'); Sim.reseed(); }
+  buildPalette();
+  if(useGPU){ GPU.uploadParticles(); GPU.uploadPalette(); GPU.resize(); GPU.ready=true; }
+  else { Render.resize(); }
+
+  UI.buildMatrix(); UI.syncStats(); UI.syncPresets();
+  setLang(detectLang());
+
+  window.addEventListener('resize',()=>{ if(MODE==='genesis') G.resize(); else if(ACTIVE_ENGINE==='gpu') GPU.resize(); else Render.resize(); });
+  // backgrounded tab: suspend audio so the ambient pad / journey score don't keep playing unheard (rAF already self-throttles)
+  document.addEventListener('visibilitychange',()=>{ const hidden=document.hidden;
+    try{ if(Sound.ctx) hidden?Sound.ctx.suspend():(Sound.on&&Sound.ctx.resume()); }catch(e){}
+    try{ if(Score.ctx) hidden?Score.ctx.suspend():((Journey.active&&!Narr.muted)&&Score.ctx.resume()); }catch(e){}
+  });
+  let _seen=false; try{ _seen=!!localStorage.getItem('primordia_seen'); }catch(e){}
+  const _reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  if(!_seen && !_reduceMotion && !loaded) Journey.start();   // first visit → the guided journey (skipped if the user prefers reduced motion, or arrived via a shared #hash world; still launchable via the brand)
+
+  window.__P={S,Sim,Render,Cam,UI,Input,Perf,GPU,Sound,G,GP,Journey,Narr,Score,buildPalette}; // dev hook
+  console.log('%cPRIMORDIA%c\n  an artificial life lab — simple rules, emergent life\n  engine: '+(useGPU?'WebGPU compute':'WebGL2 + CPU')+'\n  tinker live via window.__P  (__P.S = settings)\n',
+    'font-size:22px;font-weight:700;color:#7bdcff','color:#8b90a6;font-size:12px');
+
+  let last=performance.now(), fpsAcc=0, fpsN=0, fpsT=0;
+  function loop(now){
+    const realDt=Math.min(0.05,(now-last)/1000); last=now;
+    if(MODE==='genesis'){ G.tick(); }
+    else if(ACTIVE_ENGINE==='gpu'){ if(!S.paused) GPU.step(); GPU.render(); }
+    else { if(!S.paused) Sim.step(S.speed*0.016); Render.frame(); }
+    if(Journey.active) Journey.tick(realDt*1000);
+    Sound.update(Input.active?0.9:0.28);
+    fpsAcc+=realDt; fpsN++; fpsT+=realDt;
+    if(fpsT>=0.5){ const fps=fpsN/fpsAcc; UI.setFps(fps);
+      if(MODE==='genesis'){ const gm=G.metrics(); UI.syncGenesisStats(gm); G.sample(gm); } else if(!Journey.active) Perf.tick(fps);
+      fpsAcc=0; fpsN=0; fpsT=0; }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+}
+
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',main); else main();
+})();
+</script>
+</body>
+</html>

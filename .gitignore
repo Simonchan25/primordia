@@ -1,0 +1,9 @@
+# macOS
+.DS_Store
+
+# local tooling / preview config
+.claude/
+
+# editor
+.vscode/
+*.swp
