@@ -1,5 +1,7 @@
 # PRIMORDIA — an artificial life lab · 人工生命实验室
 
+### ▶ [**Play it live**](https://simonchan25.github.io/primordia/) · [在线体验](https://simonchan25.github.io/primordia/)
+
 > Thousands of particles. A handful of rules. Nobody designs the creatures that appear.
 >
 > 成千上万个粒子，几条简单规则。没有人设计涌现出的生命。
