@@ -2101,12 +2101,14 @@ const Narr = {                 // bilingual voice narration via the Web Speech A
     const next=()=>{
       if(tok!==this._tok) return;
       if(i>=parts.length) return finish();
-      const tx=parts[i++];
+      const isLast=(i===parts.length-1), frac=parts.length>1?i/(parts.length-1):0; const tx=parts[i++];
       try{
         const u=new SpeechSynthesisUtterance(tx);
         u.lang=lang==='zh'?'zh-CN':'en-US';
-        u.rate=lang==='zh'?0.82:0.76;
-        u.pitch=lang==='zh'?0.88:0.78;
+        // gentle intonation arc (less monotone): rise toward the middle of a chapter, settle slower & lower on the final "landing" line
+        const bRate=lang==='zh'?0.82:0.76, bPitch=lang==='zh'?0.88:0.78, arc=Math.sin(frac*Math.PI);
+        u.rate  = isLast ? bRate-0.05  : +(bRate+0.03*arc).toFixed(3);
+        u.pitch = isLast ? bPitch-0.06 : +(bPitch+0.05*arc).toFixed(3);
         u.volume=0.96;
         const v=this.voice(lang); if(v)u.voice=v;
         let done=false;
