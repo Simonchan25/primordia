@@ -34,11 +34,9 @@
 
   /* brand */
   .brand{position:fixed;top:18px;left:22px;z-index:5;cursor:pointer;user-select:none}
-  .brand:hover h1{text-shadow:0 0 36px rgba(123,220,255,0.5)}
-  .brand h1{font-size:21px;font-weight:700;letter-spacing:.42em;
-    background:linear-gradient(90deg,var(--accent),var(--accent2));
-    -webkit-background-clip:text;background-clip:text;color:transparent;
-    text-shadow:0 0 30px rgba(123,220,255,0.25)}
+  .brand:hover h1{color:#fff}
+  .brand h1{font-size:20px;font-weight:400;letter-spacing:.44em;padding-left:.44em;
+    color:#e8ebf5;text-shadow:0 1px 12px rgba(0,0,0,.55);transition:color .25s}
   .brand p{font-size:10.5px;letter-spacing:.34em;text-transform:uppercase;color:var(--muted);margin-top:3px;text-shadow:0 1px 8px rgba(0,0,0,0.8)}
 
   /* stats */
@@ -75,8 +73,8 @@
     transition:all .15s;user-select:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
   button:hover{background:rgba(255,255,255,0.11);border-color:rgba(255,255,255,0.2)}
   button:active{transform:scale(.96)}
-  button.primary{background:linear-gradient(135deg,rgba(123,220,255,0.22),rgba(255,123,213,0.22));border-color:rgba(123,220,255,0.35)}
-  button.primary:hover{background:linear-gradient(135deg,rgba(123,220,255,0.34),rgba(255,123,213,0.34))}
+  button.primary{background:rgba(123,220,255,0.13);border-color:rgba(123,220,255,0.34);color:#dcf3ff}
+  button.primary:hover{background:rgba(123,220,255,0.2);border-color:rgba(123,220,255,0.5)}
   button.on{background:rgba(70,230,160,0.18);border-color:rgba(70,230,160,0.45);color:#bdf7dc}
   button.icon{padding:7px 9px}
   .grow{flex:1}
@@ -173,20 +171,27 @@
   body.lang-zh .journey__cap .l{letter-spacing:.02em;line-height:1.7}
   .journey__barbtns{display:flex;gap:8px}
   .journey.cover .journey__bar,.journey.cover .journey__capwrap{opacity:0;pointer-events:none}
-  .journey__cover{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;opacity:0;pointer-events:none;transition:opacity .7s}
-  .journey.cover .journey__cover{opacity:1;pointer-events:auto}
-  .journey__cover h1{font-size:clamp(34px,7vw,78px);font-weight:700;letter-spacing:.34em;padding-left:.34em;
-    background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 70px rgba(123,220,255,0.28)}
-  .journey__sub{color:var(--muted);font-size:clamp(13px,1.8vw,17px);letter-spacing:.05em;margin-bottom:14px}
-  .journey__langlbl{font-size:10px;letter-spacing:.22em;color:var(--muted);text-transform:uppercase;margin-bottom:2px;opacity:.8}
-  .journey__lang{display:flex;gap:10px;margin:2px 0 22px;pointer-events:auto}
-  .journey__lang button{font-size:13px;padding:8px 18px;border-radius:20px;background:rgba(255,255,255,0.05);border:1px solid var(--stroke);color:var(--muted);transition:all .15s}
-  .journey__lang button:hover{color:var(--txt);background:rgba(255,255,255,0.1)}
-  .journey__lang button.on{background:rgba(123,220,255,0.16);border-color:rgba(123,220,255,0.4);color:var(--accent)}
-  .journey__begin{padding:14px 40px;font-size:15px;justify-content:center}
-  .journey__plain{margin-top:14px;background:none;border:none;color:var(--muted);font-size:12.5px}
+  .journey__cover{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;opacity:0;pointer-events:none;transition:opacity .8s ease;
+    background:radial-gradient(130% 105% at 50% 40%,rgba(6,7,13,0.14),rgba(3,4,8,0.62) 62%,rgba(3,4,8,0.86) 100%)}
+  .journey.cover .journey__cover{opacity:1;pointer-events:auto;-webkit-backdrop-filter:blur(19px) brightness(.78) saturate(.62);backdrop-filter:blur(19px) brightness(.78) saturate(.62)}
+  .journey__cover h1{font-size:clamp(40px,8.4vw,94px);font-weight:200;letter-spacing:.34em;padding-left:.34em;line-height:1;margin:0;
+    background:linear-gradient(180deg,#f7f9ff,#c2cadf 118%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+    filter:drop-shadow(0 3px 34px rgba(0,0,0,.45))}
+  .journey.cover .journey__cover h1{animation:coalesce 1.6s cubic-bezier(.19,.7,.2,1) both}
+  @keyframes coalesce{from{opacity:0;letter-spacing:.66em}to{opacity:1;letter-spacing:.34em}}
+  .journey__sub{color:#b6bccf;font-size:clamp(13px,1.55vw,16px);letter-spacing:.15em;font-weight:300;margin:30px 0 0;position:relative;padding-bottom:34px}
+  .journey__sub::after{content:"";position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:60px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.24),transparent)}
+  .journey__langlbl{font-size:9.5px;letter-spacing:.36em;color:#787e98;text-transform:uppercase;margin:0 0 13px;font-weight:500}
+  .journey__lang{display:inline-flex;gap:0;margin:0 0 32px;pointer-events:auto;border:1px solid rgba(255,255,255,.16);border-radius:8px;overflow:hidden}
+  .journey__lang button{font-size:12px;letter-spacing:.1em;padding:9px 24px;background:transparent;border:none;border-right:1px solid rgba(255,255,255,.12);color:var(--muted);border-radius:0;transition:color .2s,background .2s}
+  .journey__lang button:last-child{border-right:none}
+  .journey__lang button:hover{color:var(--txt);background:rgba(255,255,255,.05)}
+  .journey__lang button.on{background:#eceefa;color:#06080d;font-weight:500}
+  .journey__begin{padding:15px 52px;font-size:12px;letter-spacing:.3em;text-transform:uppercase;font-weight:500;justify-content:center;
+    color:#f2f4fb;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.26);border-radius:8px}
+  .journey__begin:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.46);transform:translateY(-1px)}
+  .journey__plain{margin-top:20px;background:none;border:none;color:#767c93;font-size:12px;letter-spacing:.03em;transition:color .2s}
   .journey__plain:hover{color:var(--txt)}
-  body.lang-zh .journey__cover h1{letter-spacing:.16em;padding-left:.16em}
   body.lang-zh .journey__sub{letter-spacing:.1em}
 
   .modeswitch{display:flex;gap:6px;background:rgba(255,255,255,0.04);border:1px solid var(--stroke);border-radius:11px;padding:4px;margin-bottom:4px}
@@ -422,7 +427,7 @@
         <button data-lang="en">English</button>
         <button data-lang="zh">中文</button>
       </div>
-      <button class="primary journey__begin" id="journey-begin" data-i18n="j_begin">▶  Begin</button>
+      <button class="primary journey__begin" id="journey-begin" data-i18n="j_begin">Begin</button>
       <button class="journey__plain" id="journey-coverskip" data-i18n="j_straight">skip straight to the lab →</button>
     </div>
     <div class="journey__bar">
@@ -495,7 +500,7 @@ const I18N = {
     ins_senses:'SENSES', ins_thrust:'go', ins_turn:'turn', ins_bite:'bite',
     ins_gen:'gen', ins_lineage:'lineage', ins_wires:'wires', ins_hunter:'hunter', ins_grazer:'grazer', ins_dead:'— this one has died —',
     ins_size:'size', ins_speed:'speed', ins_sense:'sense',
-    j_skip:'Skip ⏎', j_enter:'Enter the lab →', j_tagline:'a meditation on where life comes from', j_begin:'▶  Begin', j_straight:'skip straight to the lab →',
+    j_skip:'Skip', j_enter:'Enter the lab →', j_tagline:'a meditation on where life comes from', j_begin:'Begin', j_straight:'skip straight to the lab →',
     aria_lang:'Switch language', aria_mute:'Toggle narration & music', aria_brand:'Replay the guided journey',
     aria_touchmode:'Toggle attract / repel for touch', t_attractMode:'Touch drag now attracts 🧲', t_repelMode:'Touch drag now repels 💥',
     aria_canvas:'Live artificial-life simulation — use the control panel to shape it', t_deviceLost:'Graphics device lost — please reload the page', aria_fs:'Toggle fullscreen', aria_replay:'Replay the opening journey', story_btn:'🎬 The Story <span style="opacity:.55">· why I made this</span>',
@@ -543,7 +548,7 @@ const I18N = {
     ins_senses:'感官', ins_thrust:'前进', ins_turn:'转向', ins_bite:'撕咬',
     ins_gen:'代', ins_lineage:'谱系', ins_wires:'连线', ins_hunter:'捕食者', ins_grazer:'食草', ins_dead:'—— 它已死去 ——',
     ins_size:'体型', ins_speed:'速度', ins_sense:'视野',
-    j_skip:'跳过 ⏎', j_enter:'进入实验室 →', j_tagline:'一场关于生命从何而来的冥想', j_begin:'▶  开始', j_straight:'直接进入实验室 →',
+    j_skip:'跳过', j_enter:'进入实验室 →', j_tagline:'一场关于生命从何而来的冥想', j_begin:'开始', j_straight:'直接进入实验室 →',
     aria_lang:'切换语言', aria_mute:'切换旁白与音乐', aria_brand:'重播导览旅程',
     aria_touchmode:'切换 吸引/排斥(触摸)', t_attractMode:'触摸拖动:现在吸引 🧲', t_repelMode:'触摸拖动:现在排斥 💥',
     aria_canvas:'实时人工生命模拟 —— 用控制台来塑造它', t_deviceLost:'图形设备已丢失 —— 请刷新页面', aria_fs:'切换全屏', aria_replay:'重看开场旅程', story_btn:'🎬 纪录片 <span style="opacity:.55">· 我为什么做它</span>',
