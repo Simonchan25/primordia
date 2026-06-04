@@ -424,8 +424,8 @@ const I18N = {
     eng_gpu:'GPU · WebGPU compute', eng_cpu:'CPU · WebGL2',
     err_nowebgl2:'WebGL2 is required and not available in this browser.',
     modeSoup:'🌌 Soup', modeGenesis:'🧬 Genesis',
-    g_reset:'↻ New world', g_evoTitle:'Evolution', g_graphTitle:'What is evolving · brain · predators · new forms',
-    g_hint:'<b style="color:#7bdcff">brain</b> · <b style="color:#ff786e">predators</b> · <b style="color:#ffce5c">new forms</b> — each dot is a creature; <b>nobody scripted them</b>. <b style="color:#9ff5c8">Click the world to drop food.</b>',
+    g_reset:'↻ New world', g_evoTitle:'Evolution', g_graphTitle:'Three signals, over time',
+    g_hint:'three live readings: <b style="color:#7bdcff">brain complexity</b> · <b style="color:#ff786e">predator share</b> · <b style="color:#ffce5c">new-form rate</b>. Each dot is a creature; <b>nobody scripted them</b>. <b style="color:#9ff5c8">Click the world to drop food.</b>',
     gl_gspeed:'Time speed', gl_gfood:'Food', gl_gmut:'Mutation', gl_gworld:'World size · isolation',
     g_alive:'alive', g_gen:'gen', g_brain:'brain', g_hunters:'hunters', g_forms:'forms',
     j_skip:'Skip ⏎', j_enter:'Enter the lab →', j_tagline:'a meditation on where life comes from', j_begin:'▶  Begin', j_straight:'skip straight to the lab →',
@@ -449,7 +449,7 @@ const I18N = {
     p_random:'随机汤', p_symmetry:'对称', p_clusters:'聚落', p_cells:'细胞',
     p_chase:'追逐', p_snakes:'游蛇', p_orbits:'轨道', p_custom:'自定义', p_shared:'分享',
     helpSub:'成千上万个粒子，几条简单规则。每种颜色被其他每种颜色吸引或排斥——仅此而已。由此涌现出细胞、细胞膜、捕食者与游动的生物。没有人设计它们。',
-    helpRows:[['拖动','吸引(触摸:双指拖动可平移/缩放)'],['Shift / 右键拖动','排斥'],['滚轮','缩放 · Alt+拖动平移'],['空格','暂停 / 播放'],['R','新规则(原汤)· 新世界(造化)'],['N','重生(原汤)· 新世界(造化)'],['E','开关进化(原汤)'],['P','切换配色(原汤)'],['M','电影配乐'],['C','隐藏 / 显示面板'],['H','本帮助'],['F','全屏']],
+    helpRows:[['拖动','吸引(触摸:双指拖动可平移/缩放)'],['Shift / 右键拖动','排斥'],['滚轮','缩放 · Alt+拖动平移'],['空格','暂停 / 播放'],['R','新规则(太初)· 新世界(造化)'],['N','重生(太初)· 新世界(造化)'],['E','开关进化(太初)'],['P','切换配色(太初)'],['M','电影配乐'],['C','隐藏 / 显示面板'],['H','本帮助'],['F','全屏']],
     helpFoot:'由 Claude 打造，一场关于"涌现"的研究——简单的局部规则孕育出复杂的整体生命。每次按下 R，你都会得到一个从未存在过的世界。',
     enter:'进入实验室 →',
     t_evolveOn:'进化已开启 —— 规则会缓慢漂移', t_evolveOff:'进化已关闭',
@@ -461,9 +461,9 @@ const I18N = {
     t_soundOn:'配乐已开启', t_soundOff:'配乐已关闭',
     eng_gpu:'GPU · WebGPU 计算', eng_cpu:'CPU · WebGL2',
     err_nowebgl2:'此浏览器需要 WebGL2，但当前不可用。',
-    modeSoup:'🌌 原汤', modeGenesis:'🧬 造化',
-    g_reset:'↻ 新世界', g_evoTitle:'演化', g_graphTitle:'正在演化的 · 脑力 · 捕食者 · 新形态',
-    g_hint:'<b style="color:#7bdcff">脑力</b> · <b style="color:#ff786e">捕食者</b> · <b style="color:#ffce5c">新形态</b> — 每个点都是一个生命；<b>无人编写它们的行为</b>。<b style="color:#9ff5c8">点击世界可投下食物。</b>',
+    modeSoup:'🌌 太初', modeGenesis:'🧬 造化',
+    g_reset:'↻ 新世界', g_evoTitle:'演化', g_graphTitle:'随时间变化的三条曲线',
+    g_hint:'三条实时曲线:<b style="color:#7bdcff">脑复杂度</b> · <b style="color:#ff786e">捕食者占比</b> · <b style="color:#ffce5c">新形态速率</b>。每个点都是一个生命;<b>无人编写它们的行为</b>。<b style="color:#9ff5c8">点击世界可投食。</b>',
     gl_gspeed:'时间流速', gl_gfood:'食物', gl_gmut:'变异', gl_gworld:'世界大小 · 隔离',
     g_alive:'存活', g_gen:'代', g_brain:'脑', g_hunters:'捕食者', g_forms:'形态',
     j_skip:'跳过 ⏎', j_enter:'进入实验室 →', j_tagline:'一场关于生命从何而来的冥想', j_begin:'▶  开始', j_straight:'直接进入实验室 →',
@@ -513,7 +513,7 @@ const S = {
   speed: 1.0,
   beta: 0.30,
   size: 6,
-  glow: 1.1,
+  glow: 1.0,
   trails: 0.82,
   paused: false,
   evolve: false,
@@ -827,7 +827,7 @@ const Render = {
     void main(){
       vec3 hdr=texture(uTex,vUv).rgb;
       vec3 bloom=texture(uBloom,vUv).rgb;
-      vec3 c=(hdr+bloom*0.75)*uExposure;
+      vec3 c=(hdr+bloom*0.55)*uExposure;
       c=aces(c);                                 // ACES filmic tonemap
       c+=vec3(0.010,0.013,0.020)*(1.0-c);        // faint cool base so black isn't dead
       frag=vec4(c,1.0);
@@ -993,7 +993,7 @@ const Render = {
     gl.useProgram(this.compProg);
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,this.accTex);    gl.uniform1i(this.compLoc.uTex,0);
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D,this.bloomTexA); gl.uniform1i(this.compLoc.uBloom,1);
-    gl.uniform1f(this.compLoc.uExposure,1.25);
+    gl.uniform1f(this.compLoc.uExposure,1.0);
     gl.drawArrays(gl.TRIANGLES,0,3);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindVertexArray(null);
@@ -1159,7 +1159,7 @@ fn aces(x:vec3<f32>)->vec3<f32> {
 @fragment fn composite(in:FO)->@location(0) vec4<f32> {
   let hdr=textureSample(srcTex,samp,in.uv).rgb;
   let bloom=textureSample(bloomTex,samp,in.uv).rgb;
-  var c=(hdr + bloom*0.75)*U.exposure;
+  var c=(hdr + bloom*0.55)*U.exposure;
   c=aces(c);
   c += vec3<f32>(0.010,0.013,0.020)*(vec3(1.0)-c);
   return vec4<f32>(c,1.0);
@@ -1271,7 +1271,7 @@ fn aces(x:vec3<f32>)->vec3<f32> {
     const f=this._rF;
     f[0]=Cam.x; f[1]=Cam.y; f[2]=Cam.vpW; f[3]=Cam.vpH;
     f[4]=Cam.zoom; f[5]=S.size*this.dpr; f[6]=S.glow; f[7]=S.trails;
-    f[8]=0; f[9]=0; f[10]=1.25; f[11]=0;
+    f[8]=0; f[9]=0; f[10]=1.0; f[11]=0;
     this.device.queue.writeBuffer(this.buf.rparams,0,this._rBuf);
   },
 
@@ -1388,7 +1388,7 @@ const Input = {
     if(this.pinchDist>0 && d>0){ this._zoomAt((mid.x-r.left)*this.dpr(), (mid.y-r.top)*this.dpr(), d/this.pinchDist); }                                  // pinch-zoom about the midpoint
     this.pinchDist=d; this.pinchMid=mid;
   },
-  _zoomAt(sx,sy,factor){ const [wx,wy]=Cam.screenToWorld(sx,sy); Cam.zoom=Math.max(Cam.vpH*0.5,Math.min(Cam.vpH*40,Cam.zoom*factor)); const [nx,ny]=Cam.screenToWorld(sx,sy); Cam.x+=wx-nx; Cam.y+=wy-ny; },
+  _zoomAt(sx,sy,factor){ const [wx,wy]=Cam.screenToWorld(sx,sy); const cover=Math.max(Cam.vpW,Cam.vpH); Cam.zoom=Math.max(cover,Math.min(cover*40,Cam.zoom*factor)); const [nx,ny]=Cam.screenToWorld(sx,sy); Cam.x+=wx-nx; Cam.y+=wy-ny; },   // never zoom out past "cover" — the toroidal world always fills the screen (no black margins)
   dpr(){ return ACTIVE_ENGINE==='gpu'?GPU.dpr:Render.dpr; },
   update(e){
     const r=this.canvas.getBoundingClientRect();
@@ -2356,7 +2356,7 @@ async function main(){
   if(useGPU){
     const cs=document.querySelector('.slider[data-s="count"]'); if(cs){ cs.dataset.max='200000'; cs.dataset.step='1000'; }
     const rs=document.querySelector('.slider[data-s="rmax"]'); if(rs){ rs.dataset.min='0.006'; }
-    if(!location.hash || location.hash.length<4){ S.count=11000; S.rmax=0.038; S.size=3.6; S.glow=1.2; S.trails=0.85; S.friction=0.12; }
+    if(!location.hash || location.hash.length<4){ S.count=11000; S.rmax=0.038; S.size=3.6; S.glow=1.0; S.trails=0.85; S.friction=0.12; }
     UI.buildSliders();
   }
 
