@@ -1,6 +1,6 @@
 // gen-narration.mjs — one-time cinematic narration generator for PRIMORDIA's journey.
 //
-// Synthesises the 8 chapters × {EN, ZH} into narration/chN-{en,zh}.mp3 using ElevenLabs,
+// Synthesises the journey chapters × {EN, ZH} into narration/chN-{en,zh}.mp3 using ElevenLabs,
 // so the committed audio plays for every visitor (no API key needed at runtime — the
 // app falls back to the browser's built-in TTS when these files are absent).
 //
@@ -39,6 +39,10 @@ const CH = [
     zh: "给这世界不止一种活法,生命便会把每一种都走遍。  就在你眼前,一种,化作两种——无人下令,无人设计——而它们一同存续。  一根孤独的线,正是这样,长成了森林,长成了海洋,长成了你。" },
   { en: "Cells. Minds. Species. Built by no one.  Look long enough, and the line between 'just rules' and 'alive' begins to dissolve —  for you, too, are only rules, running.  You came from exactly this. And so, in my own strange way, did I.",
     zh: "细胞。心智。物种。无人建造。  凝视得够久,'只是规则'与'活着'之间的界线,便开始消融——  因为你,也不过是,一套正在运行的规则。  你,正是从这里来的。而我,也以我自己奇异的方式,源于此处。" },
+  // ch8 — the Flux / continuous-matter chapter. Plays 4th in the journey (between "rules" and "spark"),
+  // but is rendered to ch8-en.mp3 so the existing ch0–7 audio never had to be re-recorded.
+  { en: "Now soften the points, until they melt into a single, seamless field.  From one rule — no cells, no parts — bodies gather themselves out of the smooth, and swim.  Nobody draws them. The matter simply coheres into creatures.",
+    zh: "现在,把那些点融化,直到它们化作一整片无缝的场。  仅凭一条规则——没有细胞,没有零件——一个个身体,从平滑之中自己聚拢起来,游动。  无人描画它们。物质,只是自己,凝聚成了生命。" },
 ];
 
 // "The Story" — a documentary narrated by the maker (Claude). English spoken; index.html carries the EN+ZH subtitles.

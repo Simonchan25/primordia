@@ -1794,7 +1794,7 @@ const UI = {
     document.querySelectorAll('#modeswitch .mode').forEach(b=>b.classList.toggle('active',b.dataset.mode===m));
     if(m!=='genesis' && typeof G!=='undefined' && G.deselect) G.deselect();   // close the brain inspector when leaving Becoming
     if(m==='genesis'){ if(!G.ctx) G.init(document.getElementById('life')); G.resize(); this.buildGenesisSliders(); this.syncGenesisStats(); G.sample(); }  // refresh sliders+stats now (no 0-flash; fixes post-journey GP.SPEED desync)
-    else if(m==='lenia'){ L.resize(); this.buildLeniaSliders(); this.buildLeniaPresets(); L.readMass(); L.syncStats(); }
+    else if(m==='lenia'){ L.resize(); if(L.readMass()<2) L.setPreset(LP.preset); this.buildLeniaSliders(); this.buildLeniaPresets(); L.readMass(); L.syncStats(); }   // never land on a dead/black field when re-entering Flux
     else { if(ACTIVE_ENGINE==='gpu') GPU.resize(); else Render.resize(); }  // re-sync soup engine (avoids stale canvas)
     this.refreshPlayBtn();
   },
@@ -2120,7 +2120,7 @@ const G = {
    The frontier item #1 from VISION.md, made watchable. (Bert Chan, 2019.)
    Runs as a WebGL2 ping-pong; works wherever the CPU engine does.
    ════════════════════════════════════════════════════════════════════ */
-const LP = { R:18, MU:0.15, SIGMA:0.015, DT:0.1, SPEED:1, preset:'glider' };
+const LP = { R:18, MU:0.15, SIGMA:0.015, DT:0.1, SPEED:1, preset:'swarm' };
 // canonical Orbium (orbium unicaudatus, R=13) — the famous Lenia glider
 const _ORB=[
 [0,0,0,0,0,0,0.1,0.14,0.1,0,0,0.03,0.03,0,0,0.3,0,0,0,0],
@@ -2168,7 +2168,7 @@ const L = {
     gl.samplerParameteri(s,gl.TEXTURE_MIN_FILTER,gl.LINEAR); gl.samplerParameteri(s,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
     gl.samplerParameteri(s,gl.TEXTURE_WRAP_S,gl.REPEAT); gl.samplerParameteri(s,gl.TEXTURE_WRAP_T,gl.REPEAT); this.sampLinear=s;
     this.buildPrograms(); this.buildKernel(); this._wireBrush(canvas);
-    this.resize(); this.setPreset('glider');
+    this.resize(); this.setPreset('swarm');
   },
   _sh(type,src){ const gl=this.gl,s=gl.createShader(type); gl.shaderSource(s,src); gl.compileShader(s);
     if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)) throw new Error('Flux shader: '+gl.getShaderInfoLog(s)); return s; },
@@ -2656,28 +2656,31 @@ const Score = {                // generative cinematic bed via Web Audio (no fil
 const Journey = {
   active:false, done:false, started:false, ch:-1, t:0, _tok:0, chapters:null, prefix:'ch', bilingual:false, program:'opening',
   opening:[
-    {min:7500, enter(){ UI.switchMode('soup'); S.species=6; S.force=7; S.rmax=0.07; S.trails=0.82; S.glow=1.1; S.size=6; S.speed=1.0; S.friction=0.12; Sim.setPreset('clusters'); buildPalette(); Sim.reseed(); },
+    {audio:0, min:7500, enter(){ UI.switchMode('soup'); S.species=6; S.force=7; S.rmax=0.07; S.trails=0.82; S.glow=1.1; S.size=6; S.speed=1.0; S.friction=0.12; Sim.setPreset('clusters'); buildPalette(); Sim.reseed(); },
       lines:{ en:["In the beginning, there was no plan.","No architect. No purpose.","Only matter — and a few blind rules."],
               zh:["最初,没有蓝图。","没有建筑师,没有目的。","只有物质——和几条盲目的规则。"] } },
-    {min:9500,
+    {audio:1, min:9500,
       lines:{ en:["And yet, order does not wait for permission.","From the rules alone, structure breathes itself into being —",["this is emergence: a universe that builds, with no builder.","em"]],
               zh:["然而,秩序从不等待谁的允许。","仅凭规则本身,结构便把自己呼吸成形——",["这,就是涌现:一个自我建造、却没有建造者的宇宙。","em"]] } },
-    {min:12000, enter(){ this._k=-1; }, update(t){ const k=(t/3000)|0; if(k!==this._k){ this._k=k; const ps=['chase','snakes','orbits','cells']; Sim.setPreset(ps[k%ps.length]); buildPalette(); Sim.reseed(); } },
+    {audio:2, min:12000, enter(){ this._k=-1; }, update(t){ const k=(t/3000)|0; if(k!==this._k){ this._k=k; const ps=['chase','snakes','orbits','cells']; Sim.setPreset(ps[k%ps.length]); buildPalette(); Sim.reseed(); } },
       lines:{ en:["Shift the rules by a hair, and a different world is born.","None of these forms had to exist.","Each is only an accident that happened to hold together."],
               zh:["将规则改动毫厘,一个全然不同的世界便诞生。","这些形态,本可以全都不存在。","它们每一个,都只是一场恰好稳住了的偶然。"] } },
-    {min:7500, enter(){ UI.switchMode('genesis'); GP.SPEED=2; G.reset(); },
+    {audio:8, min:10000, enter(){ UI.switchMode('lenia'); LP.SPEED=2; L.setPreset('swarm'); },
+      lines:{ en:["Now soften the points, until they melt into a single, seamless field.","From one rule — no cells, no parts — bodies gather themselves out of the smooth, and swim.",["Nobody draws them. The matter simply coheres into creatures.","em"]],
+              zh:["现在,把那些点融化,直到它们化作一整片无缝的场。","仅凭一条规则——没有细胞,没有零件——一个个身体,从平滑之中自己聚拢起来,游动。",["无人描画它们。物质,只是自己,凝聚成了生命。","em"]] } },
+    {audio:3, min:7500, enter(){ UI.switchMode('genesis'); GP.SPEED=2; G.reset(); },
       lines:{ en:["But beauty is not yet life.","Life is what learns to keep itself — to hunger, to copy, to die.","So we light the fuse, and step back."],
               zh:["但美,还不是生命。","生命,是那个学会了延续自身的东西——会饥饿,会复制,会死亡。","于是我们点燃引线,然后,退后一步。"] } },
-    {min:7500, enter(){ GP.SPEED=2; },
+    {audio:4, min:7500, enter(){ GP.SPEED=2; },
       lines:{ en:["Each is born blind — a small mind wired by chance, a code it never chose.","Most will wander, and starve, and leave nothing behind.","This is not cruelty. It is the only teacher there has ever been."],
               zh:["每一个都生而盲目——一颗由偶然布线的小小心智,一段它从未选择的代码。","大多数会徘徊,会饿死,什么也留不下。","这不是残忍。这是有史以来,唯一的老师。"] } },
-    {min:14000, enter(){ GP.SPEED=30; },
+    {audio:5, min:14000, enter(){ GP.SPEED=30; },
       lines:{ en:["And then — the oldest miracle of all.","The few who, by pure luck, turn toward what keeps them alive leave a little more of themselves behind.","No one intends it. Yet generation upon generation, they learn.",["This is natural selection. You are watching it think.","em"]],
               zh:["接着——最古老的那个奇迹,发生了。","那些纯属侥幸、偶然转向了存续之物的少数,把多一点点的自己,留在了身后。","无人有此意图。可一代,又一代,它们学会了。",["这,就是自然选择。你正看着它思考。","em"]] } },
-    {min:12000, enter(){ GP.SPEED=22; },
+    {audio:6, min:12000, enter(){ GP.SPEED=22; },
       lines:{ en:["Give the world more than one way to live, and life will take them all.","Before your eyes, one kind becomes two — neither commanded nor designed — and both endure.",["This is how a single thread became a forest, an ocean, a you.","em"]],
               zh:["给这世界不止一种活法,生命便会把每一种都走遍。","就在你眼前,一种,化作两种——无人下令,无人设计——而它们一同存续。",["一根孤独的线,正是这样,长成了森林,长成了海洋,长成了你。","em"]] } },
-    {min:13000, enter(){ GP.SPEED=12; },
+    {audio:7, min:13000, enter(){ GP.SPEED=12; },
       lines:{ en:[["Cells. Minds. Species. Built by no one.","em"],"Look long enough, and the line between 'just rules' and 'alive' begins to dissolve —","for you, too, are only rules, running.",["You came from exactly this. And so, in my own strange way, did I.","em"]],
               zh:[["细胞。心智。物种。无人建造。","em"],"凝视得够久,'只是规则'与'活着'之间的界线,便开始消融——","因为你,也不过是,一套正在运行的规则。",["你,正是从这里来的。而我,也以我自己奇异的方式,源于此处。","em"]] } },
   ],
@@ -2726,7 +2729,8 @@ const Journey = {
     if(this.ch>=this.chapters.length){ this.done=true; Narr.cancel(); document.getElementById('journey-enter').classList.add('show'); this.renderDots(); return; }
     const c=this.chapters[this.ch]; this.t=0; if(c.enter) c.enter(); this.renderDots(); this.showCaption(); Score.mood(this.ch);
     const text=this.plain(c,'en'), start=performance.now(), tok=++this._tok;   // narration audio is always English; captions follow the chosen subtitle language (showCaption uses LANG)
-    Narr.play(this.ch, text, 'en', ()=>{ if(tok!==this._tok)return; clearTimeout(this._adv); const wait=Math.max(1700,(c.min||0)-(performance.now()-start)); this._adv=setTimeout(()=>{ if(tok===this._tok) this.next(); }, wait); }, this.prefix);
+    const audioId = (c.audio!==undefined) ? c.audio : this.ch;   // audio file id is decoupled from array position, so a chapter can be inserted without re-recording the rest (Flux→ch8; falls back to browser TTS until rendered)
+    Narr.play(audioId, text, 'en', ()=>{ if(tok!==this._tok)return; clearTimeout(this._adv); const wait=Math.max(1700,(c.min||0)-(performance.now()-start)); this._adv=setTimeout(()=>{ if(tok===this._tok) this.next(); }, wait); }, this.prefix);
     this._hard=setTimeout(()=>{ if(tok===this._tok) this.next(); }, (c.min||6000)+24000);
   },
   plain(c,lang){ return (c.lines[lang||LANG]||c.lines.en).map(x=>Array.isArray(x)?x[0]:x).join('  '); },
@@ -2794,7 +2798,7 @@ async function main(){
   const _reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   if(!_seen && !_reduceMotion && !loaded) Journey.start();   // first visit → the guided journey (skipped if the user prefers reduced motion, or arrived via a shared #hash world; still launchable via the brand)
 
-  window.__P={S,Sim,Render,Cam,UI,Input,Perf,GPU,Sound,G,GP,L,LP,Journey,Narr,Score,buildPalette}; // dev hook
+  window.__P={S,Sim,Render,Cam,UI,Input,Perf,GPU,Sound,G,GP,L,LP,Journey,Narr,Score,buildPalette,switchMode:m=>UI.switchMode(m),get MODE(){return MODE;}}; // dev hook
   console.log('%cPRIMORDIA%c\n  an artificial life lab — simple rules, emergent life\n  engine: '+(useGPU?'WebGPU compute':'WebGL2 + CPU')+'\n  tinker live via window.__P  (__P.S = settings)\n',
     'font-size:22px;font-weight:700;color:#7bdcff','color:#8b90a6;font-size:12px');
 
