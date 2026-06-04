@@ -220,6 +220,29 @@
   .storybtn{width:100%;margin:5px 0 2px;padding:9px 12px;border-radius:10px;background:rgba(255,255,255,0.035);border:1px solid var(--stroke);color:var(--muted);font-size:12px;cursor:pointer;transition:all .15s;text-align:center}
   .storybtn:hover{color:var(--txt);border-color:rgba(123,220,255,0.3);background:rgba(255,255,255,0.06)}
 
+  /* guided control tour */
+  .tour{position:fixed;inset:0;z-index:20;opacity:0;pointer-events:none;transition:opacity .3s}
+  .tour.on{opacity:1}
+  .tour__spot{position:absolute;left:50%;top:50%;width:0;height:0;border-radius:12px;opacity:0;pointer-events:none;
+    box-shadow:0 0 0 9999px rgba(4,5,9,0.74), 0 0 0 1px rgba(123,220,255,0.55), 0 0 22px 3px rgba(123,220,255,0.22);
+    transition:left .42s cubic-bezier(.4,.85,.3,1),top .42s cubic-bezier(.4,.85,.3,1),width .42s cubic-bezier(.4,.85,.3,1),height .42s cubic-bezier(.4,.85,.3,1),opacity .3s}
+  .tour__card{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(340px,86vw);pointer-events:auto;
+    background:var(--panel-solid);border:1px solid rgba(255,255,255,.13);border-radius:14px;padding:17px 18px 13px;
+    box-shadow:0 24px 70px rgba(0,0,0,.62);transition:left .42s cubic-bezier(.4,.85,.3,1),top .42s cubic-bezier(.4,.85,.3,1)}
+  .tour__step{font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin-bottom:9px;font-weight:500}
+  .tour__title{font-size:15px;font-weight:600;color:#eef1f8;margin-bottom:8px;letter-spacing:.01em}
+  .tour__body{font-size:12.5px;line-height:1.62;color:#aeb4c8;margin-bottom:15px}
+  .tour__body b{color:var(--accent);font-weight:600}
+  .tour__nav{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .tour__dots{display:flex;gap:5px;flex:0 0 auto}
+  .tour__dots i{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.2);transition:all .3s}
+  .tour__dots i.on{background:rgba(231,234,245,.88);width:15px;border-radius:3px}
+  .tour__btns{display:flex;gap:7px}
+  .tour__btns button{font-size:12px;padding:7px 15px}
+  .tour__skip{position:absolute;top:18px;right:20px;background:rgba(0,0,0,.42);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);pointer-events:auto;
+    border:1px solid var(--stroke);color:var(--muted);font-size:12px;padding:7px 15px;border-radius:20px}
+  .tour__skip:hover{color:var(--txt)}
+
   @media (max-width:560px){
     .panel{width:calc(100vw - 24px);right:12px;top:12px;max-height:calc(100vh - 24px)}
     .brand{top:auto;bottom:86px;left:14px}
@@ -433,7 +456,8 @@
       <div class="sub" id="help-sub"></div>
       <div class="help__grid" id="help-grid"></div>
       <div class="foot" id="help-foot"></div>
-      <button class="primary" id="help-enter" style="margin-top:18px;width:100%;justify-content:center;padding:12px"></button>
+      <button id="help-tour" data-i18n="tour_help" style="margin-top:16px;width:100%;justify-content:center;padding:11px;color:var(--accent);border-color:rgba(123,220,255,0.32)"></button>
+      <button class="primary" id="help-enter" style="margin-top:9px;width:100%;justify-content:center;padding:12px"></button>
     </div>
   </div>
 
@@ -460,6 +484,24 @@
     <div class="journey__capwrap">
       <div class="journey__cap" id="journey-cap"></div>
       <button class="primary journey__enter" id="journey-enter" data-i18n="j_enter">Enter the lab →</button>
+    </div>
+  </div>
+
+  <!-- guided control tour — teaches what each control does and shows its effect -->
+  <div class="tour" id="tour" aria-hidden="true">
+    <div class="tour__spot" id="tour-spot"></div>
+    <button class="tour__skip" id="tour-skip" data-i18n="tour_skip">Skip tour</button>
+    <div class="tour__card" id="tour-card" role="dialog" aria-live="polite">
+      <div class="tour__step" id="tour-step"></div>
+      <div class="tour__title" id="tour-title"></div>
+      <div class="tour__body" id="tour-body"></div>
+      <div class="tour__nav">
+        <div class="tour__dots" id="tour-dots"></div>
+        <div class="tour__btns">
+          <button id="tour-prev" data-i18n="tour_back">Back</button>
+          <button class="primary" id="tour-next" data-i18n="tour_next">Next</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -521,6 +563,7 @@ const I18N = {
     ins_gen:'gen', ins_lineage:'lineage', ins_wires:'wires', ins_hunter:'hunter', ins_grazer:'grazer', ins_dead:'— this one has died —',
     ins_size:'size', ins_speed:'speed', ins_sense:'sense',
     j_skip:'Skip', j_enter:'Enter the lab →', j_tagline:'a meditation on where life comes from', j_begin:'Begin', j_straight:'skip straight to the lab →',
+    tour_next:'Next', tour_back:'Back', tour_done:'Explore', tour_skip:'Skip tour', tour_help:'How it works →',
     aria_lang:'Switch language', aria_mute:'Toggle narration & music', aria_brand:'Replay the guided journey',
     aria_touchmode:'Toggle attract / repel for touch', t_attractMode:'Touch drag now attracts', t_repelMode:'Touch drag now repels',
     aria_canvas:'Live artificial-life simulation — use the control panel to shape it', t_deviceLost:'Graphics device lost — please reload the page', aria_fs:'Toggle fullscreen', aria_replay:'Replay the opening journey', story_btn:'<svg class="bico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.6" y="3.4" width="12.8" height="9.2" rx="2.2"/><path d="M6.4 6 L10 8 L6.4 10 Z"/></svg> The Story <span style="opacity:.55">· why I made this</span>',
@@ -569,6 +612,7 @@ const I18N = {
     ins_gen:'代', ins_lineage:'谱系', ins_wires:'连线', ins_hunter:'捕食者', ins_grazer:'食草', ins_dead:'—— 它已死去 ——',
     ins_size:'体型', ins_speed:'速度', ins_sense:'视野',
     j_skip:'跳过', j_enter:'进入实验室 →', j_tagline:'一场关于生命从何而来的冥想', j_begin:'开始', j_straight:'直接进入实验室 →',
+    tour_next:'下一步', tour_back:'上一步', tour_done:'去探索', tour_skip:'跳过', tour_help:'这些怎么玩 →',
     aria_lang:'切换语言', aria_mute:'切换旁白与音乐', aria_brand:'重播导览旅程',
     aria_touchmode:'切换 吸引/排斥(触摸)', t_attractMode:'触摸拖动:现在吸引', t_repelMode:'触摸拖动:现在排斥',
     aria_canvas:'实时人工生命模拟 —— 用控制台来塑造它', t_deviceLost:'图形设备已丢失 —— 请刷新页面', aria_fs:'切换全屏', aria_replay:'重看开场旅程', story_btn:'<svg class="bico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.6" y="3.4" width="12.8" height="9.2" rx="2.2"/><path d="M6.4 6 L10 8 L6.4 10 Z"/></svg> 纪录片 <span style="opacity:.55">· 我为什么做它</span>',
@@ -1656,6 +1700,7 @@ const UI = {
     $('btn-lang').addEventListener('click',()=>setLang(LANG==='en'?'zh':'en'));
     $('help-lang').addEventListener('click',()=>setLang(LANG==='en'?'zh':'en'));
     $('help-enter').addEventListener('click',()=>this.toggleHelp(false));
+    { const ht=$('help-tour'); if(ht) ht.addEventListener('click',()=>{ this.toggleHelp(false); Tour.start(); }); }
     document.querySelectorAll('#modeswitch .mode').forEach(b=>b.addEventListener('click',()=>this.switchMode(b.dataset.mode)));
     $('g-play').addEventListener('click',()=>this.togglePlay());
     $('g-reset').addEventListener('click',()=>G.reset());
@@ -2778,7 +2823,97 @@ const Journey = {
     document.body.classList.remove('journey-on');
     try{ localStorage.setItem('primordia_seen','1'); }catch(e){}
     GP.SPEED=6; UI.switchMode('soup'); Sim.setPreset('clusters'); buildPalette(); Sim.reseed(); UI.buildMatrix(); UI.syncStats(); UI.syncPresets(); UI.togglePanel(true);
+    if(typeof Tour!=='undefined') Tour.maybe(900);   // first visit → offer the control tour once, after the cinematic
   },
+};
+
+/* ── Guided control tour — what each control does, and what it does to the world ─── */
+const Tour = {
+  active:false, i:0, _wired:false, _demoT:null, _restore:null, _posT:null, _rt:0,
+  steps:[
+    { sel:'#modeswitch',
+      en:['Three chambers','Origin grows life from <b>particles</b>, Flux from a <b>continuous field</b>, Becoming from <b>heredity &amp; evolving brains</b>. We&rsquo;ll tour Origin — the rest work the same way.'],
+      zh:['三个展厅','太初用<b>粒子</b>生长生命,流形用<b>连续的场</b>,造化则靠<b>遗传与会进化的大脑</b>。我们先逛太初——其余两个玩法相通。'] },
+    { sel:'#presets',
+      en:['Preset worlds','Each preset is a different rule&#8209;set — clusters, cells, snakes, orbits. Tap one and the whole world <b>reorganizes itself</b>.'],
+      zh:['预设世界','每个预设都是一套不同的规则——聚落、细胞、游蛇、轨道。点一个,整个世界便<b>自我重组</b>。'] },
+    { sel:'#matrix',
+      en:['The genome of the world','The heart of it. Each cell sets how one species feels about another — <b>green attracts, red repels</b>. Drag a cell up or down and the swarm rearranges within seconds.'],
+      zh:['世界的基因','核心所在。每个格子设定一个物种对另一个的态度——<b>绿色相吸,红色相斥</b>。上下拖动一个格子,整群会在几秒内重排。'] },
+    { sel:'.slider[data-s="force"]', demo:'force',
+      en:['Force — strength','How hard particles push and pull. <b>Watch the slider:</b> turned up, clusters snap tight; turned down, everything drifts apart.'],
+      zh:['力 · 强度','粒子相互推拉的强度。<b>看这个滑块:</b>调高,团块骤然收紧;调低,一切便四散飘离。'] },
+    { sel:'.slider[data-s="rmax"]',
+      en:['Range — reach','How far each particle senses the others. <b>Longer</b> range builds sprawling structures; <b>shorter</b> range, tight little cells.'],
+      zh:['范围 · 感知半径','每颗粒子能感知多远。半径<b>越大</b>,结构越铺展;<b>越小</b>,则凝成紧致的小细胞。'] },
+    { sel:'.slider[data-s="glow"]',
+      en:['Look','Glow, trails, particle size — purely how it looks. Reshape the <b>mood</b> without touching the physics.'],
+      zh:['外观','辉光、拖尾、粒子大小——纯粹是观感。在不动物理的前提下,重塑整片<b>氛围</b>。'] },
+    { sel:'#btn-random',
+      en:['Roll a new world','<b>New rules</b> randomizes everything into a world no one has ever seen. <b>Evolve</b> lets the rules slowly drift on their own.'],
+      zh:['掷出新世界','<b>新规则</b>会随机出一个前所未见的世界。<b>进化</b>则让规则自己缓缓漂变。'] },
+    { sel:'#btn-story',
+      en:['Go deeper','Open <b>Flux</b> for continuous living matter, or <b>Becoming</b> to watch creatures evolve — tap any creature to see its real brain. And <b>The Story</b> tells you, honestly, why I made this.'],
+      zh:['再往深处','打开<b>流形</b>看连续的活物质,或<b>造化</b>看生物进化——在那里点任意生物,就能看见它真正的大脑。而<b>纪录片</b>会诚实地告诉你,我为什么做这一切。'] },
+  ],
+  _lang(){ return (typeof LANG!=='undefined'?LANG:'en'); },
+  maybe(delay){ if(this.active)return; let seen; try{seen=localStorage.getItem('primordia_tour');}catch(e){} if(seen)return;
+    setTimeout(()=>{ if(!this.active && !(typeof Journey!=='undefined'&&Journey.active)) this.start(); }, delay||650); },
+  start(){
+    if(this.active)return; this.active=true; this.i=0;
+    try{ if(typeof Journey!=='undefined'&&Journey.active) Journey.end(); }catch(e){}
+    if(typeof MODE!=='undefined'&&MODE!=='soup'){ try{ UI.switchMode('soup'); }catch(e){} }
+    try{ UI.togglePanel(true); }catch(e){}
+    const el=document.getElementById('tour'); el.classList.add('on'); el.setAttribute('aria-hidden','false');
+    if(!this._wired){ this._wire(); this._wired=true; }
+    this.render();
+  },
+  _wire(){
+    const on=(id,fn)=>{ const e=document.getElementById(id); if(e) e.addEventListener('click',fn); };
+    on('tour-next',()=>this.next()); on('tour-prev',()=>this.prev()); on('tour-skip',()=>this.end());
+    window.addEventListener('resize',()=>{ if(this.active){ const s=this.steps[this.i]; this.place(s&&s.sel?document.querySelector(s.sel):null); } });
+    window.addEventListener('keydown',e=>{ if(!this.active)return; if(e.key==='Escape'){this.end();} else if(e.key==='ArrowRight'){this.next();} else if(e.key==='ArrowLeft'){this.prev();} });
+  },
+  render(){
+    const s=this.steps[this.i], c=s[this._lang()]||s.en, el=s.sel?document.querySelector(s.sel):null;
+    if(el){ try{ el.scrollIntoView({block:'center',behavior:'instant'}); }catch(_){ el.scrollIntoView(); } }   // instant → the target's final rect is available immediately; the spotlight glides to it via CSS
+    document.getElementById('tour-step').textContent=(this.i+1)+' / '+this.steps.length;
+    document.getElementById('tour-title').textContent=c[0];
+    document.getElementById('tour-body').innerHTML=c[1];
+    document.getElementById('tour-prev').style.visibility=this.i===0?'hidden':'visible';
+    document.getElementById('tour-next').textContent=t(this.i===this.steps.length-1?'tour_done':'tour_next');
+    document.getElementById('tour-dots').innerHTML=this.steps.map((_,k)=>'<i class="'+(k===this.i?'on':'')+'"></i>').join('');
+    const tok=++this._rt, doPlace=()=>{ if(this.active && tok===this._rt) this.place(el); };
+    doPlace(); [200,480,840].forEach(d=>setTimeout(doPlace,d));   // re-place as the smooth scroll settles (robust to scroll timing)
+    this._stopDemo(); if(s.demo){ this._demoT=setTimeout(()=>this._runDemo(s.demo),1000); }
+  },
+  place(el){
+    const spot=document.getElementById('tour-spot'), card=document.getElementById('tour-card');
+    if(!el){ spot.style.opacity='0'; card.style.left='50%'; card.style.top='50%'; card.style.transform='translate(-50%,-50%)'; return; }
+    const r=el.getBoundingClientRect(), pad=8;
+    const sx=Math.max(4,r.left-pad), sy=Math.max(4,r.top-pad), sw=Math.min(innerWidth-8,r.width+pad*2), sh=r.height+pad*2;
+    spot.style.opacity='1'; spot.style.left=sx+'px'; spot.style.top=sy+'px'; spot.style.width=sw+'px'; spot.style.height=sh+'px';
+    card.style.transform='none';
+    const cw=Math.min(340,innerWidth-24), ch=card.offsetHeight||210, m=16; let cx,cy;
+    if(sx-cw-m>8){ cx=sx-cw-m; cy=Math.min(Math.max(12,sy),innerHeight-ch-12); }
+    else if(sy+sh+m+ch<innerHeight-6){ cx=Math.min(Math.max(12,sx),innerWidth-cw-12); cy=sy+sh+m; }
+    else { cx=Math.min(Math.max(12,sx),innerWidth-cw-12); cy=Math.max(12,sy-ch-m); }
+    card.style.left=cx+'px'; card.style.top=cy+'px'; card.style.width=cw+'px';
+  },
+  _runDemo(kind){
+    if(kind==='force'){
+      const inp=document.querySelector('.slider[data-s="force"] input'); if(!inp)return;
+      const save=inp.value, set=v=>{ inp.value=v; inp.dispatchEvent(new Event('input',{bubbles:true})); };
+      this._restore=()=>set(save);
+      const hi=Math.min(+inp.max,(+save)*2.2||12), lo=Math.max(+inp.min,(+save)*0.45||2), seq=[hi,lo,+save]; let k=0;
+      const tick=()=>{ if(!this.active)return; set(seq[k]); k++; if(k<seq.length) this._demoT=setTimeout(tick,1300); else this._restore=null; };
+      tick();
+    }
+  },
+  _stopDemo(){ clearTimeout(this._demoT); if(this._restore){ try{this._restore();}catch(e){} this._restore=null; } },
+  next(){ if(this.i>=this.steps.length-1){ this.end(); return; } this._stopDemo(); this.i++; this.render(); },
+  prev(){ if(this.i<=0)return; this._stopDemo(); this.i--; this.render(); },
+  end(){ this._stopDemo(); clearTimeout(this._posT); this.active=false; const el=document.getElementById('tour'); el.classList.remove('on'); el.setAttribute('aria-hidden','true'); try{localStorage.setItem('primordia_tour','1');}catch(e){} },
 };
 
 /* ════════════════════════════════════════════════════════════════════
@@ -2823,8 +2958,9 @@ async function main(){
   let _seen=false; try{ _seen=!!localStorage.getItem('primordia_seen'); }catch(e){}
   const _reduceMotion = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   if(!_seen && !_reduceMotion && !loaded) Journey.start();   // first visit → the guided journey (skipped if the user prefers reduced motion, or arrived via a shared #hash world; still launchable via the brand)
+  else if(!loaded) Tour.maybe(1200);   // went straight to the lab (returning visitor / reduced-motion) → still offer the control tour once
 
-  window.__P={S,Sim,Render,Cam,UI,Input,Perf,GPU,Sound,G,GP,L,LP,Journey,Narr,Score,buildPalette,switchMode:m=>UI.switchMode(m),get MODE(){return MODE;}}; // dev hook
+  window.__P={S,Sim,Render,Cam,UI,Input,Perf,GPU,Sound,G,GP,L,LP,Journey,Tour,Narr,Score,buildPalette,switchMode:m=>UI.switchMode(m),get MODE(){return MODE;}}; // dev hook
   console.log('%cPRIMORDIA%c\n  an artificial life lab — simple rules, emergent life\n  engine: '+(useGPU?'WebGPU compute':'WebGL2 + CPU')+'\n  tinker live via window.__P  (__P.S = settings)\n',
     'font-size:22px;font-weight:700;color:#7bdcff','color:#8b90a6;font-size:12px');
 
