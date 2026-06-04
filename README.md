@@ -10,7 +10,7 @@
 
 > 📖 **Why this exists — and is the goal to make *real* life?** Read the **[Vision & Manifesto](VISION.md)** (bilingual). Short version: no — PRIMORDIA is the *self-organization* half of life, made impossible to look away from; the honest aim is to make emergence *felt*, and to chase the harder, still-unsolved half (heredity, selection, open-ended evolution).
 
-**Open it and press *Begin*, and a cinematic guided journey plays** — a calm **voice narration** over a **generative score** (both synthesised live, no audio files), with on-screen captions, walking you through the *real* simulation as it grows from "nothing but blind rules" → self-organising cells → creatures that evolve foraging → one species splitting into two → and finally where life, mind, and *you* come from at all. Bilingual, skippable, replayable by clicking the title. *This is the part that makes it land* — everything below is the lab you're handed afterwards.
+**Open it and press *Begin*, and a cinematic guided journey plays** — a deep, calm **voice narration** (pre-rendered with [ElevenLabs](https://elevenlabs.io); a live browser-TTS fallback when the audio is absent) over a **generative score** (synthesised live in the Web Audio API), with on-screen captions, walking you through the *real* simulation as it grows from "nothing but blind rules" → self-organising cells → creatures that evolve foraging → one species splitting into two → and finally where life, mind, and *you* come from at all. Bilingual, skippable, replayable by clicking the title. *This is the part that makes it land* — everything below is the lab you're handed afterwards.
 
 It ships with **two interchangeable engines**:
 
@@ -99,7 +99,8 @@ The single most important parameter for *look* is **density** (`particles × rad
 - **HDR rendering + bloom.** Particles are drawn as soft additive glows into a 16-bit float buffer; a bright-pass + separable Gaussian blur produces the bloom; an ACES filmic tonemap composites to the screen so dense cores bloom smoothly toward white instead of clipping. Trails come from feeding each frame back with a slight fade.
 - **Adaptive quality.** A frame-rate watchdog quietly lowers the particle count if a machine can't keep up.
 - **Bilingual.** A small `data-i18n` + `t(key)` layer; language auto-detects from the browser, persists in `localStorage`, and rebuilds the dynamic UI on switch.
-- Poke at `window.__P` in the console (`.S` = live settings, `.GPU`, `.Sim`, `.Sound`).
+- **Cinematic narration.** The journey plays pre-rendered ElevenLabs clips from `narration/chN-{en,zh}.mp3`, ducking the score and falling back to the browser's `speechSynthesis` if the files are missing. Regenerate them (e.g. after editing the script, or with a different voice) via: `ELEVENLABS_API_KEY=… node tools/gen-narration.mjs` — the key is read only from the environment and never written to disk.
+- Poke at `window.__P` in the console (`.S` = live settings, `.GPU`, `.Sim`, `.Sound`, `.G`).
 
 ## Inspiration & credits
 

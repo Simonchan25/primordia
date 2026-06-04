@@ -2122,7 +2122,22 @@ const Narr = {                 // bilingual voice narration via the Web Speech A
     next();
     setTimeout(()=>{ if(tok===this._tok) finish(); }, est+12000);
   },
-  cancel(){ this._tok++; try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} try{ Score.duck(false); }catch(e){} },
+  // play committed cinematic narration (narration/chN-{lang}.mp3) if present; gracefully fall back to browser TTS
+  play(idx,text,lang,onEnd){
+    const est=Math.min(22000, text.length*(lang==='zh'?245:64)+1600);
+    if(this.muted){ setTimeout(onEnd, est); return; }
+    try{ if(this._audio){ this._audio.onended=null; this._audio.onerror=null; this._audio.pause(); this._audio=null; } }catch(e){}
+    let done=false, started=false;
+    const fin=()=>{ if(done)return; done=true; try{ Score.duck(false); }catch(e){} onEnd(); };
+    let a; try{ a=new Audio(`narration/ch${idx}-${lang}.mp3`); }catch(e){ return this.speak(text,lang,fin); }
+    this._audio=a; a.preload='auto';
+    const fallback=()=>{ if(started||done)return; try{ a.onerror=null; a.onended=null; a.pause(); }catch(e){} this.speak(text,lang,fin); };
+    a.onplaying=()=>{ started=true; try{ Score.duck(true); }catch(e){} };
+    a.onended=fin; a.onerror=fallback;
+    const p=a.play(); if(p&&p.catch) p.catch(fallback);
+    setTimeout(fallback, 1700);   // local file didn't start in time (e.g. absent) → browser voice
+  },
+  cancel(){ this._tok++; try{ if(this._audio){ this._audio.onended=null; this._audio.onerror=null; this._audio.pause(); this._audio=null; } }catch(e){} try{ if(window.speechSynthesis) speechSynthesis.cancel(); }catch(e){} try{ Score.duck(false); }catch(e){} },
 };
 const Score = {                // generative cinematic bed via Web Audio (no files)
   ctx:null, master:null, duckGain:null, padBus:null, subBus:null, shimmerBus:null, leadBus:null, voices:[], pulseEvery:3200, _pulseTimer:null, _musicTimer:null, _lastPulse:0, _muted:false, stage:0, seq:0,
@@ -2268,7 +2283,7 @@ const Journey = {
     if(this.ch>=this.chapters.length){ this.done=true; Narr.cancel(); document.getElementById('journey-enter').classList.add('show'); this.renderDots(); return; }
     const c=this.chapters[this.ch]; this.t=0; if(c.enter) c.enter(); this.renderDots(); this.showCaption(); Score.mood(this.ch);
     const text=this.plain(c), start=performance.now(), tok=++this._tok;
-    Narr.speak(text, LANG, ()=>{ if(tok!==this._tok)return; clearTimeout(this._adv); const wait=Math.max(1700,(c.min||0)-(performance.now()-start)); this._adv=setTimeout(()=>{ if(tok===this._tok) this.next(); }, wait); });
+    Narr.play(this.ch, text, LANG, ()=>{ if(tok!==this._tok)return; clearTimeout(this._adv); const wait=Math.max(1700,(c.min||0)-(performance.now()-start)); this._adv=setTimeout(()=>{ if(tok===this._tok) this.next(); }, wait); });
     this._hard=setTimeout(()=>{ if(tok===this._tok) this.next(); }, (c.min||6000)+24000);
   },
   plain(c){ return (c.lines[LANG]||c.lines.en).map(x=>Array.isArray(x)?x[0]:x).join('  '); },
