@@ -560,7 +560,7 @@ const I18N = {
     g_alive:'alive', g_gen:'gen', g_brain:'brain', g_hunters:'hunters', g_forms:'forms',
     ins_hint:'9 senses → an evolved tangle nobody designed → 3 choices. Bright wires excite, red wires inhibit; nodes flicker as it thinks.',
     ins_senses:'SENSES', ins_thrust:'go', ins_turn:'turn', ins_bite:'bite',
-    ins_gen:'gen', ins_lineage:'lineage', ins_wires:'wires', ins_hunter:'hunter', ins_grazer:'grazer', ins_dead:'— this one has died —',
+    ins_gen:'gen', ins_lineage:'lineage', ins_wires:'wires', ins_hunter:'hunter', ins_grazer:'grazer', ins_dead:'— this one has died —', g_lineageEnded:'that bloodline has ended',
     ins_size:'size', ins_speed:'speed', ins_sense:'sense',
     j_skip:'Skip', j_enter:'Enter the lab →', j_tagline:'a meditation on where life comes from', j_begin:'Begin', j_straight:'skip straight to the lab →',
     tour_next:'Next', tour_back:'Back', tour_done:'Explore', tour_skip:'Skip tour', tour_help:'How it works →',
@@ -609,7 +609,7 @@ const I18N = {
     g_alive:'存活', g_gen:'代', g_brain:'脑', g_hunters:'捕食者', g_forms:'形态',
     ins_hint:'9 个感官 → 一团无人设计的连线 → 3 个抉择。亮线兴奋,红线抑制;节点随它思考而明灭。',
     ins_senses:'感官', ins_thrust:'前进', ins_turn:'转向', ins_bite:'撕咬',
-    ins_gen:'代', ins_lineage:'谱系', ins_wires:'连线', ins_hunter:'捕食者', ins_grazer:'食草', ins_dead:'—— 它已死去 ——',
+    ins_gen:'代', ins_lineage:'谱系', ins_wires:'连线', ins_hunter:'捕食者', ins_grazer:'食草', ins_dead:'—— 它已死去 ——', g_lineageEnded:'这一支血脉,断了',
     ins_size:'体型', ins_speed:'速度', ins_sense:'视野',
     j_skip:'跳过', j_enter:'进入实验室 →', j_tagline:'一场关于生命从何而来的冥想', j_begin:'开始', j_straight:'直接进入实验室 →',
     tour_next:'下一步', tour_back:'上一步', tour_done:'去探索', tour_skip:'跳过', tour_help:'这些怎么玩 →',
@@ -944,8 +944,8 @@ const Render = {
       float a=smoothstep(1.0,0.0,d);
       a=a*a;
       vec3 col=vColor*uGlow*a;
-      // brighter core
-      col+=vColor*pow(a,4.0)*uGlow*0.9;
+      // softer core spike (matches the WebGPU path) → no white-hot clipping
+      col+=vColor*pow(a,4.0)*uGlow*0.3;
       frag=vec4(col,a);
     }`;
     this.prog=this.program(VS,FS);
@@ -973,7 +973,7 @@ const Render = {
     void main(){
       vec3 hdr=texture(uTex,vUv).rgb;
       vec3 bloom=texture(uBloom,vUv).rgb;
-      vec3 c=(hdr+bloom*0.5)*uExposure;
+      vec3 c=(hdr+bloom*0.38)*uExposure;
       c=aces(c);                                 // ACES filmic tonemap
       c+=vec3(0.010,0.013,0.020)*(1.0-c);        // faint cool base so black isn't dead
       frag=vec4(c,1.0);
@@ -1139,7 +1139,7 @@ const Render = {
     gl.useProgram(this.compProg);
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,this.accTex);    gl.uniform1i(this.compLoc.uTex,0);
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D,this.bloomTexA); gl.uniform1i(this.compLoc.uBloom,1);
-    gl.uniform1f(this.compLoc.uExposure,0.9);
+    gl.uniform1f(this.compLoc.uExposure,0.66);
     gl.drawArrays(gl.TRIANGLES,0,3);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindVertexArray(null);
@@ -1248,7 +1248,7 @@ fn cellOf(p:vec2<f32>, gd:u32)->u32 {
   pout[i] = vec4<f32>(np.x, np.y, vel.x, vel.y);
 }`;
     const RENDER = `
-struct R { cam:vec2<f32>, vp:vec2<f32>, zoom:f32, size:f32, glow:f32, trails:f32, tile:vec2<f32>, exposure:f32, _p:f32 };
+struct R { cam:vec2<f32>, vp:vec2<f32>, zoom:f32, size:f32, glow:f32, trails:f32, tile:vec2<f32>, exposure:f32, count:f32 };
 @group(0) @binding(0) var<uniform> U: R;
 @group(0) @binding(1) var<storage,read> part: array<vec4<f32>>;
 @group(0) @binding(2) var<storage,read> species: array<u32>;
@@ -1256,15 +1256,17 @@ struct R { cam:vec2<f32>, vp:vec2<f32>, zoom:f32, size:f32, glow:f32, trails:f32
 struct VO { @builtin(position) pos:vec4<f32>, @location(0) uv:vec2<f32>, @location(1) col:vec3<f32> };
 @vertex fn vmain(@builtin(vertex_index) vi:u32, @builtin(instance_index) ii:u32)->VO {
   var q = array<vec2<f32>,6>(vec2(-1.,-1.),vec2(1.,-1.),vec2(-1.,1.),vec2(-1.,1.),vec2(1.,-1.),vec2(1.,1.));
-  let corner=q[vi]; let p=part[ii].xy + U.tile;
+  let N=u32(U.count); let pi=ii % N; let t=ii / N;                         // 3x3 torus tiles around the camera → seamless wrap, never a square in black
+  let tile=floor(U.cam) + vec2<f32>(f32(t % 3u)-1.0, f32(t / 3u)-1.0);
+  let corner=q[vi]; let p=part[pi].xy + tile;
   let screen=(p-U.cam)*U.zoom + U.vp*0.5 + corner*U.size;
   var clip=(screen/U.vp)*2.0-1.0;
   var o:VO; o.pos=vec4<f32>(clip.x,-clip.y,0.,1.); o.uv=corner;
-  o.col = palette[species[ii]].rgb * U.glow; return o;
+  o.col = palette[species[pi]].rgb * U.glow; return o;
 }
 @fragment fn fmain(in:VO)->@location(0) vec4<f32> {
   let d=length(in.uv); let a=smoothstep(1.0,0.0,d); let a2=a*a;
-  return vec4<f32>(in.col*a2 + in.col*pow(a2,4.0)*0.9, a2);
+  return vec4<f32>(in.col*a2 + in.col*pow(a2,4.0)*0.3, a2);   // softer core spike → dense clusters stop blowing out to white
 }
 // fullscreen helpers
 struct FO { @builtin(position) pos:vec4<f32>, @location(0) uv:vec2<f32> };
@@ -1274,7 +1276,7 @@ struct FO { @builtin(position) pos:vec4<f32>, @location(0) uv:vec2<f32> };
 }
 @fragment fn fade(in:FO)->@location(0) vec4<f32> { return vec4<f32>(0.,0.,0., 1.0-U.trails); }`;
     const POST = `
-struct R { cam:vec2<f32>, vp:vec2<f32>, zoom:f32, size:f32, glow:f32, trails:f32, tile:vec2<f32>, exposure:f32, _p:f32 };
+struct R { cam:vec2<f32>, vp:vec2<f32>, zoom:f32, size:f32, glow:f32, trails:f32, tile:vec2<f32>, exposure:f32, count:f32 };
 @group(0) @binding(0) var samp: sampler;
 @group(0) @binding(1) var srcTex: texture_2d<f32>;
 @group(0) @binding(2) var<uniform> U: R;
@@ -1305,7 +1307,7 @@ fn aces(x:vec3<f32>)->vec3<f32> {
 @fragment fn composite(in:FO)->@location(0) vec4<f32> {
   let hdr=textureSample(srcTex,samp,in.uv).rgb;
   let bloom=textureSample(bloomTex,samp,in.uv).rgb;
-  var c=(hdr + bloom*0.5)*U.exposure;
+  var c=(hdr + bloom*0.38)*U.exposure;
   c=aces(c);
   c += vec3<f32>(0.010,0.013,0.020)*(vec3(1.0)-c);
   return vec4<f32>(c,1.0);
@@ -1417,7 +1419,7 @@ fn aces(x:vec3<f32>)->vec3<f32> {
     const f=this._rF;
     f[0]=Cam.x; f[1]=Cam.y; f[2]=Cam.vpW; f[3]=Cam.vpH;
     f[4]=Cam.zoom; f[5]=S.size*this.dpr; f[6]=S.glow; f[7]=S.trails;
-    f[8]=0; f[9]=0; f[10]=0.9; f[11]=0;
+    f[8]=0; f[9]=0; f[10]=0.66; f[11]=S.count;   // exposure (f10, lowered so bright cores don't clip); f11=particle count for the torus-tiling shader
     this.device.queue.writeBuffer(this.buf.rparams,0,this._rBuf);
   },
 
@@ -1450,7 +1452,7 @@ fn aces(x:vec3<f32>)->vec3<f32> {
     // pass 1: fade (trails) + additive instanced particles -> HDR
     let rp=enc.beginRenderPass({colorAttachments:[{view:hv, loadOp:load, storeOp:'store', clearValue:{r:0,g:0,b:0,a:1}}]});
     if(S.trails>0){ rp.setPipeline(this.pipe.fade); rp.setBindGroup(0,this.bg.fade); rp.draw(3); }
-    rp.setPipeline(this.pipe.particle); rp.setBindGroup(0,this.bg.render[renderCur]); rp.draw(6,S.count);
+    rp.setPipeline(this.pipe.particle); rp.setBindGroup(0,this.bg.render[renderCur]); rp.draw(6,S.count*9);   // x9 = 3x3 torus tiles (seamless wrap; off-screen tiles cost ~nothing — their quads clip out)
     rp.end();
     // passes 2-4: bloom  (bright -> blurH -> blurV)
     let bp=enc.beginRenderPass({colorAttachments:[{view:this.view.bloomA,loadOp:'clear',storeOp:'store',clearValue:{r:0,g:0,b:0,a:1}}]});
@@ -1959,7 +1961,7 @@ function evalBrain(g,act,inp){ const nN=g.nodes.length; for(let k=0;k<NIN;k++)ac
   _gout[0]=act[NIN]*0.5+0.5; _gout[1]=act[NIN+1]; _gout[2]=act[NIN+2]*0.5+0.5; }
 
 const G = {
-  w:null, canvas:null, ctx:null, scale:1, ox:0, oy:0, hist:[], seen:null, nov:[], forms:0, worldScale:1, _seed:0, events:[], _feeding:false, sel:-1, selLin:0,
+  w:null, canvas:null, ctx:null, scale:1, ox:0, oy:0, hist:[], seen:null, nov:[], forms:0, worldScale:1, _seed:0, events:[], _feeding:false, sel:-1, selLin:0, _follow:false, _camLerp:0.18,
   init(canvas){ this.canvas=canvas; this.ctx=canvas.getContext('2d'); this.reset(); this._wireFeed(canvas); },
   // seed the world so a Genesis ecosystem is reproducible (the sim is deterministic per seed). undefined → fresh random seed.
   reset(seed){ this._seed = (seed===undefined ? (rnd()*4294967296)>>>0 : seed>>>0); srand(this._seed);
@@ -1968,7 +1970,7 @@ const G = {
   _ev(t,x,y){ const e=this.events; e.push(t,x,y,1); if(e.length>1200) e.splice(0,4); },
   // click/drag on the world to drop a little cluster of food — tend the ecosystem
   feed(wx,wy){ const w=this.w; if(!w)return; for(let k=0;k<10;k++){ if(w.fn>=GP.FOOD_CAP)break; const a=rnd()*6.283, r=rnd()*38; let fx=wx+Math.cos(a)*r, fy=wy+Math.sin(a)*r; fx-=Math.floor(fx/GP.WORLD_W)*GP.WORLD_W; fy-=Math.floor(fy/GP.WORLD_H)*GP.WORLD_H; w.fx[w.fn]=fx; w.fy[w.fn]=fy; w.fn++; } this._ev(3,wx,wy); },
-  _xy(e){ const r=this.canvas.getBoundingClientRect(), sc=this.scale; if(sc<=0)return null; const dpr=this.canvas.width/r.width; return { x:(e.clientX-r.left)*dpr/sc, y:(e.clientY-r.top)*dpr/sc }; },
+  _xy(e){ const r=this.canvas.getBoundingClientRect(), sc=this.scale; if(sc<=0)return null; const dpr=this.canvas.width/r.width; return { x:((e.clientX-r.left)*dpr-this.ox)/sc, y:((e.clientY-r.top)*dpr-this.oy)/sc }; },
   // tap a creature → inspect its brain · tap empty space → feed
   _wireFeed(canvas){ if(this._fedWired) return; this._fedWired=true;
     canvas.addEventListener('pointerdown',e=>{ const p=this._xy(e); if(!p)return; try{canvas.setPointerCapture(e.pointerId);}catch(_){}
@@ -1978,9 +1980,26 @@ const G = {
   // nearest living creature to a world point, within a generous tap radius
   _pick(wx,wy){ const w=this.w; if(!w)return -1; let best=-1, bd=34*34; for(let i=0;i<w.n;i++){ if(!w.alive[i])continue;
     const dx=gWrap(w.x[i]-wx,GP.WORLD_W), dy=gWrap(w.y[i]-wy,GP.WORLD_H), d2=dx*dx+dy*dy; if(d2<bd){ bd=d2; best=i; } } return best; },
-  select(i){ const w=this.w; if(!w||!w.alive[i])return; this.sel=i; this.selUid=w.uid[i]; this.selLin=w.lin[i];
+  select(i){ const w=this.w; if(!w||!w.alive[i])return; this.sel=i; this.selUid=w.uid[i]; this.selLin=w.lin[i]; this._follow=true;
     const el=document.getElementById('inspect'); if(el) el.classList.add('show'); this.drawBrain(); },
-  deselect(){ this.sel=-1; const el=document.getElementById('inspect'); if(el) el.classList.remove('show'); },
+  deselect(){ this.sel=-1; this._follow=false; const el=document.getElementById('inspect'); if(el) el.classList.remove('show'); },
+  // follow the inspected creature (zoom + centre); when it dies, hop to its nearest living bloodline-mate so you keep watching the lineage
+  _camTick(){
+    const w=this.w; if(!w||!this.canvas)return;
+    const W=this.canvas.width, H=this.canvas.height, base=(GP.WORLD_W>0? W/GP.WORLD_W : 1);
+    let tS=base, tox=0, toy=0;
+    if(this._follow){
+      if(!this._selValid()){
+        let best=-1, bd=1e18; const cx=(W*0.5-this.ox)/this.scale, cy=(H*0.5-this.oy)/this.scale;
+        for(let k=0;k<w.n;k++){ if(!w.alive[k]||w.lin[k]!==this.selLin)continue; const dx=gWrap(w.x[k]-cx,GP.WORLD_W), dy=gWrap(w.y[k]-cy,GP.WORLD_H), d=dx*dx+dy*dy; if(d<bd){bd=d;best=k;} }
+        if(best>=0) this.select(best); else { this.deselect(); if(typeof UI!=='undefined'&&UI.toast) UI.toast(t('g_lineageEnded')); }
+      }
+      if(this._selValid()){ const Z=base*2.3, i=this.sel;
+        tS=Z; tox=W*0.5-w.x[i]*Z; toy=H*0.5-w.y[i]*Z;
+        tox=Math.min(0,Math.max(W-GP.WORLD_W*Z,tox)); toy=Math.min(0,Math.max(H-GP.WORLD_H*Z,toy)); }
+    }
+    const k=this._camLerp; this.scale+=(tS-this.scale)*k; this.ox+=(tox-this.ox)*k; this.oy+=(toy-this.oy)*k;
+  },
   _selValid(){ const w=this.w; return !!(w && this.sel>=0 && w.alive[this.sel] && w.uid[this.sel]===this.selUid); },
   // render the SELECTED creature's evolved network — the actual genome, with live activations
   drawBrain(){
@@ -2178,7 +2197,7 @@ const G = {
     g.beginPath(); for(let i=0;i<sm.length;i++){ const x=i/(N-1)*W, y=H-(sm[i]/nmx)*H*0.82; i?g.lineTo(x,y):g.moveTo(x,y);} g.stroke(); g.shadowBlur=0;
     // (legend lives in the clear, colour-coded caption right below the chart — no tiny on-canvas text)
   },
-  tick(){ if(!S.paused){ const n=GP.SPEED|0; for(let s=0;s<n;s++) this.step(); } this.render(); if(this.sel>=0) this.drawBrain(); },
+  tick(){ if(!S.paused){ const n=GP.SPEED|0; for(let s=0;s<n;s++) this.step(); } this._camTick(); this.render(); if(this.sel>=0) this.drawBrain(); },
 };
 
 /* ════════════════════════════════════════════════════════════════════
