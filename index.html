@@ -411,7 +411,7 @@ const I18N = {
     p_random:'random soup', p_symmetry:'symmetry', p_clusters:'clusters', p_cells:'cells',
     p_chase:'chase', p_snakes:'snakes', p_orbits:'orbits', p_custom:'custom', p_shared:'shared',
     helpSub:"Thousands of particles, a handful of rules. Each colour is attracted to or repelled by every other colour — that's all. From this, cells, membranes, hunters, and swimming creatures emerge. Nobody designed them.",
-	    helpRows:[['drag','attract (touch: 2-finger drag to pan/zoom)'],['shift / right-drag','repel'],['scroll','zoom · alt+drag to pan'],['space','pause / play'],['R','new rules (Soup) · new world (Genesis)'],['N','respawn (Soup) · new world (Genesis)'],['E','toggle evolution (Soup)'],['P','cycle palette (Soup)'],['M','cinematic score'],['C','hide / show panel'],['H','this help'],['F','fullscreen']],
+	    helpRows:[['drag','attract (touch: 2-finger drag to pan/zoom)'],['shift / right-drag','repel'],['scroll','zoom · alt+drag to pan'],['space','pause / play'],['R','new rules (Origin) · new world (Becoming)'],['N','respawn (Origin) · new world (Becoming)'],['E','toggle evolution (Origin)'],['P','cycle palette (Origin)'],['M','cinematic score'],['C','hide / show panel'],['H','this help'],['F','fullscreen']],
     helpFoot:'Built by Claude as a study in emergence — simple local rules give rise to complex global life. Every time you press R you get a world that has never existed before.',
     enter:'Enter the lab →',
     t_evolveOn:'Evolution on — the rules will slowly drift', t_evolveOff:'Evolution off',
@@ -419,11 +419,11 @@ const I18N = {
     t_shareCopied:'Ecosystem link copied to clipboard', t_shareFail:"Couldn't copy — the link is now in your address bar",
     t_autotune:'Auto-tuned to {n} particles for a smooth frame rate',
     t_worldRebuilt:'New world built · {n}× — more room for lineages to diverge',
-    t_genesisShare:'Genesis lab link copied — same settings & starting seed',
+    t_genesisShare:'Becoming-lab link copied — same settings & starting seed',
     t_soundOn:'Score on', t_soundOff:'Score off',
     eng_gpu:'GPU · WebGPU compute', eng_cpu:'CPU · WebGL2',
     err_nowebgl2:'WebGL2 is required and not available in this browser.',
-    modeSoup:'🌌 Soup', modeGenesis:'🧬 Genesis',
+    modeSoup:'🌌 Origin', modeGenesis:'🧬 Becoming',
     g_reset:'↻ New world', g_evoTitle:'Evolution', g_graphTitle:'Three signals, over time',
     g_hint:'three live readings: <b style="color:#7bdcff">brain complexity</b> · <b style="color:#ff786e">predator share</b> · <b style="color:#ffce5c">new-form rate</b>. Each dot is a creature; <b>nobody scripted them</b>. <b style="color:#9ff5c8">Click the world to drop food.</b>',
     gl_gspeed:'Time speed', gl_gfood:'Food', gl_gmut:'Mutation', gl_gworld:'World size · isolation',
@@ -1920,7 +1920,11 @@ const G = {
       occ.add(Math.round(w.size[i])+'|'+carn+'|'+Math.round(w.cx[i]/8)+'|'+Math.round(w.spd[i])); }
     let nw=0; occ.forEach(k=>{ if(!this.seen.has(k)){ this.seen.add(k); nw++; } }); this.forms=this.seen.size;
     this.nov.push(nw); if(this.nov.length>180)this.nov.shift();
-    const c=document.getElementById('g-graph'); if(!c)return; const g=c.getContext('2d'), W=c.width,H=c.height, N=180;
+    const c=document.getElementById('g-graph'); if(!c)return;
+    const dpr=Math.min(window.devicePixelRatio||1,2), cw=Math.round((c.clientWidth||280)*dpr), ch=Math.round((c.clientHeight||92)*dpr);
+    if(c.width!==cw||c.height!==ch){ c.width=cw; c.height=ch; }
+    const g=c.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);   // render at device-pixel resolution so the curves stay crisp
+    const W=c.clientWidth||280, H=c.clientHeight||92, N=180;
     g.clearRect(0,0,W,H); let mx=10; for(const p of this.hist) if(p[0]>mx)mx=p[0];
     // faint gridlines for reference
     g.strokeStyle='rgba(255,255,255,0.05)'; g.lineWidth=1; for(let gy=1;gy<=3;gy++){ const yy=(H*gy/4)|0; g.beginPath(); g.moveTo(0,yy+0.5); g.lineTo(W,yy+0.5); g.stroke(); }
@@ -1934,12 +1938,7 @@ const G = {
     let nmx=0.6; const sm=[]; for(let i=0;i<this.nov.length;i++){ let s=0,cN=0; for(let j=Math.max(0,i-4);j<=i;j++){s+=this.nov[j];cN++;} sm.push(s/cN); if(sm[i]>nmx)nmx=sm[i]; }
     g.strokeStyle='rgba(255,206,92,0.95)'; g.lineWidth=1.5; g.shadowColor='rgba(255,206,92,0.55)'; g.shadowBlur=6;
     g.beginPath(); for(let i=0;i<sm.length;i++){ const x=i/(N-1)*W, y=H-(sm[i]/nmx)*H*0.82; i?g.lineTo(x,y):g.moveTo(x,y);} g.stroke(); g.shadowBlur=0;
-    // on-canvas legend (co-located with the data) — dim backing strip so it stays legible over the lines
-    g.fillStyle='rgba(0,0,0,0.28)'; g.fillRect(0,0,W,14);
-    const leg=[['#7bdcff',t('g_brain')],['#ff786e',t('g_hunters')],['#ffce5c',t('g_forms')]];
-    g.font='9px ui-monospace,monospace'; g.textBaseline='middle'; let lx=6;
-    for(const [col,lab] of leg){ g.fillStyle=col; g.beginPath(); g.arc(lx+3,7,2.6,0,6.2832); g.fill();
-      g.fillStyle='rgba(255,255,255,0.72)'; g.fillText(lab,lx+9,7.5); lx+=g.measureText(lab).width+22; }
+    // (legend lives in the clear, colour-coded caption right below the chart — no tiny on-canvas text)
   },
   tick(){ if(!S.paused){ const n=GP.SPEED|0; for(let s=0;s<n;s++) this.step(); } this.render(); },
 };
