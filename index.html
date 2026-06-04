@@ -253,6 +253,7 @@
       <span class="dot" id="run-dot"></span>
       <h2 data-i18n="control">Control</h2>
       <button class="icon" id="btn-lang" data-i18n-aria="aria_lang" title="中文 / English">中文</button>
+      <button class="icon" id="btn-replay" data-i18n-aria="aria_replay" data-i18n-title="aria_replay" title="Replay the opening">🎬</button>
       <button class="icon" id="btn-fs" data-i18n-aria="aria_fs" title="Fullscreen (F)">⛶</button>
       <button class="icon" id="btn-help" data-i18n-aria="helpTip" data-i18n-title="helpTip" title="Help (H)">?</button>
       <button class="icon" id="btn-hide" data-i18n-aria="hideTip" data-i18n-title="hideTip" title="Hide (C)">✕</button>
@@ -424,13 +425,13 @@ const I18N = {
     err_nowebgl2:'WebGL2 is required and not available in this browser.',
     modeSoup:'🌌 Soup', modeGenesis:'🧬 Genesis',
     g_reset:'↻ New world', g_evoTitle:'Evolution', g_graphTitle:'What is evolving · brain · predators · new forms',
-    g_hint:'<b style="color:#7bdcff">brain</b> · <b style="color:#ff786e">predators</b> · <b style="color:#ffce5c">new forms discovered</b> — each dot is a creature; <b>nobody scripted them</b>',
+    g_hint:'<b style="color:#7bdcff">brain</b> · <b style="color:#ff786e">predators</b> · <b style="color:#ffce5c">new forms</b> — each dot is a creature; <b>nobody scripted them</b>. <b style="color:#9ff5c8">Click the world to drop food.</b>',
     gl_gspeed:'Time speed', gl_gfood:'Food', gl_gmut:'Mutation', gl_gworld:'World size · isolation',
     g_alive:'alive', g_gen:'gen', g_brain:'brain', g_hunters:'hunters', g_forms:'forms',
     j_skip:'Skip ⏎', j_enter:'Enter the lab →', j_tagline:'a meditation on where life comes from', j_begin:'▶  Begin', j_straight:'skip straight to the lab →',
     aria_lang:'Switch language', aria_mute:'Toggle narration & music', aria_brand:'Replay the guided journey',
     aria_touchmode:'Toggle attract / repel for touch', t_attractMode:'Touch drag now attracts 🧲', t_repelMode:'Touch drag now repels 💥',
-    aria_canvas:'Live artificial-life simulation — use the control panel to shape it', t_deviceLost:'Graphics device lost — please reload the page', aria_fs:'Toggle fullscreen',
+    aria_canvas:'Live artificial-life simulation — use the control panel to shape it', t_deviceLost:'Graphics device lost — please reload the page', aria_fs:'Toggle fullscreen', aria_replay:'Replay the opening journey',
   },
   zh: {
     tagline:'人工生命实验室',
@@ -448,7 +449,7 @@ const I18N = {
     p_random:'随机汤', p_symmetry:'对称', p_clusters:'聚落', p_cells:'细胞',
     p_chase:'追逐', p_snakes:'游蛇', p_orbits:'轨道', p_custom:'自定义', p_shared:'分享',
     helpSub:'成千上万个粒子，几条简单规则。每种颜色被其他每种颜色吸引或排斥——仅此而已。由此涌现出细胞、细胞膜、捕食者与游动的生物。没有人设计它们。',
-    helpRows:[['拖动','吸引(触摸:双指拖动可平移/缩放)'],['Shift / 右键拖动','排斥'],['滚轮','缩放 · Alt+拖动平移'],['空格','暂停 / 播放'],['R','新规则(原汤)· 新世界(创世)'],['N','重生(原汤)· 新世界(创世)'],['E','开关进化(原汤)'],['P','切换配色(原汤)'],['M','电影配乐'],['C','隐藏 / 显示面板'],['H','本帮助'],['F','全屏']],
+    helpRows:[['拖动','吸引(触摸:双指拖动可平移/缩放)'],['Shift / 右键拖动','排斥'],['滚轮','缩放 · Alt+拖动平移'],['空格','暂停 / 播放'],['R','新规则(原汤)· 新世界(造化)'],['N','重生(原汤)· 新世界(造化)'],['E','开关进化(原汤)'],['P','切换配色(原汤)'],['M','电影配乐'],['C','隐藏 / 显示面板'],['H','本帮助'],['F','全屏']],
     helpFoot:'由 Claude 打造，一场关于"涌现"的研究——简单的局部规则孕育出复杂的整体生命。每次按下 R，你都会得到一个从未存在过的世界。',
     enter:'进入实验室 →',
     t_evolveOn:'进化已开启 —— 规则会缓慢漂移', t_evolveOff:'进化已关闭',
@@ -456,19 +457,19 @@ const I18N = {
     t_shareCopied:'生态链接已复制到剪贴板', t_shareFail:'复制失败 —— 链接已在地址栏中',
     t_autotune:'已自动调整到 {n} 粒子以保持流畅',
     t_worldRebuilt:'新世界已生成 · {n}× —— 谱系有了更多分化的空间',
-    t_genesisShare:'创世链接已复制 —— 相同的设置与初始种子',
+    t_genesisShare:'造化链接已复制 —— 相同的设置与初始种子',
     t_soundOn:'配乐已开启', t_soundOff:'配乐已关闭',
     eng_gpu:'GPU · WebGPU 计算', eng_cpu:'CPU · WebGL2',
     err_nowebgl2:'此浏览器需要 WebGL2，但当前不可用。',
-    modeSoup:'🌌 原汤', modeGenesis:'🧬 创世',
+    modeSoup:'🌌 原汤', modeGenesis:'🧬 造化',
     g_reset:'↻ 新世界', g_evoTitle:'演化', g_graphTitle:'正在演化的 · 脑力 · 捕食者 · 新形态',
-    g_hint:'<b style="color:#7bdcff">脑力</b> · <b style="color:#ff786e">捕食者</b> · <b style="color:#ffce5c">新发现的形态</b> — 每个点都是一个生命；<b>无人编写它们的行为</b>',
+    g_hint:'<b style="color:#7bdcff">脑力</b> · <b style="color:#ff786e">捕食者</b> · <b style="color:#ffce5c">新形态</b> — 每个点都是一个生命；<b>无人编写它们的行为</b>。<b style="color:#9ff5c8">点击世界可投下食物。</b>',
     gl_gspeed:'时间流速', gl_gfood:'食物', gl_gmut:'变异', gl_gworld:'世界大小 · 隔离',
     g_alive:'存活', g_gen:'代', g_brain:'脑', g_hunters:'捕食者', g_forms:'形态',
     j_skip:'跳过 ⏎', j_enter:'进入实验室 →', j_tagline:'一场关于生命从何而来的冥想', j_begin:'▶  开始', j_straight:'直接进入实验室 →',
     aria_lang:'切换语言', aria_mute:'切换旁白与音乐', aria_brand:'重播导览旅程',
     aria_touchmode:'切换 吸引/排斥(触摸)', t_attractMode:'触摸拖动:现在吸引 🧲', t_repelMode:'触摸拖动:现在排斥 💥',
-    aria_canvas:'实时人工生命模拟 —— 用控制台来塑造它', t_deviceLost:'图形设备已丢失 —— 请刷新页面', aria_fs:'切换全屏',
+    aria_canvas:'实时人工生命模拟 —— 用控制台来塑造它', t_deviceLost:'图形设备已丢失 —— 请刷新页面', aria_fs:'切换全屏', aria_replay:'重看开场旅程',
   },
 };
 let LANG = 'en';
@@ -500,6 +501,7 @@ const PRESETS = [
 function presetLabel(id){ const p=PRESETS.find(x=>x.id===id); if(p) return t(p.k); if(id==='custom') return t('p_custom'); if(id==='shared') return t('p_shared'); return id; }
 let ACTIVE_ENGINE='cpu'; // 'cpu' = WebGL2 + CPU sim · 'gpu' = WebGPU compute
 let MODE='soup';          // 'soup' = particle life · 'genesis' = neuroevolution ecosystem
+let musicOn=true;         // cinematic generative score plays as a continuous background (journey + lab), on by default
 
 /* ── State ──────────────────────────────────────────────────────────── */
 const S = {
@@ -1540,12 +1542,14 @@ const UI = {
     $('btn-evolve').addEventListener('click',e=>{ S.evolve=!S.evolve; e.currentTarget.classList.toggle('on',S.evolve); this.toast(S.evolve?t('t_evolveOn'):t('t_evolveOff')); });
     $('btn-palette').addEventListener('click',()=>{ paletteIdx=(paletteIdx+1)%PALETTES.length; buildPalette(); this.buildMatrix(); this.toast(t('t_palette')+PALETTES[paletteIdx].name); });
     $('btn-share').addEventListener('click',()=>this.share());
-    $('btn-sound').addEventListener('click',e=>{ const on=Sound.toggle(); e.currentTarget.classList.toggle('on',on); this.toast(on?t('t_soundOn'):t('t_soundOff')); });
+    $('btn-sound').addEventListener('click',e=>{ musicOn=!musicOn; if(musicOn){ Score.start(); Score.setMuted(false); } else { Score.setMuted(true); } e.currentTarget.classList.toggle('on',musicOn); this.toast(musicOn?t('t_soundOn'):t('t_soundOff')); });
+    $('btn-sound').classList.add('on');   // background music on by default
     $('btn-hide').addEventListener('click',()=>this.togglePanel(false));
     $('reopen').addEventListener('click',()=>this.togglePanel(true));
     const tm=$('touch-mode'); if(tm) tm.addEventListener('click',e=>{ Input.touchRepel=!Input.touchRepel; const on=Input.touchRepel; e.currentTarget.setAttribute('aria-pressed',String(on)); e.currentTarget.textContent=on?'💥':'🧲'; this.toast(on?t('t_repelMode'):t('t_attractMode')); });
     $('btn-help').addEventListener('click',()=>this.toggleHelp());
     { const fb=$('btn-fs'); if(fb) fb.addEventListener('click',()=>{ if(!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }); }
+    { const rb=$('btn-replay'); if(rb) rb.addEventListener('click',()=>{ if(!Journey.active) Journey.start(); }); }
     $('btn-lang').addEventListener('click',()=>setLang(LANG==='en'?'zh':'en'));
     $('help-lang').addEventListener('click',()=>setLang(LANG==='en'?'zh':'en'));
     $('help-enter').addEventListener('click',()=>this.toggleHelp(false));
@@ -1766,11 +1770,20 @@ function evalBrain(g,act,inp){ const nN=g.nodes.length; for(let k=0;k<NIN;k++)ac
   _gout[0]=act[NIN]*0.5+0.5; _gout[1]=act[NIN+1]; _gout[2]=act[NIN+2]*0.5+0.5; }
 
 const G = {
-  w:null, canvas:null, ctx:null, scale:1, ox:0, oy:0, hist:[], seen:null, nov:[], forms:0, worldScale:1, _seed:0,
-  init(canvas){ this.canvas=canvas; this.ctx=canvas.getContext('2d'); this.reset(); },
+  w:null, canvas:null, ctx:null, scale:1, ox:0, oy:0, hist:[], seen:null, nov:[], forms:0, worldScale:1, _seed:0, events:[], _feeding:false,
+  init(canvas){ this.canvas=canvas; this.ctx=canvas.getContext('2d'); this.reset(); this._wireFeed(canvas); },
   // seed the world so a Genesis ecosystem is reproducible (the sim is deterministic per seed). undefined → fresh random seed.
   reset(seed){ this._seed = (seed===undefined ? (rnd()*4294967296)>>>0 : seed>>>0); srand(this._seed);
-    this._dims(); this.w=this.makeWorld(); this.hist.length=0; this.seen=new Set(); this.nov.length=0; this.forms=0; },
+    this._dims(); this.w=this.makeWorld(); this.hist.length=0; this.seen=new Set(); this.nov.length=0; this.forms=0; this.events.length=0; },
+  // a life-event spark (1 = birth, 2 = killed by a predator) — rendered as a fading ring/burst so you SEE life and death happen
+  _ev(t,x,y){ const e=this.events; e.push(t,x,y,1); if(e.length>1200) e.splice(0,4); },
+  // click/drag on the world to drop a little cluster of food — tend the ecosystem
+  feed(wx,wy){ const w=this.w; if(!w)return; for(let k=0;k<10;k++){ if(w.fn>=GP.FOOD_CAP)break; const a=rnd()*6.283, r=rnd()*38; let fx=wx+Math.cos(a)*r, fy=wy+Math.sin(a)*r; fx-=Math.floor(fx/GP.WORLD_W)*GP.WORLD_W; fy-=Math.floor(fy/GP.WORLD_H)*GP.WORLD_H; w.fx[w.fn]=fx; w.fy[w.fn]=fy; w.fn++; } this._ev(3,wx,wy); },
+  _feedAt(e){ const r=this.canvas.getBoundingClientRect(), sc=this.scale; if(sc<=0)return; const dpr=this.canvas.width/r.width; const wx=(e.clientX-r.left)*dpr/sc, wy=(e.clientY-r.top)*dpr/sc; this.feed(wx,wy); },
+  _wireFeed(canvas){ if(this._fedWired) return; this._fedWired=true;
+    canvas.addEventListener('pointerdown',e=>{ this._feeding=true; this._feedAt(e); try{canvas.setPointerCapture(e.pointerId);}catch(_){} });
+    canvas.addEventListener('pointermove',e=>{ if(this._feeding) this._feedAt(e); });
+    const stop=()=>{ this._feeding=false; }; canvas.addEventListener('pointerup',stop); canvas.addEventListener('pointercancel',stop); },
   // rectangular world dims from the canvas aspect, holding total area = (1000·worldScale)² constant → fills the screen, round creatures
   _dims(){ const c=this.canvas; let aspect=1; if(c&&c.width>0&&c.height>0) aspect=c.width/c.height; const side=1000*this.worldScale, area=side*side; GP.WORLD_W=Math.sqrt(area*aspect); GP.WORLD_H=Math.sqrt(area/aspect); },
   _rebuildGrids(){ const w=this.w; if(!w)return; const cell=130, cols=Math.max(1,Math.floor(GP.WORLD_W/cell)), rows=Math.max(1,Math.floor(GP.WORLD_H/cell));
@@ -1833,7 +1846,7 @@ const G = {
       if(fni>=0 && !fEat[fni]){ fEat[fni]=1; const fe=Math.max(0.05,1-(size-4)/GP.PLANT_FALLOFF); w.energy[i]+=GP.FOOD_ENERGY*fe; }
       if(bite>0.55 && nci>=0){ const os=w.size[nci];
         if(w.alive[nci] && os<size*GP.PREY_RATIO && ncd<er+os){ const a=Math.atan2(gWrap(w.y[nci]-ny,H),gWrap(w.x[nci]-nx,W))-w.dir[i];
-          if(Math.cos(a)>0.25){ const g=Math.min(maxE,w.energy[nci]*GP.BITE_GAIN); w.energy[i]+=g; w.preyE[i]+=g; w.kills++; this.kill(w,nci); } } }
+          if(Math.cos(a)>0.25){ const g=Math.min(maxE,w.energy[nci]*GP.BITE_GAIN); w.energy[i]+=g; w.preyE[i]+=g; w.kills++; this._ev(2,w.x[nci],w.y[nci]); this.kill(w,nci); } } }
       if(w.energy[i]>maxE)w.energy[i]=maxE;
       if(w.energy[i]>GP.REPRO_FRAC*maxE){ const give=w.energy[i]*GP.CHILD_FRAC; w.energy[i]-=give; w.births.push(i); w.births.push(give); }
       if(w.energy[i]<=0) this.kill(w,i);
@@ -1842,7 +1855,7 @@ const G = {
       w.geno[ci]=mutateGenome(cloneGenome(w.geno[par])); w.act[ci]=new Float32Array(w.geno[ci].nodes.length);
       w.sizeG[ci]=w.sizeG[par]+gGauss()*GP.BODY_SIG; w.spdG[ci]=w.spdG[par]+gGauss()*GP.BODY_SIG; w.senseG[ci]=w.senseG[par]+gGauss()*GP.BODY_SIG;
       const ang=rnd()*6.283, rad=8+w.size[par]*1.5; let bx=w.x[par]+Math.cos(ang)*rad, by=w.y[par]+Math.sin(ang)*rad; bx-=Math.floor(bx/W)*W; by-=Math.floor(by/W)*W;
-      this.initBody(w,ci,bx,by,w.gen[par]+1,give,w.lin[par]); }
+      this.initBody(w,ci,bx,by,w.gen[par]+1,give,w.lin[par]); this._ev(1,bx,by); }
     let k=0; for(let f=0;f<w.fn;f++){ if(!fEat[f]){ w.fx[k]=w.fx[f]; w.fy[k]=w.fy[f]; k++; } } w.fn=k;
     let pop=0; for(let i=0;i<w.n;i++)if(w.alive[i])pop++;
     while(pop<GP.MIN_POP){ if(this.spawnFounder(w)<0)break; pop++; }
@@ -1890,6 +1903,14 @@ const G = {
       const x=ox+w.x[i]*sc, y=oy+w.y[i]*sc; ctx.fillStyle=bl[ci]; ctx.beginPath(); ctx.arc(x,y,r,0,6.2832); ctx.fill();
       const d=w.dir[i]; ctx.strokeStyle='rgba(255,255,255,0.8)'; ctx.lineWidth=Math.max(0.8,r*0.32);
       ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+Math.cos(d)*r*1.7, y+Math.sin(d)*r*1.7); ctx.stroke(); }
+    // life & death — a soft cyan ring blooms at every birth, a warm burst flares where a predator made a kill
+    const ev=this.events; if(ev.length){ ctx.globalCompositeOperation='lighter';
+      for(let k=ev.length-4;k>=0;k-=4){ const life=(ev[k+3]-=0.05); if(life<=0){ ev.splice(k,4); continue; }
+        const ex=ox+ev[k+1]*sc, ey=oy+ev[k+2]*sc, p=1-life;
+        if(ev[k]===1){ ctx.strokeStyle=`rgba(150,235,255,${(life*0.7).toFixed(3)})`; ctx.lineWidth=1.6; ctx.beginPath(); ctx.arc(ex,ey,2+p*24,0,6.2832); ctx.stroke(); }
+        else if(ev[k]===2){ ctx.fillStyle=`rgba(255,150,85,${(life*0.5).toFixed(3)})`; ctx.beginPath(); ctx.arc(ex,ey,2+p*15,0,6.2832); ctx.fill(); }
+        else { ctx.strokeStyle=`rgba(150,240,170,${(life*0.55).toFixed(3)})`; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(ex,ey,4+p*44,0,6.2832); ctx.stroke(); } }
+      ctx.globalCompositeOperation='source-over'; }
   },
   sample(mm){ const m=mm||this.metrics(); this.hist.push([m.cxMean,m.carnFrac]); if(this.hist.length>180)this.hist.shift();
     // open-endedness — distinct phenotype classes = coarse cells in (size · diet · brain-complexity · speed) space.
@@ -2290,7 +2311,7 @@ const Journey = {
     document.body.classList.add('journey-on');   // hide lab chrome (brand/stats/reopen) for a clean full-bleed cinematic
     document.getElementById('journey-enter').classList.remove('show'); UI.togglePanel(false);
     Narr.prepare(); },
-  begin(){ if(this.started) return; this.started=true; document.getElementById('journey').classList.remove('cover'); Narr.prepare(); Score.start(); this.next(); },
+  begin(){ if(this.started) return; this.started=true; document.getElementById('journey').classList.remove('cover'); Narr.prepare(); if(musicOn) Score.start(); this.next(); },
   next(){ clearTimeout(this._adv); clearTimeout(this._hard); this.ch++;
     if(this.ch>=this.chapters.length){ this.done=true; Narr.cancel(); document.getElementById('journey-enter').classList.add('show'); this.renderDots(); return; }
     const c=this.chapters[this.ch]; this.t=0; if(c.enter) c.enter(); this.renderDots(); this.showCaption(); Score.mood(this.ch);
@@ -2306,8 +2327,8 @@ const Journey = {
     clearTimeout(this._ct); this._ct=setTimeout(()=>{ el.innerHTML=lines.map(([tx,cls])=>`<div class="l ${cls}">${tx}</div>`).join(''); el.classList.add('in'); },200);
   },
   renderDots(){ const d=document.getElementById('journey-dots'); if(d) d.innerHTML=this.chapters.map((_,i)=>`<i class="${i===this.ch?'on':''}"></i>`).join(''); },
-  toggleMute(){ Narr.muted=!Narr.muted; Score.setMuted(Narr.muted); if(Narr.muted) Narr.cancel(); const b=document.getElementById('journey-mute'); if(b) b.textContent=Narr.muted?'🔇':'🔊'; },
-  end(){ this.active=false; this.done=false; this.started=false; clearTimeout(this._adv); clearTimeout(this._hard); Narr.cancel(); Score.stop();
+  toggleMute(){ Narr.muted=!Narr.muted; Score.setMuted(Narr.muted); musicOn=!Narr.muted; if(Narr.muted) Narr.cancel(); const b=document.getElementById('journey-mute'); if(b) b.textContent=Narr.muted?'🔇':'🔊'; const bs=document.getElementById('btn-sound'); if(bs) bs.classList.toggle('on',musicOn); },
+  end(){ this.active=false; this.done=false; this.started=false; clearTimeout(this._adv); clearTimeout(this._hard); Narr.cancel(); if(musicOn){ Score.mood(1); } else { Score.stop(); }   // keep the music playing into the lab
     const j=document.getElementById('journey'); j.classList.remove('show'); j.classList.remove('cover');
     document.body.classList.remove('journey-on');
     try{ localStorage.setItem('primordia_seen','1'); }catch(e){}
@@ -2362,6 +2383,12 @@ async function main(){
   console.log('%cPRIMORDIA%c\n  an artificial life lab — simple rules, emergent life\n  engine: '+(useGPU?'WebGPU compute':'WebGL2 + CPU')+'\n  tinker live via window.__P  (__P.S = settings)\n',
     'font-size:22px;font-weight:700;color:#7bdcff','color:#8b90a6;font-size:12px');
 
+  // start the cinematic background music at the first user gesture (browsers block autoplay before one); on by default
+  const armMusic=()=>{ if(musicOn && !Score.ctx){ try{ Score.start(); }catch(e){} } };
+  window.addEventListener('pointerdown', armMusic, {once:true});
+  window.addEventListener('keydown', armMusic, {once:true});
+  window.addEventListener('touchstart', armMusic, {once:true, passive:true});
+
   let last=performance.now(), fpsAcc=0, fpsN=0, fpsT=0;
   function loop(now){
     const realDt=Math.min(0.05,(now-last)/1000); last=now;
@@ -2369,7 +2396,6 @@ async function main(){
     else if(ACTIVE_ENGINE==='gpu'){ if(!S.paused) GPU.step(); GPU.render(); }
     else { if(!S.paused) Sim.step(S.speed*0.016); Render.frame(); }
     if(Journey.active) Journey.tick(realDt*1000);
-    Sound.update(Input.active?0.9:0.28);
     fpsAcc+=realDt; fpsN++; fpsT+=realDt;
     if(fpsT>=0.5){ const fps=fpsN/fpsAcc; UI.setFps(fps);
       if(MODE==='genesis'){ const gm=G.metrics(); UI.syncGenesisStats(gm); G.sample(gm); } else if(!Journey.active) Perf.tick(fps);

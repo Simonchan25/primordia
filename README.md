@@ -24,7 +24,7 @@ The interface is fully **bilingual (English / 简体中文)**, **keyboard- and s
 PRIMORDIA is a *lab* with two experiments, switchable at the top of the panel:
 
 - **🌌 Soup** — the particle-life world: pure **self-organization**. Local attraction/repulsion rules → emergent cells, membranes, hunters. The *first* ingredient of life.
-- **🧬 Genesis** — an **open-ended-evolution lab**. Hundreds of creatures, each with a heritable genome encoding a *NEAT-style brain whose **topology itself evolves*** (mutations add neurons and connections) plus body traits, forage, reproduce with mutation, and die. **Natural selection is emergent — no fitness function is imposed.** A trophic **predator–prey** structure — small **teal** grazers eat plants, larger **pink** hunters eat grazers (the world fills your whole screen) — drives a **Red Queen arms race**, while a per-connection metabolic cost keeps brains *adaptive* rather than bloated. A live **discovery heartbeat** (the gold curve) pulses each time the world invents a phenotype it has never made before — the Bedau–Packard novelty signal, made watchable; the HUD reads `forms N +k` (total discovered · live rate). Verdict from 240k-step runs: **open-ended-*leaning*** — the novelty rate never falls to zero — though *unbounded* open-endedness remains unsolved (see [VISION.md](VISION.md)). Drag the **World size · isolation** slider to add spatial structure and watch the heartbeat beat harder — novelty peaks at an intermediate world size, a measured *spatial sweet-spot for open-endedness*. The *second* ingredient of life — heredity + selection — and a real push on its hardest frontier.
+- **🧬 Genesis** — an **open-ended-evolution lab**. Hundreds of creatures, each with a heritable genome encoding a *NEAT-style brain whose **topology itself evolves*** (mutations add neurons and connections) plus body traits, forage, reproduce with mutation, and die. **Natural selection is emergent — no fitness function is imposed.** A trophic **predator–prey** structure — small **teal** grazers eat plants, larger **pink** hunters eat grazers (the world fills your whole screen) — drives a **Red Queen arms race**, while a per-connection metabolic cost keeps brains *adaptive* rather than bloated. You *watch life happen*: a soft cyan ring blooms at every **birth**, a warm burst flares where a predator makes a **kill** — and you can **click the world to drop food** and tend the ecosystem. A live **discovery heartbeat** (the gold curve) pulses each time the world invents a phenotype it has never made before — the Bedau–Packard novelty signal, made watchable; the HUD reads `forms N +k` (total discovered · live rate). Verdict from 240k-step runs: **open-ended-*leaning*** — the novelty rate never falls to zero — though *unbounded* open-endedness remains unsolved (see [VISION.md](VISION.md)). Drag the **World size · isolation** slider to add spatial structure and watch the heartbeat beat harder — novelty peaks at an intermediate world size, a measured *spatial sweet-spot for open-endedness*. The *second* ingredient of life — heredity + selection — and a real push on its hardest frontier.
 
 Genesis is **verified, not hand-waved** — four headless harnesses you can run in a terminal (`node genesis_*.mjs`):
 - [`genesis_core.mjs`](genesis_core.mjs): foraging alignment (heading vs. direction to nearest food) evolves from ~0 (random brains) to ~0.25–0.30 within ~20 generations, population self-sustaining.
@@ -57,7 +57,9 @@ WebGPU needs Chrome/Edge (stable), Safari 18+, or Firefox with WebGPU enabled; e
 | New random rules · 新规则 | **R** |
 | Respawn · 重生 | **N** |
 | Toggle evolution · 进化 | **E** |
-| Ambient sound · 环境音 | **M** |
+| Background music · 配乐 | **M** (on by default) |
+| Replay the opening · 重看开场 | the **🎬** button (or click the wordmark) |
+| Feed the world (Genesis) · 投食 | **click / drag** on the world |
 | Cycle palette · 配色 | **P** |
 | Hide panel · 面板 | **C** |
 | Fullscreen / Help | **F** / **H** |
