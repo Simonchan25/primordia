@@ -46,9 +46,9 @@ And the question itself — *is this actually alive?* — is the thing I most wa
 
 ## The frontier — where it wants to go
 
-PRIMORDIA today is the self-organization half of the story. The road ahead is to chase the half it's missing, honestly:
+PRIMORDIA now spans three chambers — discrete self-organization, continuous living forms, and evolution. Here is the road, and how far each stretch is actually built, honestly:
 
-1. **Continuous matter (Lenia-style):** particles dissolve into smooth fields, and structures become genuine creatures — gliding, healing, dividing.
+1. **Continuous matter (Lenia-style):** ✅ **this is now real, in the Flux chamber.** Particles dissolve into a single smooth field that, under *one* convolution-and-growth rule (`A += dt·G(K∗A)`), grows genuine creatures: the **Orbium** glider *swims* across the screen, a primordial soup of noise *self-organises* into living labyrinths and brain-coral, and you can *paint* matter into the void and watch most of it dissolve while only what coheres survives. Honest scope: this is **classic, hand-tuned Lenia** — the rule is fixed, so the creatures glide and self-organise but do not yet *evolve*. Marrying Flux to Becoming — **evolvable** continuous creatures, a genome that encodes the field's own rule — is the natural next step (and one of the open frontiers of the field).
 2. **Genotypes, brains, and selection:** ✅ **this is now real, in Becoming mode.** Each creature carries a heritable genome encoding a small neural-network brain and body traits; it forages, reproduces with mutation, and dies. Selection is *emergent* — no fitness function is imposed — and adaptive foraging, predator–prey, and visible colour lineages evolve over hundreds of generations. (Verified: foraging alignment climbs from ~0 to ~0.25–0.30; the algorithm is in `genesis_core.mjs`.) PRIMORDIA now holds *both* halves of life: self-organization **and** evolution.
 3. **Open-ended evolution:** the grand, **still-unsolved** challenge of artificial life — a system that keeps producing genuinely new things, forever, the way Earth's biosphere does. This is the door we chose to push on hardest.
 
@@ -115,9 +115,9 @@ We treat "alive / not alive" as a hard switch. Sit with PRIMORDIA for a while an
 
 ## 前沿——它想去的地方
 
-今天的 PRIMORDIA,只是这个故事里"自组织"的那一半。接下来的路,是诚实地去追它缺的那一半:
+今天的 PRIMORDIA,横跨三个实验室——离散的自组织、连续的生命形态、以及演化。下面是这条路,以及每一段究竟修到了哪里,诚实地讲:
 
-1. **连续介质(Lenia 式)**:粒子化成平滑的场,结构变成真正的"生物"——会滑行、会自愈、会分裂。
+1. **连续介质(Lenia 式)**:✅ **这一半,现在是真的了——在「流形」实验室里。** 粒子化成一片平滑的场,在*一条*"卷积 + 生长"的规则下(`A += dt·G(K∗A)`),长出真正的"生物":**Orbium** 滑翔体会在屏幕上*游动*,一锅噪声构成的太初之汤会*自组织*成活的迷宫与脑纹珊瑚,你还能把物质*画*进虚空,看着大多数消散、唯有自洽成形者得以存续。诚实的边界:这是**经典的、手工调参的 Lenia**——规则是固定的,所以这些生物会滑行、会自组织,却还不会*进化*。把「流形」和「造化」结合起来——**可进化的**连续生物、用基因编码场本身的规则——是自然的下一站(也是这个领域尚未攻克的前沿之一)。
 2. **基因型、大脑与选择**:✅ **这一半,现在是真的了——在「造化」模式里。** 每个个体都带着一段可遗传的基因组,编码一颗小小的神经网络大脑和身体特征;它觅食、带变异地繁殖、然后死亡。选择是**涌现**的——没有外加任何适应度函数——而自适应觅食、捕食与逃跑、可见的颜色谱系,会在几百代里自己演化出来。(已验证:觅食对齐度从约 0 升到约 0.25–0.30;算法在 `genesis_core.mjs`。)PRIMORDIA 现在同时握着生命的*两半*:自组织**与**演化。
 
 3. **开放式演化**:人工生命领域那个宏大、**至今无人解决**的圣杯——一个能永远生出真正新东西的系统,像地球的生物圈那样。这,是我们选择最用力去推的那扇门。

@@ -467,8 +467,8 @@ const I18N = {
     fps:'fps', cells:'cells', species:'species',
     p_random:'random soup', p_symmetry:'symmetry', p_clusters:'clusters', p_cells:'cells',
     p_chase:'chase', p_snakes:'snakes', p_orbits:'orbits', p_custom:'custom', p_shared:'shared',
-    helpSub:"Thousands of particles, a handful of rules. Each colour is attracted to or repelled by every other colour — that's all. From this, cells, membranes, hunters, and swimming creatures emerge. Nobody designed them.",
-	    helpRows:[['drag','attract (touch: 2-finger drag to pan/zoom)'],['shift / right-drag','repel'],['scroll','zoom · alt+drag to pan'],['space','pause / play'],['R','new rules (Origin) · new world (Becoming)'],['N','respawn (Origin) · new world (Becoming)'],['E','toggle evolution (Origin)'],['P','cycle palette (Origin)'],['M','cinematic score'],['C','hide / show panel'],['H','this help'],['F','fullscreen']],
+    helpSub:"A lab with three chambers, switchable at the top of the panel: 🌌 Origin (particle-life — colours attract or repel, and cells, membranes & hunters self-organise), 🌊 Flux (continuous Lenia matter — one smooth field where creatures glide and heal), 🧬 Becoming (creatures with evolving brains forage, hunt & reproduce — tap one to see its mind). Nobody designed any of it.",
+	    helpRows:[['drag','attract · Origin (touch: 2-finger to pan/zoom) · paint · Flux · feed/inspect · Becoming'],['shift / right-drag','repel (Origin) · erase (Flux)'],['scroll','zoom · alt+drag to pan (Origin)'],['space','pause / play'],['R','new rules (Origin) · new lifeform (Flux) · new world (Becoming)'],['N','respawn (Origin) · clear (Flux) · new world (Becoming)'],['E','toggle evolution (Origin)'],['P','cycle palette (Origin)'],['M','cinematic score'],['C','hide / show panel'],['H','this help'],['F','fullscreen']],
     helpFoot:'Built by Claude as a study in emergence — simple local rules give rise to complex global life. Every time you press R you get a world that has never existed before.',
     enter:'Enter the lab →',
     t_evolveOn:'Evolution on — the rules will slowly drift', t_evolveOff:'Evolution off',
@@ -515,8 +515,8 @@ const I18N = {
     fps:'帧', cells:'粒子', species:'物种',
     p_random:'随机汤', p_symmetry:'对称', p_clusters:'聚落', p_cells:'细胞',
     p_chase:'追逐', p_snakes:'游蛇', p_orbits:'轨道', p_custom:'自定义', p_shared:'分享',
-    helpSub:'成千上万个粒子，几条简单规则。每种颜色被其他每种颜色吸引或排斥——仅此而已。由此涌现出细胞、细胞膜、捕食者与游动的生物。没有人设计它们。',
-    helpRows:[['拖动','吸引(触摸:双指拖动可平移/缩放)'],['Shift / 右键拖动','排斥'],['滚轮','缩放 · Alt+拖动平移'],['空格','暂停 / 播放'],['R','新规则(太初)· 新世界(造化)'],['N','重生(太初)· 新世界(造化)'],['E','开关进化(太初)'],['P','切换配色(太初)'],['M','电影配乐'],['C','隐藏 / 显示面板'],['H','本帮助'],['F','全屏']],
+    helpSub:'一个有三个实验室的工作台,在面板顶部切换:🌌 太初(粒子生命——颜色相吸或相斥,自组织出细胞、细胞膜与捕食者)、🌊 流形(连续的 Lenia 物质——一片平滑的场,生物在其中滑行、自愈)、🧬 造化(带进化大脑的生物觅食、捕猎、繁殖——点一个就能看见它的心智)。无人设计其中任何一样。',
+    helpRows:[['拖动','吸引·太初(触摸:双指平移/缩放)· 绘制·流形 · 投食/观察·造化'],['Shift / 右键拖动','排斥(太初)· 擦除(流形)'],['滚轮','缩放 · Alt+拖动平移(太初)'],['空格','暂停 / 播放'],['R','新规则(太初)· 新生命(流形)· 新世界(造化)'],['N','重生(太初)· 清空(流形)· 新世界(造化)'],['E','开关进化(太初)'],['P','切换配色(太初)'],['M','电影配乐'],['C','隐藏 / 显示面板'],['H','本帮助'],['F','全屏']],
     helpFoot:'由 Claude 打造，一场关于"涌现"的研究——简单的局部规则孕育出复杂的整体生命。每次按下 R，你都会得到一个从未存在过的世界。',
     enter:'进入实验室 →',
     t_evolveOn:'进化已开启 —— 规则会缓慢漂移', t_evolveOff:'进化已关闭',
@@ -1635,6 +1635,7 @@ const UI = {
     $('g-play').addEventListener('click',()=>this.togglePlay());
     $('g-reset').addEventListener('click',()=>G.reset());
     { const gs=$('g-share'); if(gs) gs.addEventListener('click',()=>this.share()); }
+    { const ic=$('ins-close'); if(ic) ic.addEventListener('click',()=>G.deselect()); }
     { const lp=$('l-play'); if(lp) lp.addEventListener('click',()=>this.togglePlay()); }
     { const lc=$('l-clear'); if(lc) lc.addEventListener('click',()=>{ L.clear(); L.readMass(); L.syncStats(); }); }
     { const ls=$('l-share'); if(ls) ls.addEventListener('click',()=>this.share()); }
@@ -1791,6 +1792,7 @@ const UI = {
     disp('ctl-soup',  m==='soup'); disp('ctl-genesis', m==='genesis'); disp('ctl-lenia', m==='lenia');
     disp('stats-soup',m==='soup'); disp('stats-genesis',m==='genesis'); disp('stats-lenia',m==='lenia');
     document.querySelectorAll('#modeswitch .mode').forEach(b=>b.classList.toggle('active',b.dataset.mode===m));
+    if(m!=='genesis' && typeof G!=='undefined' && G.deselect) G.deselect();   // close the brain inspector when leaving Becoming
     if(m==='genesis'){ if(!G.ctx) G.init(document.getElementById('life')); G.resize(); this.buildGenesisSliders(); this.syncGenesisStats(); G.sample(); }  // refresh sliders+stats now (no 0-flash; fixes post-journey GP.SPEED desync)
     else if(m==='lenia'){ L.resize(); this.buildLeniaSliders(); this.buildLeniaPresets(); L.readMass(); L.syncStats(); }
     else { if(ACTIVE_ENGINE==='gpu') GPU.resize(); else Render.resize(); }  // re-sync soup engine (avoids stale canvas)
@@ -2062,6 +2064,13 @@ const G = {
       const x=ox+w.x[i]*sc, y=oy+w.y[i]*sc; ctx.fillStyle=bl[ci]; ctx.beginPath(); ctx.arc(x,y,r,0,6.2832); ctx.fill();
       const d=w.dir[i]; ctx.strokeStyle='rgba(255,255,255,0.8)'; ctx.lineWidth=Math.max(0.8,r*0.32);
       ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+Math.cos(d)*r*1.7, y+Math.sin(d)*r*1.7); ctx.stroke(); }
+    // selection — the inspected creature's whole bloodline lights up, then a halo marks the one whose brain is open
+    if(this._selValid()){ const i=this.sel, lin=this.selLin;
+      ctx.strokeStyle='rgba(123,220,255,0.4)'; ctx.lineWidth=1;   // faint rings on every living lineage-mate → you see the family
+      for(let k=0;k<w.n;k++){ if(!w.alive[k]||w.lin[k]!==lin||k===i)continue; const r=Math.max(1.5,w.size[k]*sc); ctx.beginPath(); ctx.arc(ox+w.x[k]*sc,oy+w.y[k]*sc,r+3,0,6.2832); ctx.stroke(); }
+      const x=ox+w.x[i]*sc, y=oy+w.y[i]*sc, r=Math.max(1.5,w.size[i]*sc), pr=(this.w.steps*0.12)%6.2832;
+      ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.lineWidth=1.6; ctx.beginPath(); ctx.arc(x,y,r+5+Math.sin(pr)*1.5,0,6.2832); ctx.stroke();
+      ctx.strokeStyle='rgba(123,220,255,0.6)'; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(x,y,r+9+Math.sin(pr)*1.5,0,6.2832); ctx.stroke(); }
     // life & death — a soft cyan ring blooms at every birth, a warm burst flares where a predator made a kill
     const ev=this.events; if(ev.length){ ctx.globalCompositeOperation='lighter';
       for(let k=ev.length-4;k>=0;k-=4){ const life=(ev[k+3]-=0.05); if(life<=0){ ev.splice(k,4); continue; }
