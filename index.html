@@ -488,9 +488,13 @@ const I18N = {
     lp_glider:'glider', lp_swarm:'swarm', lp_soup:'primordial soup', lp_coral:'coral',
     t_leniaShare:'Flux link copied — same rule & lifeform',
     g_reset:'↻ New world', g_evoTitle:'Evolution', g_graphTitle:'Three signals, over time',
-    g_hint:'three live readings: <b style="color:#7bdcff">brain complexity</b> · <b style="color:#ff786e">predator share</b> · <b style="color:#ffce5c">new-form rate</b>. Each dot is a creature; <b>nobody scripted them</b>. <b style="color:#9ff5c8">Click the world to drop food.</b>',
+    g_hint:'three live readings: <b style="color:#7bdcff">brain complexity</b> · <b style="color:#ff786e">predator share</b> · <b style="color:#ffce5c">new-form rate</b>. Each dot is a creature; <b>nobody scripted them</b>. <b style="color:#9ff5c8">Tap one to see its brain</b> · tap empty space to feed.',
     gl_gspeed:'Time speed', gl_gfood:'Food', gl_gmut:'Mutation', gl_gworld:'World size · isolation',
     g_alive:'alive', g_gen:'gen', g_brain:'brain', g_hunters:'hunters', g_forms:'forms',
+    ins_hint:'9 senses → an evolved tangle nobody designed → 3 choices. Bright wires excite, red wires inhibit; nodes flicker as it thinks.',
+    ins_senses:'SENSES', ins_thrust:'go', ins_turn:'turn', ins_bite:'bite',
+    ins_gen:'gen', ins_lineage:'lineage', ins_wires:'wires', ins_hunter:'hunter', ins_grazer:'grazer', ins_dead:'— this one has died —',
+    ins_size:'size', ins_speed:'speed', ins_sense:'sense',
     j_skip:'Skip ⏎', j_enter:'Enter the lab →', j_tagline:'a meditation on where life comes from', j_begin:'▶  Begin', j_straight:'skip straight to the lab →',
     aria_lang:'Switch language', aria_mute:'Toggle narration & music', aria_brand:'Replay the guided journey',
     aria_touchmode:'Toggle attract / repel for touch', t_attractMode:'Touch drag now attracts 🧲', t_repelMode:'Touch drag now repels 💥',
@@ -532,9 +536,13 @@ const I18N = {
     lp_glider:'滑翔体', lp_swarm:'群游', lp_soup:'太初之汤', lp_coral:'珊瑚',
     t_leniaShare:'流形链接已复制 —— 相同的规则与生命体',
     g_reset:'↻ 新世界', g_evoTitle:'演化', g_graphTitle:'随时间变化的三条曲线',
-    g_hint:'三条实时曲线:<b style="color:#7bdcff">脑复杂度</b> · <b style="color:#ff786e">捕食者占比</b> · <b style="color:#ffce5c">新形态速率</b>。每个点都是一个生命;<b>无人编写它们的行为</b>。<b style="color:#9ff5c8">点击世界可投食。</b>',
+    g_hint:'三条实时曲线:<b style="color:#7bdcff">脑复杂度</b> · <b style="color:#ff786e">捕食者占比</b> · <b style="color:#ffce5c">新形态速率</b>。每个点都是一个生命;<b>无人编写它们的行为</b>。<b style="color:#9ff5c8">点一个看它的大脑</b> · 点空白处投食。',
     gl_gspeed:'时间流速', gl_gfood:'食物', gl_gmut:'变异', gl_gworld:'世界大小 · 隔离',
     g_alive:'存活', g_gen:'代', g_brain:'脑', g_hunters:'捕食者', g_forms:'形态',
+    ins_hint:'9 个感官 → 一团无人设计的连线 → 3 个抉择。亮线兴奋,红线抑制;节点随它思考而明灭。',
+    ins_senses:'感官', ins_thrust:'前进', ins_turn:'转向', ins_bite:'撕咬',
+    ins_gen:'代', ins_lineage:'谱系', ins_wires:'连线', ins_hunter:'捕食者', ins_grazer:'食草', ins_dead:'—— 它已死去 ——',
+    ins_size:'体型', ins_speed:'速度', ins_sense:'视野',
     j_skip:'跳过 ⏎', j_enter:'进入实验室 →', j_tagline:'一场关于生命从何而来的冥想', j_begin:'▶  开始', j_straight:'直接进入实验室 →',
     aria_lang:'切换语言', aria_mute:'切换旁白与音乐', aria_brand:'重播导览旅程',
     aria_touchmode:'切换 吸引/排斥(触摸)', t_attractMode:'触摸拖动:现在吸引 🧲', t_repelMode:'触摸拖动:现在排斥 💥',
@@ -974,7 +982,7 @@ const Render = {
     if(c.width!==w||c.height!==h){ c.width=w; c.height=h; }
     gl.viewport(0,0,w,h);
     Cam.vpW=w; Cam.vpH=h;
-    if(Cam.zoom===0) Cam.fit();
+    { const cov=Math.max(w,h); if(Cam.zoom < cov) Cam.zoom=cov; }   // toroidal world always at least fills the viewport (no black margins)
     // (re)allocate HDR targets at the new size: full-res accumulation + half-res bloom ping-pong
     if(this.accTex){
       this._allocTarget(this.accTex,this.accFbo,w,h);
@@ -1303,7 +1311,7 @@ fn aces(x:vec3<f32>)->vec3<f32> {
     if(!this.ok) return;
     this.dpr=Math.min(window.devicePixelRatio||1, this.dprCap);
     const w=Math.max(1,Math.floor(innerWidth*this.dpr)), h=Math.max(1,Math.floor(innerHeight*this.dpr));
-    this.canvas.width=w; this.canvas.height=h; Cam.vpW=w; Cam.vpH=h; if(Cam.zoom===0) Cam.fit();
+    this.canvas.width=w; this.canvas.height=h; Cam.vpW=w; Cam.vpH=h; { const cov=Math.max(w,h); if(Cam.zoom < cov) Cam.zoom=cov; }   // always fill the viewport
     const dev=this.device, U=GPUTextureUsage, HDR='rgba16float';
     for(const k of ['hdr','bloomA','bloomB']) if(this.tex[k]) this.tex[k].destroy();
     this.tex.hdr=dev.createTexture({size:[w,h],format:HDR,usage:U.RENDER_ATTACHMENT|U.TEXTURE_BINDING});
@@ -1879,20 +1887,62 @@ function evalBrain(g,act,inp){ const nN=g.nodes.length; for(let k=0;k<NIN;k++)ac
   _gout[0]=act[NIN]*0.5+0.5; _gout[1]=act[NIN+1]; _gout[2]=act[NIN+2]*0.5+0.5; }
 
 const G = {
-  w:null, canvas:null, ctx:null, scale:1, ox:0, oy:0, hist:[], seen:null, nov:[], forms:0, worldScale:1, _seed:0, events:[], _feeding:false,
+  w:null, canvas:null, ctx:null, scale:1, ox:0, oy:0, hist:[], seen:null, nov:[], forms:0, worldScale:1, _seed:0, events:[], _feeding:false, sel:-1, selLin:0,
   init(canvas){ this.canvas=canvas; this.ctx=canvas.getContext('2d'); this.reset(); this._wireFeed(canvas); },
   // seed the world so a Genesis ecosystem is reproducible (the sim is deterministic per seed). undefined → fresh random seed.
   reset(seed){ this._seed = (seed===undefined ? (rnd()*4294967296)>>>0 : seed>>>0); srand(this._seed);
-    this._dims(); this.w=this.makeWorld(); this.hist.length=0; this.seen=new Set(); this.nov.length=0; this.forms=0; this.events.length=0; },
+    this._dims(); this.w=this.makeWorld(); this.hist.length=0; this.seen=new Set(); this.nov.length=0; this.forms=0; this.events.length=0; this.deselect(); },
   // a life-event spark (1 = birth, 2 = killed by a predator) — rendered as a fading ring/burst so you SEE life and death happen
   _ev(t,x,y){ const e=this.events; e.push(t,x,y,1); if(e.length>1200) e.splice(0,4); },
   // click/drag on the world to drop a little cluster of food — tend the ecosystem
   feed(wx,wy){ const w=this.w; if(!w)return; for(let k=0;k<10;k++){ if(w.fn>=GP.FOOD_CAP)break; const a=rnd()*6.283, r=rnd()*38; let fx=wx+Math.cos(a)*r, fy=wy+Math.sin(a)*r; fx-=Math.floor(fx/GP.WORLD_W)*GP.WORLD_W; fy-=Math.floor(fy/GP.WORLD_H)*GP.WORLD_H; w.fx[w.fn]=fx; w.fy[w.fn]=fy; w.fn++; } this._ev(3,wx,wy); },
-  _feedAt(e){ const r=this.canvas.getBoundingClientRect(), sc=this.scale; if(sc<=0)return; const dpr=this.canvas.width/r.width; const wx=(e.clientX-r.left)*dpr/sc, wy=(e.clientY-r.top)*dpr/sc; this.feed(wx,wy); },
+  _xy(e){ const r=this.canvas.getBoundingClientRect(), sc=this.scale; if(sc<=0)return null; const dpr=this.canvas.width/r.width; return { x:(e.clientX-r.left)*dpr/sc, y:(e.clientY-r.top)*dpr/sc }; },
+  // tap a creature → inspect its brain · tap empty space → feed
   _wireFeed(canvas){ if(this._fedWired) return; this._fedWired=true;
-    canvas.addEventListener('pointerdown',e=>{ this._feeding=true; this._feedAt(e); try{canvas.setPointerCapture(e.pointerId);}catch(_){} });
-    canvas.addEventListener('pointermove',e=>{ if(this._feeding) this._feedAt(e); });
+    canvas.addEventListener('pointerdown',e=>{ const p=this._xy(e); if(!p)return; try{canvas.setPointerCapture(e.pointerId);}catch(_){}
+      const hit=this._pick(p.x,p.y); if(hit>=0){ this.select(hit); return; } this.deselect(); this._feeding=true; this.feed(p.x,p.y); });
+    canvas.addEventListener('pointermove',e=>{ if(this._feeding){ const p=this._xy(e); if(p) this.feed(p.x,p.y); } });
     const stop=()=>{ this._feeding=false; }; canvas.addEventListener('pointerup',stop); canvas.addEventListener('pointercancel',stop); },
+  // nearest living creature to a world point, within a generous tap radius
+  _pick(wx,wy){ const w=this.w; if(!w)return -1; let best=-1, bd=34*34; for(let i=0;i<w.n;i++){ if(!w.alive[i])continue;
+    const dx=gWrap(w.x[i]-wx,GP.WORLD_W), dy=gWrap(w.y[i]-wy,GP.WORLD_H), d2=dx*dx+dy*dy; if(d2<bd){ bd=d2; best=i; } } return best; },
+  select(i){ const w=this.w; if(!w||!w.alive[i])return; this.sel=i; this.selUid=w.uid[i]; this.selLin=w.lin[i];
+    const el=document.getElementById('inspect'); if(el) el.classList.add('show'); this.drawBrain(); },
+  deselect(){ this.sel=-1; const el=document.getElementById('inspect'); if(el) el.classList.remove('show'); },
+  _selValid(){ const w=this.w; return !!(w && this.sel>=0 && w.alive[this.sel] && w.uid[this.sel]===this.selUid); },
+  // render the SELECTED creature's evolved network — the actual genome, with live activations
+  drawBrain(){
+    const c=document.getElementById('ins-brain'); if(!c) return; const w=this.w;
+    const dpr=Math.min(window.devicePixelRatio||1,2), cw=Math.round((c.clientWidth||300)*dpr), chh=Math.round((c.clientHeight||174)*dpr);
+    if(c.width!==cw||c.height!==chh){ c.width=cw; c.height=chh; }
+    const g=c.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0); const W=c.clientWidth||300, H=c.clientHeight||174; g.clearRect(0,0,W,H);
+    const titleT=document.getElementById('ins-title-t'), sw=document.getElementById('ins-sw');
+    if(!this._selValid()){ g.fillStyle='rgba(255,150,120,0.85)'; g.font='12px '+this._mono(); g.textAlign='center'; g.fillText(t('ins_dead'), W/2, H/2);
+      if(titleT) titleT.textContent='—'; if(sw) sw.style.color='rgba(255,150,120,0.9)'; const tr0=document.getElementById('ins-traits'); if(tr0) tr0.innerHTML=''; return; }
+    const i=this.sel, gen=w.geno[i], act=w.act[i], N=gen.nodes.length, pad=15;
+    if(!this._lutBody) this._buildLut(); const col=this._lutBody[this._colIdx(w.size[i])];
+    if(sw) sw.style.color=col; const hunter=w.preyE[i]>w.age[i]*0.02;
+    if(titleT) titleT.textContent=hunter?t('ins_hunter'):t('ins_grazer');
+    const nx=new Float32Array(N), ny=new Float32Array(N); let hc=0; for(let k=0;k<N;k++) if(k>=N0)hc++; let hs=0;
+    for(let k=0;k<N;k++){ if(k<NIN){ nx[k]=0.07; ny[k]=(k+0.5)/NIN; }
+      else if(k<N0){ nx[k]=0.9; ny[k]=(k-NIN+0.5)/NOUT*0.66+0.17; }
+      else { nx[k]=0.32+0.34*((hs%3)/2); ny[k]=hc>1?0.08+0.84*(hs/(hc-1)):0.5; hs++; } }
+    const X=k=>pad+nx[k]*(W-2*pad), Y=k=>pad+ny[k]*(H-2*pad);
+    for(const cc of gen.conns){ if(!cc.en)continue; const aw=Math.abs(cc.w), a=Math.min(0.8,0.16+aw*0.34);
+      g.strokeStyle = cc.w>=0 ? `rgba(123,220,255,${a.toFixed(3)})` : `rgba(255,120,110,${a.toFixed(3)})`;
+      g.lineWidth=Math.min(2.6,0.5+aw*0.7); g.beginPath(); g.moveTo(X(cc.i),Y(cc.i)); g.lineTo(X(cc.o),Y(cc.o)); g.stroke(); }
+    for(let k=0;k<N;k++){ const a=act?Math.min(1,Math.abs(act[k])):0, base=k<NIN?[123,220,255]:(k<N0?[255,123,213]:[228,234,255]), r=k<N0?4.4:3.6;
+      g.fillStyle=`rgba(${base[0]},${base[1]},${base[2]},${(0.22+0.7*a).toFixed(3)})`; g.beginPath(); g.arc(X(k),Y(k),r+2.6*a,0,6.2832); g.fill();
+      g.fillStyle=`rgba(${base[0]},${base[1]},${base[2]},0.92)`; g.beginPath(); g.arc(X(k),Y(k),r*0.55,0,6.2832); g.fill(); }
+    g.font='9px '+this._mono(); g.textAlign='left'; g.fillStyle='rgba(255,255,255,0.4)'; g.fillText(t('ins_senses'), X(0)-4, pad-4);
+    g.fillStyle='rgba(255,123,213,0.8)'; const ol=[t('ins_thrust'),t('ins_turn'),t('ins_bite')];
+    for(let o=0;o<NOUT;o++){ g.fillText(ol[o], X(NIN+o)+8, Y(NIN+o)+3); }
+    let conns=0; for(const cc of gen.conns) if(cc.en)conns++;
+    const tr=document.getElementById('ins-traits');
+    if(tr) tr.innerHTML = `${t('ins_gen')} <span class="v">${w.gen[i]}</span> · ${t('ins_lineage')} <span class="v">#${w.lin[i]}</span> · <span class="v">${conns}</span> ${t('ins_wires')}<br>`+
+      `${t('ins_size')} <span class="v">${w.size[i].toFixed(1)}</span> · ${t('ins_speed')} <span class="v">${w.spd[i].toFixed(1)}</span> · ${t('ins_sense')} <span class="v">${Math.round(w.sense[i])}</span> · <span class="${hunter?'h':'v'}">${hunter?t('ins_hunter'):t('ins_grazer')}</span>`;
+  },
+  _mono(){ return (getComputedStyle(document.documentElement).getPropertyValue('--mono')||'monospace').trim(); },
   // rectangular world dims from the canvas aspect, holding total area = (1000·worldScale)² constant → fills the screen, round creatures
   _dims(){ const c=this.canvas; let aspect=1; if(c&&c.width>0&&c.height>0) aspect=c.width/c.height; const side=1000*this.worldScale, area=side*side; GP.WORLD_W=Math.sqrt(area*aspect); GP.WORLD_H=Math.sqrt(area/aspect); },
   _rebuildGrids(){ const w=this.w; if(!w)return; const cell=130, cols=Math.max(1,Math.floor(GP.WORLD_W/cell)), rows=Math.max(1,Math.floor(GP.WORLD_H/cell));
@@ -1912,10 +1962,10 @@ const G = {
       energy:new Float32Array(C),age:new Float32Array(C),gen:new Int32Array(C),alive:new Uint8Array(C),
       size:new Float32Array(C),spd:new Float32Array(C),sense:new Float32Array(C),
       sizeG:new Float32Array(C),spdG:new Float32Array(C),senseG:new Float32Array(C),
-      lin:new Int32Array(C),preyE:new Float32Array(C),cx:new Float32Array(C),
+      lin:new Int32Array(C),preyE:new Float32Array(C),cx:new Float32Array(C),uid:new Int32Array(C),
       geno:new Array(C),act:new Array(C),
       fx:new Float32Array(GP.FOOD_CAP),fy:new Float32Array(GP.FOOD_CAP),fn:0,
-      free:[],births:[],steps:0,maxGen:0,kills:0,nextLin:1 };
+      free:[],births:[],steps:0,maxGen:0,kills:0,nextLin:1,nextUid:1 };
     const cell=130, cols=Math.max(1,Math.floor(GP.WORLD_W/cell)), rows=Math.max(1,Math.floor(GP.WORLD_H/cell));
     w.gridCre ={cols,rows,cell,heads:new Int32Array(cols*rows),next:new Int32Array(C)};
     w.gridFood={cols,rows,cell,heads:new Int32Array(cols*rows),next:new Int32Array(GP.FOOD_CAP)};
@@ -1927,7 +1977,7 @@ const G = {
   spawnFounder(w){ const i=this.alloc(w); if(i<0)return -1; w.geno[i]=minimalGenome(); w.act[i]=new Float32Array(w.geno[i].nodes.length);
     w.sizeG[i]=gGauss(); w.spdG[i]=gGauss(); w.senseG[i]=gGauss(); this.initBody(w,i,rnd()*GP.WORLD_W,rnd()*GP.WORLD_H,0,GP.START_ENERGY,w.nextLin++); return i; },
   alloc(w){ if(w.free.length)return w.free.pop(); if(w.n<w.cap)return w.n++; return -1; },
-  initBody(w,i,x,y,gen,e,lin){ w.x[i]=x;w.y[i]=y;w.dir[i]=rnd()*6.283;w.energy[i]=e;w.age[i]=0;w.gen[i]=gen;w.alive[i]=1;w.lin[i]=lin;w.preyE[i]=0;
+  initBody(w,i,x,y,gen,e,lin){ w.x[i]=x;w.y[i]=y;w.dir[i]=rnd()*6.283;w.energy[i]=e;w.age[i]=0;w.gen[i]=gen;w.alive[i]=1;w.lin[i]=lin;w.preyE[i]=0;w.uid[i]=w.nextUid++;
     w.size[i]=geneMap(w.sizeG[i],3,12); w.spd[i]=geneMap(w.spdG[i],1.4,5.6); w.sense[i]=geneMap(w.senseG[i],55,240); w.cx[i]=complexity(w.geno[i]); if(gen>w.maxGen)w.maxGen=gen; },
   spawnFood(w){ if(w.fn>=GP.FOOD_CAP)return; w.fx[w.fn]=rnd()*GP.WORLD_W; w.fy[w.fn]=rnd()*GP.WORLD_H; w.fn++; },
   kill(w,i){ if(!w.alive[i])return; w.alive[i]=0; w.free.push(i); if(GP.CORPSE && w.fn<GP.FOOD_CAP){ w.fx[w.fn]=w.x[i]; w.fy[w.fn]=w.y[i]; w.fn++; } },
@@ -2049,7 +2099,7 @@ const G = {
     g.beginPath(); for(let i=0;i<sm.length;i++){ const x=i/(N-1)*W, y=H-(sm[i]/nmx)*H*0.82; i?g.lineTo(x,y):g.moveTo(x,y);} g.stroke(); g.shadowBlur=0;
     // (legend lives in the clear, colour-coded caption right below the chart — no tiny on-canvas text)
   },
-  tick(){ if(!S.paused){ const n=GP.SPEED|0; for(let s=0;s<n;s++) this.step(); } this.render(); },
+  tick(){ if(!S.paused){ const n=GP.SPEED|0; for(let s=0;s<n;s++) this.step(); } this.render(); if(this.sel>=0) this.drawBrain(); },
 };
 
 /* ════════════════════════════════════════════════════════════════════
@@ -2657,6 +2707,7 @@ const Journey = {
   ],
   start(prog){ this.program=(prog==='doc')?'doc':'opening'; this.chapters=this[this.program]; this.prefix=(this.program==='doc')?'doc':'ch'; this.bilingual=(this.program==='doc');
     this.active=true; this.done=false; this.started=false; this.ch=-1; S.paused=false;
+    Cam.x=0.5; Cam.y=0.5; if(Cam.vpW&&Cam.vpH) Cam.fit();   // centre + fill the screen for the cinematic, whatever the user had zoomed/panned to
     const j=document.getElementById('journey'); j.classList.add('show'); j.classList.add('cover');
     document.body.classList.add('journey-on');   // hide lab chrome (brand/stats/reopen) for a clean full-bleed cinematic
     document.getElementById('journey-enter').classList.remove('show'); UI.togglePanel(false);
