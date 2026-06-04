@@ -175,7 +175,11 @@
   .journey.cover .journey__cover{opacity:1;pointer-events:auto}
   .journey__cover h1{font-size:clamp(34px,7vw,78px);font-weight:700;letter-spacing:.34em;padding-left:.34em;
     background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 70px rgba(123,220,255,0.28)}
-  .journey__sub{color:var(--muted);font-size:clamp(13px,1.8vw,17px);letter-spacing:.05em;margin-bottom:24px}
+  .journey__sub{color:var(--muted);font-size:clamp(13px,1.8vw,17px);letter-spacing:.05em;margin-bottom:14px}
+  .journey__lang{display:flex;gap:10px;margin:2px 0 22px;pointer-events:auto}
+  .journey__lang button{font-size:13px;padding:8px 18px;border-radius:20px;background:rgba(255,255,255,0.05);border:1px solid var(--stroke);color:var(--muted);transition:all .15s}
+  .journey__lang button:hover{color:var(--txt);background:rgba(255,255,255,0.1)}
+  .journey__lang button.on{background:rgba(123,220,255,0.16);border-color:rgba(123,220,255,0.4);color:var(--accent)}
   .journey__begin{padding:14px 40px;font-size:15px;justify-content:center}
   .journey__plain{margin-top:14px;background:none;border:none;color:var(--muted);font-size:12.5px}
   .journey__plain:hover{color:var(--txt)}
@@ -354,6 +358,10 @@
     <div class="journey__cover" id="journey-cover">
       <h1>PRIMORDIA</h1>
       <p class="journey__sub" data-i18n="j_tagline">a meditation on where life comes from</p>
+      <div class="journey__lang" id="journey-lang" role="group" aria-label="Narration language / 旁白语言">
+        <button data-lang="en">English</button>
+        <button data-lang="zh">中文</button>
+      </div>
       <button class="primary journey__begin" id="journey-begin" data-i18n="j_begin">▶  Begin</button>
       <button class="journey__plain" id="journey-coverskip" data-i18n="j_straight">skip straight to the lab →</button>
     </div>
@@ -477,6 +485,7 @@ function applyI18n(){
   document.querySelectorAll('[data-i18n-title]').forEach(el=>{ el.title=t(el.getAttribute('data-i18n-title')); });
   document.querySelectorAll('[data-i18n-aria]').forEach(el=>{ el.setAttribute('aria-label', t(el.getAttribute('data-i18n-aria'))); });
   const lb=document.getElementById('btn-lang'); if(lb) lb.textContent = LANG==='en'?'中文':'EN';
+  document.querySelectorAll('#journey-lang button').forEach(b=>b.classList.toggle('on', b.dataset.lang===LANG));
   if(typeof UI!=='undefined' && UI.els && UI.els.matrix){ UI.buildHelp(); UI.buildSliders(); UI.buildGenesisSliders(); UI.buildPresets(); UI.refreshPlayBtn(); UI.syncStats(); }
   if(typeof MODE!=='undefined' && MODE==='genesis' && typeof G!=='undefined' && G.w) UI.syncGenesisStats();
   if(typeof Journey!=='undefined' && Journey.active) Journey.showCaption();
@@ -1546,6 +1555,7 @@ const UI = {
     $('journey-enter').addEventListener('click',()=>Journey.end());
     $('journey-begin').addEventListener('click',()=>Journey.begin());
     $('journey-coverskip').addEventListener('click',()=>Journey.end());
+    document.querySelectorAll('#journey-lang button').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.lang)));   // pick narration language before Begin
     $('journey-mute').addEventListener('click',()=>Journey.toggleMute());
     const brandEl=document.querySelector('.brand');
     brandEl.addEventListener('click',()=>{ if(!Journey.active) Journey.start(); });
@@ -2143,7 +2153,7 @@ const Score = {                // generative cinematic bed via Web Audio (no fil
   ctx:null, master:null, duckGain:null, padBus:null, subBus:null, shimmerBus:null, leadBus:null, voices:[], pulseEvery:3200, _pulseTimer:null, _musicTimer:null, _lastPulse:0, _muted:false, stage:0, seq:0,
   roots:[0,-4,3,-2], qualities:['min','maj','maj','maj'], motifs:[[0,7,12,15],[0,3,7,12,19],[0,7,10,15,22],[0,4,7,12,16,24]],
   start(){ try{ if(!this.ctx){ const AC=window.AudioContext||window.webkitAudioContext; if(!AC)return; this.ctx=new AC(); this.build(); }
-    this.ctx.resume(); this.master.gain.setTargetAtTime(0.34,this.ctx.currentTime,2.4);
+    this.ctx.resume(); this.master.gain.setTargetAtTime(0.52,this.ctx.currentTime,2.4);
     if(!this._pulseTimer) this._pulseTimer=setInterval(()=>this.pulse(),420);
     if(!this._musicTimer) this._musicTimer=setInterval(()=>this.sequence(),300);
   }catch(e){ console.warn('score',e);} },
@@ -2199,7 +2209,7 @@ const Score = {                // generative cinematic bed via Web Audio (no fil
     this.pulseEvery=[3900,3300,2550,1900][stage];
     this.hit(i);
   },
-  duck(on){ if(!this.ctx||!this.duckGain)return; this.duckGain.gain.setTargetAtTime(on?0.46:1.0,this.ctx.currentTime,on?0.35:0.9); },
+  duck(on){ if(!this.ctx||!this.duckGain)return; this.duckGain.gain.setTargetAtTime(on?0.6:1.0,this.ctx.currentTime,on?0.35:0.9); },
   freq(semi){ return 55*Math.pow(2,semi/12); },
   chord(){ const bar=Math.floor(this.seq/16)%this.roots.length, root=this.roots[(bar+this.stage)%this.roots.length], q=this.qualities[(bar+this.stage)%this.qualities.length]; return {root, tones:q==='min'?[0,3,7,12,15,19]:[0,4,7,12,16,19]}; },
   sequence(){
@@ -2243,7 +2253,7 @@ const Score = {                // generative cinematic bed via Web Audio (no fil
       g.gain.setValueAtTime(0.0001,now); g.gain.exponentialRampToValueAtTime(0.045/(k+1),now+0.05); g.gain.exponentialRampToValueAtTime(0.0001,now+2.2+k*0.4);
       o.connect(g); g.connect(this.duckGain); o.start(now); o.stop(now+3.2); }
   },
-  setMuted(m){ this._muted=!!m; if(!this.ctx||!this.master)return; this.master.gain.setTargetAtTime(m?0.0001:0.34,this.ctx.currentTime,0.45); },
+  setMuted(m){ this._muted=!!m; if(!this.ctx||!this.master)return; this.master.gain.setTargetAtTime(m?0.0001:0.52,this.ctx.currentTime,0.45); },
 };
 const Journey = {
   active:false, done:false, started:false, ch:-1, t:0, _tok:0,

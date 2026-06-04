@@ -99,7 +99,7 @@ The single most important parameter for *look* is **density** (`particles × rad
 - **HDR rendering + bloom.** Particles are drawn as soft additive glows into a 16-bit float buffer; a bright-pass + separable Gaussian blur produces the bloom; an ACES filmic tonemap composites to the screen so dense cores bloom smoothly toward white instead of clipping. Trails come from feeding each frame back with a slight fade.
 - **Adaptive quality.** A frame-rate watchdog quietly lowers the particle count if a machine can't keep up.
 - **Bilingual.** A small `data-i18n` + `t(key)` layer; language auto-detects from the browser, persists in `localStorage`, and rebuilds the dynamic UI on switch.
-- **Cinematic narration.** The journey plays pre-rendered ElevenLabs clips from `narration/chN-{en,zh}.mp3`, ducking the score and falling back to the browser's `speechSynthesis` if the files are missing. Regenerate them (e.g. after editing the script, or with a different voice) via: `ELEVENLABS_API_KEY=… node tools/gen-narration.mjs` — the key is read only from the environment and never written to disk.
+- **Cinematic narration.** The journey plays pre-rendered ElevenLabs clips from `narration/chN-{en,zh}.mp3` (voices: *Brian* for English, *Ethan Zhang* for Chinese; choose the language on the opening screen), ducking the score and falling back to the browser's `speechSynthesis` if the files are missing. Regenerate via: `ELEVENLABS_API_KEY=… VOICE_ID=<en> VOICE_ID_ZH=<zh> SPEED=0.84 node tools/gen-narration.mjs` — the key is read only from the environment and never written to disk.
 - Poke at `window.__P` in the console (`.S` = live settings, `.GPU`, `.Sim`, `.Sound`, `.G`).
 
 ## Inspiration & credits

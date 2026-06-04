@@ -17,6 +17,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 const KEY = process.env.ELEVENLABS_API_KEY;
 if (!KEY) { console.error('Set ELEVENLABS_API_KEY in the environment (it is never written to disk).'); process.exit(1); }
 const MODEL = process.env.MODEL || 'eleven_multilingual_v2';
+const SPEED = +(process.env.SPEED || 0.84);   // 0.7–1.2; <1 = slower, more storytelling pace
 
 // Canonical narration — must match the chapter text spoken in index.html (Journey.plain()).
 const CH = [
@@ -65,7 +66,7 @@ async function tts(voiceId, text, outPath) {
     headers: { 'Content-Type': 'application/json', 'Accept': 'audio/mpeg' },
     body: JSON.stringify({
       text, model_id: MODEL,
-      voice_settings: { stability: 0.45, similarity_boost: 0.8, style: 0.30, use_speaker_boost: true },
+      voice_settings: { stability: 0.5, similarity_boost: 0.8, style: 0.28, use_speaker_boost: true, speed: SPEED },
     }),
   });
   if (!r.ok) { console.error(`  ✗ ${outPath}: ${r.status} ${await r.text()}`); return false; }
