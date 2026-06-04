@@ -149,7 +149,7 @@
   .journey{position:fixed;inset:0;z-index:14;opacity:0;pointer-events:none;transition:opacity .6s}
   .journey.show{opacity:1}
   .journey__veil{position:absolute;inset:0;pointer-events:none;
-    background:radial-gradient(120% 95% at 50% 38%,transparent 42%,rgba(3,4,8,0.55) 100%),linear-gradient(to bottom,rgba(3,4,8,0.35),transparent 22%,transparent 55%,rgba(3,4,8,0.86) 100%)}
+    background:radial-gradient(120% 95% at 50% 34%,transparent 38%,rgba(3,4,8,0.52) 100%),radial-gradient(96% 62% at 50% 103%,rgba(3,4,8,0.9),rgba(3,4,8,0.55) 42%,transparent 74%),linear-gradient(to bottom,rgba(3,4,8,0.45),transparent 24%,transparent 48%,rgba(3,4,8,0.9) 100%)}
   .journey__bar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:18px 22px}
   .journey__dots{display:flex;gap:7px}
   .journey__dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.22);transition:all .4s}
@@ -162,11 +162,11 @@
   .journey__cap{max-width:740px;min-height:120px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;
     opacity:0;transform:translateY(10px);transition:opacity .7s,transform .7s}
   .journey__cap.in{opacity:1;transform:translateY(0)}
-  .journey__cap .l{font-size:clamp(18px,2.5vw,27px);line-height:1.5;font-weight:500;color:#f3f5ff;text-shadow:0 2px 24px rgba(0,0,0,0.85),0 0 2px rgba(0,0,0,0.6);letter-spacing:.005em}
+  .journey__cap .l{font-size:clamp(18px,2.4vw,26px);line-height:1.45;font-weight:500;color:#f6f8ff;text-shadow:0 2px 13px rgba(0,0,0,0.96),0 1px 4px rgba(0,0,0,0.95),0 0 2px rgba(0,0,0,0.9);letter-spacing:.005em}
   .journey__cap .l.dim{font-size:clamp(13px,1.5vw,15px);color:var(--muted);font-weight:400}
-  .journey__cap .l.em{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:600}
-  .journey__cap .l.zhsub{font-size:clamp(13px,1.65vw,17px);color:#b9bed4;font-weight:400;letter-spacing:.02em;margin-top:1px}
-  .journey__cap .l.zhsub.em{color:#c9d6ff;-webkit-text-fill-color:initial;background:none}
+  .journey__cap .l.em{color:#bfe9ff;-webkit-text-fill-color:#bfe9ff;background:none;font-weight:600;text-shadow:0 2px 13px rgba(0,0,0,0.97),0 1px 4px rgba(0,0,0,0.96),0 0 2px rgba(0,0,0,0.92)}
+  .journey__cap .l.zhsub{font-size:clamp(13px,1.6vw,16.5px);color:#d6dbee;font-weight:400;letter-spacing:.02em;margin-top:2px;text-shadow:0 2px 11px rgba(0,0,0,0.96),0 1px 3px rgba(0,0,0,0.95)}
+  .journey__cap .l.zhsub.em{color:#cfe0ff;-webkit-text-fill-color:#cfe0ff;background:none;filter:drop-shadow(0 1px 6px rgba(0,0,0,0.95))}
   .journey__enter{margin-top:26px;padding:13px 30px;font-size:14px;pointer-events:auto;opacity:0;transform:translateY(8px);
     transition:opacity .6s,transform .6s;justify-content:center}
   .journey__enter.show{opacity:1;transform:translateY(0)}
@@ -214,7 +214,23 @@
     input[type=range]::-moz-range-thumb{width:26px;height:26px}
   }
   /* the cinematic journey is full-bleed: hide the lab chrome so nothing leaks through the veil */
-  body.journey-on .brand, body.journey-on .stats, body.journey-on .reopen, body.journey-on .touchctl{opacity:0 !important;pointer-events:none !important;transition:opacity .4s}
+  body.journey-on .brand, body.journey-on .stats, body.journey-on .reopen, body.journey-on .touchctl, body.journey-on .inspect{opacity:0 !important;pointer-events:none !important;transition:opacity .4s}
+
+  /* Becoming — tap a creature to inspect the actual brain that evolved inside it */
+  .inspect{position:fixed;left:22px;top:92px;z-index:6;width:322px;max-width:calc(100vw - 44px);
+    background:var(--panel);backdrop-filter:blur(22px) saturate(140%);-webkit-backdrop-filter:blur(22px) saturate(140%);
+    border:1px solid var(--stroke);border-radius:14px;box-shadow:0 18px 60px rgba(0,0,0,0.55),inset 0 1px 0 rgba(255,255,255,0.05);
+    padding:12px 13px;opacity:0;transform:translateY(8px) scale(.98);transition:opacity .25s,transform .25s;pointer-events:none}
+  .inspect.show{opacity:1;transform:none;pointer-events:auto}
+  .inspect__head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+  .inspect__head b{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--txt);display:flex;align-items:center}
+  .inspect__head .sw{width:11px;height:11px;border-radius:50%;margin-right:8px;box-shadow:0 0 9px currentColor}
+  .inspect canvas{width:100%;height:174px;display:block;border-radius:9px;background:rgba(0,0,0,0.3)}
+  .inspect__traits{margin-top:10px;font-family:var(--mono);font-size:10.5px;color:var(--muted);line-height:1.75}
+  .inspect__traits .v{color:var(--accent)}
+  .inspect__traits .h{color:var(--accent2)}
+  .inspect__hint{margin-top:7px;font-size:10.5px;color:var(--muted);opacity:.85;line-height:1.5}
+  .inspect__close{font-size:14px;line-height:1;padding:3px 9px;border-radius:8px}
 
   /* respect users who ask for less motion — tame UI transitions (the sim itself can be paused with Space) */
   @media (prefers-reduced-motion: reduce){
@@ -252,6 +268,13 @@
       <div><b id="l-st-fps">60</b> <span data-i18n="fps">fps</span> · <b id="l-st-mass">0</b> <span data-i18n="l_mass">mass</span></div>
       <div id="l-st-line2" style="opacity:.7">—</div>
     </div>
+  </div>
+
+  <div class="inspect" id="inspect" role="dialog" aria-labelledby="ins-title">
+    <div class="inspect__head"><b id="ins-title"><span class="sw" id="ins-sw"></span><span id="ins-title-t">creature</span></b><button class="icon inspect__close" id="ins-close" aria-label="Close">✕</button></div>
+    <canvas id="ins-brain" width="322" height="174"></canvas>
+    <div class="inspect__traits" id="ins-traits"></div>
+    <div class="inspect__hint" id="ins-hint" data-i18n="ins_hint">its evolved brain — nobody designed these wires</div>
   </div>
 
   <button class="reopen icon" id="reopen" data-i18n="reopenLabel" data-i18n-title="showControls" title="Show controls (C)">☰ controls</button>
@@ -369,7 +392,7 @@
           <div class="slider" data-l="lspeed" data-int="1" data-min="0" data-max="8" data-step="1"></div>
           <div class="slider" data-l="lmu" data-min="0.05" data-max="0.40" data-step="0.001"></div>
           <div class="slider" data-l="lsigma" data-min="0.005" data-max="0.08" data-step="0.001"></div>
-          <div class="matrix-hint" style="margin-top:9px" data-i18n-html="l_hint">a smooth field, one rule, no cells. <b style="color:#9ff5c8">Drag to paint living matter</b> · Shift-drag to erase. Cut a creature and <b>it heals</b>.</div>
+          <div class="matrix-hint" style="margin-top:9px" data-i18n-html="l_hint">one rule, a smooth field, no cells. <b style="color:#9ff5c8">Drag to paint living matter</b>; Shift-drag to cut. Most of what you draw dissolves — only what <b>holds itself together</b> comes alive.</div>
         </div>
       </div>
 
@@ -460,7 +483,7 @@ const I18N = {
     modeSoup:'🌌 Origin', modeGenesis:'🧬 Becoming', modeLenia:'🌊 Flux',
     l_clear:'○ Clear', l_clearTip:'Empty the field (N)', l_lifeTitle:'Lifeforms', l_ruleTitle:'The rule of life',
     ll_lspeed:'Time speed', ll_lmu:'Life threshold μ', ll_lsigma:'Tolerance σ',
-    l_hint:'a smooth field, one rule, no cells. <b style="color:#9ff5c8">Drag to paint living matter</b> · Shift-drag to erase. Cut a creature and <b>it heals</b>.',
+    l_hint:'one rule, a smooth field, no cells. <b style="color:#9ff5c8">Drag to paint living matter</b>; Shift-drag to cut. Most of what you draw dissolves — only what <b>holds itself together</b> comes alive.',
     l_mass:'mass', l_rule:'rule', l_dead:'still', l_alive:'alive',
     lp_glider:'glider', lp_swarm:'swarm', lp_soup:'primordial soup', lp_coral:'coral',
     t_leniaShare:'Flux link copied — same rule & lifeform',
@@ -504,7 +527,7 @@ const I18N = {
     modeSoup:'🌌 太初', modeGenesis:'🧬 造化', modeLenia:'🌊 流形',
     l_clear:'○ 清空', l_clearTip:'清空整个场 (N)', l_lifeTitle:'生命形态', l_ruleTitle:'生命的法则',
     ll_lspeed:'时间流速', ll_lmu:'生命阈值 μ', ll_lsigma:'容差 σ',
-    l_hint:'一片平滑的场,一条规则,没有细胞。<b style="color:#9ff5c8">拖动可绘制活物质</b> · Shift+拖动可擦除。切开一个生物,<b>它会自愈</b>。',
+    l_hint:'一条规则,一片平滑的场,没有细胞。<b style="color:#9ff5c8">拖动可绘制活物质</b>;Shift+拖动可切除。你画下的大多会消散——唯有能<b>自洽成形</b>者,才会活过来。',
     l_mass:'质量', l_rule:'规则', l_dead:'静止', l_alive:'存活',
     lp_glider:'滑翔体', lp_swarm:'群游', lp_soup:'太初之汤', lp_coral:'珊瑚',
     t_leniaShare:'流形链接已复制 —— 相同的规则与生命体',
@@ -873,7 +896,7 @@ const Render = {
     void main(){
       vec3 hdr=texture(uTex,vUv).rgb;
       vec3 bloom=texture(uBloom,vUv).rgb;
-      vec3 c=(hdr+bloom*0.55)*uExposure;
+      vec3 c=(hdr+bloom*0.5)*uExposure;
       c=aces(c);                                 // ACES filmic tonemap
       c+=vec3(0.010,0.013,0.020)*(1.0-c);        // faint cool base so black isn't dead
       frag=vec4(c,1.0);
@@ -1039,7 +1062,7 @@ const Render = {
     gl.useProgram(this.compProg);
     gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D,this.accTex);    gl.uniform1i(this.compLoc.uTex,0);
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D,this.bloomTexA); gl.uniform1i(this.compLoc.uBloom,1);
-    gl.uniform1f(this.compLoc.uExposure,1.0);
+    gl.uniform1f(this.compLoc.uExposure,0.9);
     gl.drawArrays(gl.TRIANGLES,0,3);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindVertexArray(null);
@@ -1205,7 +1228,7 @@ fn aces(x:vec3<f32>)->vec3<f32> {
 @fragment fn composite(in:FO)->@location(0) vec4<f32> {
   let hdr=textureSample(srcTex,samp,in.uv).rgb;
   let bloom=textureSample(bloomTex,samp,in.uv).rgb;
-  var c=(hdr + bloom*0.55)*U.exposure;
+  var c=(hdr + bloom*0.5)*U.exposure;
   c=aces(c);
   c += vec3<f32>(0.010,0.013,0.020)*(vec3(1.0)-c);
   return vec4<f32>(c,1.0);
@@ -1317,7 +1340,7 @@ fn aces(x:vec3<f32>)->vec3<f32> {
     const f=this._rF;
     f[0]=Cam.x; f[1]=Cam.y; f[2]=Cam.vpW; f[3]=Cam.vpH;
     f[4]=Cam.zoom; f[5]=S.size*this.dpr; f[6]=S.glow; f[7]=S.trails;
-    f[8]=0; f[9]=0; f[10]=1.0; f[11]=0;
+    f[8]=0; f[9]=0; f[10]=0.9; f[11]=0;
     this.device.queue.writeBuffer(this.buf.rparams,0,this._rBuf);
   },
 
@@ -2038,7 +2061,7 @@ const G = {
    The frontier item #1 from VISION.md, made watchable. (Bert Chan, 2019.)
    Runs as a WebGL2 ping-pong; works wherever the CPU engine does.
    ════════════════════════════════════════════════════════════════════ */
-const LP = { R:13, MU:0.15, SIGMA:0.015, DT:0.1, SPEED:1, preset:'glider' };
+const LP = { R:18, MU:0.15, SIGMA:0.015, DT:0.1, SPEED:1, preset:'glider' };
 // canonical Orbium (orbium unicaudatus, R=13) — the famous Lenia glider
 const _ORB=[
 [0,0,0,0,0,0,0.1,0.14,0.1,0,0,0.03,0.03,0,0,0.3,0,0,0,0],
@@ -2069,7 +2092,7 @@ function rotPattern(cells,w,h,k){ k=((k%4)+4)%4; let cw=w,ch=h,src=cells;
 
 const L = {
   gl:null, canvas:null, progStep:null, progShow:null, texA:[null,null], fbo:[null,null], cur:0,
-  kernelTex:null, sampLinear:null, quadVAO:null, GW:0, GH:0, floatRT:true, _lmax:360, _R:13,
+  kernelTex:null, sampLinear:null, quadVAO:null, GW:0, GH:0, floatRT:true, _lmax:360, _R:18,
   _seed:0, _mass:0, _u:{}, _us:{}, _brush:{on:0,x:0.5,y:0.5,r:0.05,sign:1}, _wired:false, _fail:false,
 
   init(canvas){
@@ -2167,8 +2190,10 @@ const L = {
     this.setPreset(LP.preset||'glider', this._seed);
   },
 
-  _stamp(arr,cells,pw,ph,ox,oy){ const GW=this.GW,GH=this.GH;
-    for(let y=0;y<ph;y++) for(let x=0;x<pw;x++){ const v=cells[y*pw+x]; if(v<=0)continue;
+  _stamp(arr,cells,pw,ph,ox,oy,sc){ sc=sc||1; const GW=this.GW,GH=this.GH, dw=Math.round(pw*sc), dh=Math.round(ph*sc);
+    for(let y=0;y<dh;y++) for(let x=0;x<dw;x++){   // bilinear upsample the R=13 source pattern to the live kernel radius
+      const fx=x/sc, fy=y/sc, x0=Math.min(pw-1,fx|0), y0=Math.min(ph-1,fy|0), x1=Math.min(pw-1,x0+1), y1=Math.min(ph-1,y0+1), tx=fx-x0, ty=fy-y0;
+      const v=(cells[y0*pw+x0]*(1-tx)+cells[y0*pw+x1]*tx)*(1-ty)+(cells[y1*pw+x0]*(1-tx)+cells[y1*pw+x1]*tx)*ty; if(v<=0.001)continue;
       const gx=((ox+x)%GW+GW)%GW, gy=((oy+y)%GH+GH)%GH, i=(gy*GW+gx)*4; if(v>arr[i])arr[i]=v; } },
   _soup(arr,count,rad,lo,hi){ const GW=this.GW,GH=this.GH;
     for(let c=0;c<count;c++){ const cx=(rnd()*GW)|0, cy=(rnd()*GH)|0, pk=lo+rnd()*(hi-lo), rr=rad*(0.6+rnd()*0.9), r0=Math.ceil(rr);
@@ -2179,10 +2204,12 @@ const L = {
     this._seed = (seed===undefined? (rnd()*4294967296)>>>0 : seed>>>0); srand(this._seed);
     if(name==='soup'){ LP.MU=0.15; LP.SIGMA=0.017; } else if(name==='coral'){ LP.MU=0.26; LP.SIGMA=0.035; } else { LP.MU=0.15; LP.SIGMA=0.015; }
     LP.DT=0.1;
-    const arr=new Float32Array(this.GW*this.GH*4);
-    if(name==='glider'){ this._stamp(arr,ORBIUM,ORBW,ORBH, Math.round(this.GW*0.5-ORBW/2), Math.round(this.GH*0.5-ORBH/2)); }
-    else if(name==='swarm'){ const n=Math.max(4,Math.round(this.GW*this.GH/9000));
-      for(let i=0;i<n;i++){ const r=rotPattern(ORBIUM,ORBW,ORBH,(rnd()*4)|0); this._stamp(arr,r.cells,r.w,r.h,(rnd()*this.GW)|0,(rnd()*this.GH)|0); } }
+    const arr=new Float32Array(this.GW*this.GH*4), sc=this._R/13;   // ORBIUM is authored for R=13; scale it to the live kernel radius
+    if(name==='glider'){ this._stamp(arr,ORBIUM,ORBW,ORBH, Math.round(this.GW*0.5-ORBW*sc/2), Math.round(this.GH*0.5-ORBH*sc/2), sc); }
+    else if(name==='swarm'){ const csz=ORBW*sc*2.6, cols=Math.max(2,Math.floor(this.GW/csz)), rows=Math.max(2,Math.floor(this.GH/csz));   // one glider per jittered grid cell → separate swimmers, not a merged blob
+      for(let gy=0;gy<rows;gy++) for(let gx=0;gx<cols;gx++){ if(rnd()<0.32) continue;
+        const r=rotPattern(ORBIUM,ORBW,ORBH,(rnd()*4)|0), jx=(rnd()-0.5)*csz*0.4, jy=(rnd()-0.5)*csz*0.4;
+        this._stamp(arr,r.cells,r.w,r.h, Math.round(gx*csz+(csz-ORBW*sc)/2+jx), Math.round(gy*csz+(csz-ORBH*sc)/2+jy), sc); } }
     else if(name==='soup'){ this._soup(arr, Math.round(this.GW*this.GH/650), this._R*0.7, 0.35, 1.0); }
     else if(name==='coral'){ this._soup(arr, Math.round(this.GW*this.GH/450), this._R*0.55, 0.5, 1.0); }
     this._upload(this.texA[0],arr); this.cur=0;
