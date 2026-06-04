@@ -2176,7 +2176,7 @@ function rotPattern(cells,w,h,k){ k=((k%4)+4)%4; let cw=w,ch=h,src=cells;
 
 const L = {
   gl:null, canvas:null, progStep:null, progShow:null, texA:[null,null], fbo:[null,null], cur:0,
-  kernelTex:null, sampLinear:null, quadVAO:null, GW:0, GH:0, floatRT:true, _lmax:360, _R:18,
+  kernelTex:null, sampLinear:null, quadVAO:null, GW:0, GH:0, floatRT:true, _lmax:560, _R:20,
   _seed:0, _mass:0, _u:{}, _us:{}, _brush:{on:0,x:0.5,y:0.5,r:0.05,sign:1}, _wired:false, _fail:false,
 
   init(canvas){
@@ -2192,6 +2192,7 @@ const L = {
     const s=gl.createSampler();   // LINEAR sampler for the smooth display upscale (state textures stay NEAREST for the exact convolution)
     gl.samplerParameteri(s,gl.TEXTURE_MIN_FILTER,gl.LINEAR); gl.samplerParameteri(s,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
     gl.samplerParameteri(s,gl.TEXTURE_WRAP_S,gl.REPEAT); gl.samplerParameteri(s,gl.TEXTURE_WRAP_T,gl.REPEAT); this.sampLinear=s;
+    if(window.matchMedia && matchMedia('(pointer:coarse)').matches) this._lmax=400;   // lighter grid on phones/tablets (the ring convolution is the cost)
     this.buildPrograms(); this.buildKernel(); this._wireBrush(canvas);
     this.resize(); this.setPreset('swarm');
   },
