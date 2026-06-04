@@ -98,7 +98,7 @@ F(r) =  ┤  a · (1 − |2r − 1 − β| / (1 − β))        当 β ≤ r < 1
 - **自适应画质。** 一个帧率看门狗会在机器跟不上时悄悄降低粒子数。
 - **无障碍。** 尊重 `prefers-reduced-motion`;交互矩阵可键盘操作并带 ARIA;图标按钮有标签;焦点可见。
 - **双语。** 一个小巧的 `data-i18n` + `t(key)` 层;语言自动从浏览器探测、存入 `localStorage`、并在切换时重建动态界面。
-- **电影级旁白。** 旅程播放预先渲染的 ElevenLabs 音频(`narration/chN-{en,zh}.mp3`),播放时压低配乐,音频缺失则回退到浏览器 `speechSynthesis`。重新生成(改了文案或想换音色时):`ELEVENLABS_API_KEY=… node tools/gen-narration.mjs` —— key 只从环境变量读取,绝不写入磁盘。
+- **电影级旁白。** 旅程播放预先渲染的 ElevenLabs 英文旁白(`narration/chN-en.mp3`),播放时压低配乐,音频缺失则回退到浏览器 `speechSynthesis`。开场可选 **English / 中文字幕**——*字幕*切换语言,而旁白始终是英语男声。重新生成:`ELEVENLABS_API_KEY=… LANGS=en VOICE_ID=<id> SPEED=0.84 node tools/gen-narration.mjs` —— key 只从环境变量读取,绝不写入磁盘。
 - 在控制台里把玩 `window.__P`(`.S` = 实时设置,`.GPU`、`.Sim`、`.G`)。
 
 ## 灵感与致谢

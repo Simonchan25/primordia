@@ -18,6 +18,7 @@ const KEY = process.env.ELEVENLABS_API_KEY;
 if (!KEY) { console.error('Set ELEVENLABS_API_KEY in the environment (it is never written to disk).'); process.exit(1); }
 const MODEL = process.env.MODEL || 'eleven_multilingual_v2';
 const SPEED = +(process.env.SPEED || 0.84);   // 0.7–1.2; <1 = slower, more storytelling pace
+const LANGS = (process.env.LANGS || 'en,zh').split(',').map(s=>s.trim()).filter(Boolean);   // e.g. LANGS=en for English-only narration
 
 // Canonical narration — must match the chapter text spoken in index.html (Journey.plain()).
 const CH = [
@@ -81,7 +82,7 @@ async function tts(voiceId, text, outPath) {
   const voice = await pickVoice();
   let ok = 0, total = 0;
   for (let i = 0; i < CH.length; i++) {
-    for (const lang of ['en', 'zh']) {
+    for (const lang of LANGS) {
       total++;
       if (await tts(voice[lang], CH[i][lang], `narration/ch${i}-${lang}.mp3`)) ok++;
     }
