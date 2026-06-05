@@ -741,7 +741,7 @@ const I18N = {
   },
 };
 let LANG = 'en';
-function detectLang(){ try{ const s=localStorage.getItem('primordia_lang'); if(s==='en'||s==='zh') return s; }catch(e){} return (navigator.language||'en').toLowerCase().indexOf('zh')===0 ? 'zh' : 'en'; }
+function detectLang(){ try{ const s=localStorage.getItem('primordia_lang'); if(s==='en'||s==='zh') return s; }catch(e){} return 'en'; }
 function t(key){ const L=I18N[LANG]||I18N.en; return (key in L) ? L[key] : (key in I18N.en ? I18N.en[key] : key); }
 function setLang(l){
   LANG=(l==='zh')?'zh':'en';
