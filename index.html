@@ -346,7 +346,6 @@
       <span class="dot" id="run-dot"></span>
       <h2 data-i18n="control">Control</h2>
       <button class="icon" id="btn-lang" data-i18n-aria="aria_lang" title="中文 / English">中文</button>
-      <button class="icon" id="btn-replay" data-i18n-aria="aria_replay" data-i18n-title="aria_replay" title="Replay the opening"><svg class="bico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.6" y="3.4" width="12.8" height="9.2" rx="2.2"/><path d="M6.4 6 L10 8 L6.4 10 Z"/></svg></button>
       <button class="icon" id="btn-narr" aria-pressed="false" data-i18n-aria="nr_tip" data-i18n-title="nr_tip" title="Narrator (V)"><svg class="bico" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.6 h10 a1.6 1.6 0 0 1 1.6 1.6 v5.6 a1.6 1.6 0 0 1 -1.6 1.6 h-5 l-3.2 2.6 v-2.6 h-1.8 a1.6 1.6 0 0 1 -1.6 -1.6 v-5.6 a1.6 1.6 0 0 1 1.6 -1.6 Z"/></svg></button>
       <button class="icon" id="btn-fs" data-i18n-aria="aria_fs" title="Fullscreen (F)">⛶</button>
       <button class="icon" id="btn-help" data-i18n-aria="helpTip" data-i18n-title="helpTip" title="Help (H)">?</button>
@@ -1710,7 +1709,6 @@ const UI = {
     const tm=$('touch-mode'); if(tm) tm.addEventListener('click',e=>{ Input.touchRepel=!Input.touchRepel; const on=Input.touchRepel; e.currentTarget.setAttribute('aria-pressed',String(on)); e.currentTarget.classList.toggle('repel',on); this.toast(on?t('t_repelMode'):t('t_attractMode')); });
     $('btn-help').addEventListener('click',()=>this.toggleHelp());
     { const fb=$('btn-fs'); if(fb) fb.addEventListener('click',()=>{ if(!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }); }
-    { const rb=$('btn-replay'); if(rb) rb.addEventListener('click',()=>{ if(!Journey.active) Journey.start('opening'); }); }
     { const sb=$('btn-story'); if(sb) sb.addEventListener('click',()=>{ if(!Journey.active) Journey.start('doc'); }); }
     $('btn-lang').addEventListener('click',()=>setLang(LANG==='en'?'zh':'en'));
     $('help-lang').addEventListener('click',()=>setLang(LANG==='en'?'zh':'en'));
