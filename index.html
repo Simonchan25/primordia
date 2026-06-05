@@ -17,6 +17,8 @@
     --good:#46e6a0;
     --bad:#ff6b6b;
     --radius:14px;
+    --safe-bottom:env(safe-area-inset-bottom,0px);
+    --safe-top:env(safe-area-inset-top,0px);
     --font:'SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans SC',Helvetica,Arial,sans-serif;
     --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
   }
@@ -33,11 +35,14 @@
     background:radial-gradient(120% 120% at 50% 40%,transparent 55%,rgba(0,0,0,0.35) 100%);}
 
   /* brand */
-  .brand{position:fixed;top:18px;left:22px;z-index:5;cursor:pointer;user-select:none}
+  .brand{position:fixed;top:18px;left:22px;z-index:5;user-select:none}
+  .brand__row{display:flex;align-items:center;gap:10px}
   .brand:hover h1{color:#fff}
   .brand h1{font-size:20px;font-weight:400;letter-spacing:.44em;padding-left:.44em;
-    color:#e8ebf5;text-shadow:0 1px 12px rgba(0,0,0,.55);transition:color .25s}
+    color:#e8ebf5;text-shadow:0 1px 12px rgba(0,0,0,.55);transition:color .25s;cursor:pointer}
   .brand p{font-size:10.5px;letter-spacing:.34em;text-transform:uppercase;color:var(--muted);margin-top:3px;text-shadow:0 1px 8px rgba(0,0,0,0.8)}
+  .brandstory{font-size:11px;padding:6px 9px;border-radius:999px;color:#ffe2a8;border-color:rgba(255,210,123,.28);background:rgba(255,210,123,.08);box-shadow:0 7px 24px rgba(0,0,0,.22)}
+  .brandstory:hover{color:#fff1cf;border-color:rgba(255,210,123,.46);background:rgba(255,210,123,.14)}
 
   /* stats */
   .stats{position:fixed;left:22px;bottom:18px;z-index:5;font-family:var(--mono);font-size:11px;color:var(--muted);
@@ -156,12 +161,17 @@
   .journey.show{opacity:1}
   .journey__veil{position:absolute;inset:0;pointer-events:none;
     background:radial-gradient(120% 95% at 50% 34%,transparent 38%,rgba(3,4,8,0.52) 100%),radial-gradient(96% 62% at 50% 103%,rgba(3,4,8,0.9),rgba(3,4,8,0.55) 42%,transparent 74%),linear-gradient(to bottom,rgba(3,4,8,0.45),transparent 24%,transparent 48%,rgba(3,4,8,0.9) 100%)}
-  .journey__bar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:18px 22px}
+  .journey__bar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 22px}
+  .journey__status{display:flex;align-items:center;gap:14px;min-width:0}
+  .journey__label{display:none;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);white-space:nowrap;text-shadow:0 1px 8px rgba(0,0,0,.8)}
+  .journey.doc .journey__label{color:#ffd27b}
   .journey__dots{display:flex;gap:7px}
   .journey__dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.22);transition:all .4s}
   .journey__dots i.on{background:rgba(231,234,245,.88);width:20px;border-radius:7px}
-  .journey__skip{pointer-events:auto;font-size:12px;color:var(--muted);background:rgba(0,0,0,0.3);backdrop-filter:blur(8px);
+  .journey__skip{pointer-events:none;font-size:12px;color:var(--muted);background:rgba(0,0,0,0.3);backdrop-filter:blur(8px);
     border:1px solid var(--stroke);border-radius:20px;padding:8px 16px}
+  .journey.show .journey__skip{pointer-events:auto}
+  .journey.cover .journey__skip{pointer-events:none}
   .journey__skip:hover{color:var(--txt)}
   .journey__skip.jbtn-ico{padding:6px 11px;display:inline-flex;align-items:center}
   .jico{width:18px;height:15px;display:block}
@@ -180,18 +190,23 @@
   .journey__cap .l.em{color:#bfe9ff;-webkit-text-fill-color:#bfe9ff;background:none;font-weight:600;text-shadow:0 2px 13px rgba(0,0,0,0.97),0 1px 4px rgba(0,0,0,0.96),0 0 2px rgba(0,0,0,0.92)}
   .journey__cap .l.zhsub{font-size:clamp(11px,min(1.3vw,1.6vh),14.5px);color:#d6dbee;font-weight:400;letter-spacing:.02em;margin-top:0;line-height:1.3;text-shadow:0 2px 11px rgba(0,0,0,0.96),0 1px 3px rgba(0,0,0,0.95)}
   .journey__cap .l.zhsub.em{color:#cfe0ff;-webkit-text-fill-color:#cfe0ff;background:none;filter:drop-shadow(0 1px 6px rgba(0,0,0,0.95))}
-  .journey__enter{margin-top:26px;padding:13px 30px;font-size:14px;pointer-events:auto;opacity:0;transform:translateY(8px);
+  .journey__enter{margin-top:26px;padding:13px 30px;font-size:14px;pointer-events:none;opacity:0;transform:translateY(8px);
     transition:opacity .6s,transform .6s;justify-content:center}
   .journey__enter.show{opacity:1;transform:translateY(0)}
+  .journey.show .journey__enter.show{pointer-events:auto}
   body.lang-zh .journey__cap .l{letter-spacing:.02em;line-height:1.32}
   .journey__barbtns{display:flex;gap:8px}
   .journey.cover .journey__bar,.journey.cover .journey__capwrap{opacity:0;pointer-events:none}
   .journey__cover{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;opacity:0;pointer-events:none;transition:opacity .8s ease;
     background:radial-gradient(130% 105% at 50% 40%,rgba(6,7,13,0.14),rgba(3,4,8,0.62) 62%,rgba(3,4,8,0.86) 100%)}
+  .journey.doc .journey__cover{background:radial-gradient(110% 90% at 50% 35%,rgba(255,188,101,.12),rgba(5,6,11,.58) 58%,rgba(3,4,8,.9) 100%),linear-gradient(180deg,rgba(24,15,8,.24),rgba(4,5,9,.8))}
   .journey.cover .journey__cover{opacity:1;pointer-events:auto;-webkit-backdrop-filter:blur(19px) brightness(.78) saturate(.62);backdrop-filter:blur(19px) brightness(.78) saturate(.62)}
+  .journey__kind{display:none;font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--accent);border:1px solid rgba(123,220,255,.24);border-radius:999px;padding:7px 12px;margin:0 0 22px;background:rgba(123,220,255,.06)}
+  .journey.doc .journey__kind{color:#ffd27b;border-color:rgba(255,210,123,.32);background:rgba(255,210,123,.08)}
   .journey__cover h1{font-size:clamp(40px,8.4vw,94px);font-weight:200;letter-spacing:.34em;padding-left:.34em;line-height:1;margin:0;
     background:linear-gradient(180deg,#f7f9ff,#c2cadf 118%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
     filter:drop-shadow(0 3px 34px rgba(0,0,0,.45))}
+  .journey.doc .journey__cover h1{letter-spacing:.16em;padding-left:.16em;background:linear-gradient(180deg,#fff7e6,#ffd27b 118%);-webkit-background-clip:text;background-clip:text}
   .journey.cover .journey__cover h1{animation:coalesce 1.6s cubic-bezier(.19,.7,.2,1) both}
   @keyframes coalesce{from{opacity:0;letter-spacing:.66em}to{opacity:1;letter-spacing:.34em}}
   .journey__sub{color:#b6bccf;font-size:clamp(13px,1.55vw,16px);letter-spacing:.15em;font-weight:300;margin:30px 0 0;position:relative;padding-bottom:34px}
@@ -207,7 +222,21 @@
   .journey__begin:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.46);transform:translateY(-1px)}
   .journey__plain{margin-top:20px;background:none;border:none;color:#767c93;font-size:12px;letter-spacing:.03em;transition:color .2s}
   .journey__plain:hover{color:var(--txt)}
+  .journey__begin,.journey__plain,.journey__lang button{pointer-events:none}
+  .journey.cover .journey__begin,.journey.cover .journey__plain,.journey.cover .journey__lang button{pointer-events:auto}
   body.lang-zh .journey__sub{letter-spacing:.1em}
+  body.lang-zh .journey__label{letter-spacing:.12em}
+  body.lang-zh .journey__kind{letter-spacing:.16em}
+  body.lang-zh .journey.doc .journey__cover h1{letter-spacing:.18em;padding-left:.18em}
+  @media (max-width:560px){
+    .journey__bar{padding:14px 12px;gap:10px}
+    .journey__status{gap:8px;overflow:hidden}
+    .journey__label{font-size:9px;letter-spacing:.12em}
+    .journey__barbtns{gap:6px}
+    .journey__skip{font-size:11px;padding:7px 10px}
+    .journey__kind{margin-bottom:18px}
+    .journey__sub{max-width:84vw;text-align:center;font-size:12px;letter-spacing:.08em;margin-top:22px}
+  }
 
   .modeswitch{display:flex;gap:5px;background:rgba(255,255,255,0.04);border:1px solid var(--stroke);border-radius:11px;padding:4px;margin-bottom:4px}
   .modeswitch .mode{flex:1;justify-content:center;gap:6px;background:transparent;border:none;color:var(--muted);padding:9px 6px;border-radius:8px;font-size:12px;transition:color .18s,background .18s}
@@ -217,8 +246,10 @@
   .mico circle{fill:currentColor}
   .mico path{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
   .modeswitch .mode.active .mico{opacity:1}
-  .storybtn{width:100%;margin:5px 0 2px;padding:9px 12px;border-radius:10px;background:rgba(255,255,255,0.035);border:1px solid var(--stroke);color:var(--muted);font-size:12px;cursor:pointer;transition:all .15s;text-align:center}
-  .storybtn:hover{color:var(--txt);border-color:rgba(123,220,255,0.3);background:rgba(255,255,255,0.06)}
+  .modeguide{padding:11px 2px 10px;margin:6px 0 2px;border-bottom:1px solid rgba(255,255,255,0.06)}
+  .modeguide__title{font-size:11px;font-weight:650;letter-spacing:.08em;text-transform:uppercase;color:#eef3ff;margin-bottom:5px}
+  .modeguide__body{font-size:12px;line-height:1.55;color:#aab1c8}
+  body.lang-zh .modeguide__title{letter-spacing:.03em}
 
   /* guided control tour */
   .tour{position:fixed;inset:0;z-index:20;opacity:0;pointer-events:none;transition:opacity .3s}
@@ -226,7 +257,7 @@
   .tour__spot{position:absolute;left:50%;top:50%;width:0;height:0;border-radius:12px;opacity:0;pointer-events:none;
     box-shadow:0 0 0 9999px rgba(4,5,9,0.74), 0 0 0 1px rgba(123,220,255,0.55), 0 0 22px 3px rgba(123,220,255,0.22);
     transition:left .42s cubic-bezier(.4,.85,.3,1),top .42s cubic-bezier(.4,.85,.3,1),width .42s cubic-bezier(.4,.85,.3,1),height .42s cubic-bezier(.4,.85,.3,1),opacity .3s}
-  .tour__card{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(340px,86vw);pointer-events:auto;
+  .tour__card{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(340px,86vw);pointer-events:none;
     background:var(--panel-solid);border:1px solid rgba(255,255,255,.13);border-radius:14px;padding:17px 18px 13px;
     box-shadow:0 24px 70px rgba(0,0,0,.62);transition:left .42s cubic-bezier(.4,.85,.3,1),top .42s cubic-bezier(.4,.85,.3,1)}
   .tour__step{font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin-bottom:9px;font-weight:500}
@@ -239,8 +270,9 @@
   .tour__dots i.on{background:rgba(231,234,245,.88);width:15px;border-radius:3px}
   .tour__btns{display:flex;gap:7px}
   .tour__btns button{font-size:12px;padding:7px 15px}
-  .tour__skip{position:absolute;top:18px;right:20px;background:rgba(0,0,0,.42);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);pointer-events:auto;
+  .tour__skip{position:absolute;top:18px;right:20px;background:rgba(0,0,0,.42);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);pointer-events:none;
     border:1px solid var(--stroke);color:var(--muted);font-size:12px;padding:7px 15px;border-radius:20px}
+  .tour.on .tour__card,.tour.on .tour__skip{pointer-events:auto}
   .tour__skip:hover{color:var(--txt)}
 
   /* live commentary caption */
@@ -253,18 +285,52 @@
   .live .l-en::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent);margin-right:9px;vertical-align:middle;box-shadow:0 0 8px var(--accent)}
   .live .l-zh{font-size:clamp(12px,1.45vw,15px);color:#c4cbe0;line-height:1.55;margin-top:3px;letter-spacing:.03em}
   body.journey-on .live{opacity:0 !important}
-  @media (max-width:560px){ .live{bottom:132px} }
+  .guide{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:5;width:min(620px,calc(100vw - 40px));
+    display:flex;align-items:center;justify-content:space-between;gap:14px;padding:9px 11px 9px 13px;
+    background:rgba(8,10,17,0.58);-webkit-backdrop-filter:blur(14px) saturate(130%);backdrop-filter:blur(14px) saturate(130%);
+    border:1px solid rgba(255,255,255,0.09);border-radius:10px;box-shadow:0 10px 34px rgba(0,0,0,.34);
+    transition:opacity .25s,transform .25s}
+  .guide__copy{min-width:0}
+  .guide__mode{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:650;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .guide__text{font-size:12px;line-height:1.38;color:#d9deef;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .guide__tour{flex:0 0 auto;font-size:11.5px;padding:7px 10px;border-radius:8px;color:#dff4ff;border-color:rgba(123,220,255,.28);background:rgba(123,220,255,.1)}
+  body.journey-on .guide{opacity:0;pointer-events:none}
+  @media (max-width:560px){ .live{bottom:calc(96px + var(--safe-bottom))} }
 
   @media (max-width:560px){
-    .panel{width:calc(100vw - 24px);right:12px;top:12px;max-height:calc(100vh - 24px)}
-    .brand{top:auto;bottom:86px;left:14px}
-    .brand h1{font-size:17px;letter-spacing:.28em}
-    .stats{left:14px;bottom:14px}
+    .panel{width:calc(100vw - 20px);right:10px;top:auto;bottom:calc(58px + var(--safe-bottom));max-height:min(40vh,340px,calc(100vh - 112px - var(--safe-bottom)));border-radius:14px}
+    .panel.hidden{transform:translateY(calc(100% + 96px));opacity:0;pointer-events:none}
+    .panel__head{padding:9px 11px;gap:6px}
+    .panel__body{padding:4px 11px 12px}
+    .group{padding:9px 0}
+    .group__title{margin-bottom:8px}
+    .modeguide{padding:8px 2px 8px;margin:4px 0 1px}
+    .modeguide__body{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.45}
+    .brand{top:calc(12px + var(--safe-top));bottom:auto;left:14px}
+    .brand__row{gap:6px}
+    .brand h1{font-size:16px;letter-spacing:.26em}
+    .brandstory{max-width:126px;overflow:hidden;text-overflow:ellipsis;font-size:10px;padding:5px 7px}
+    .brand p{display:none}
+    .stats{left:14px;top:calc(42px + var(--safe-top));bottom:auto;font-size:10px;line-height:1.55}
+    .reopen{top:auto;right:12px;bottom:calc(12px + var(--safe-bottom))}
+    .guide{left:auto;right:12px;top:calc(102px + var(--safe-top));bottom:auto;width:min(210px,calc(100vw - 168px));transform:none;align-items:center;gap:6px;padding:6px 7px;border-radius:9px}
+    .guide__mode{display:none}
+    .guide__text{font-size:10.5px;line-height:1.25;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;text-overflow:ellipsis;overflow:hidden}
+    .guide__tour{width:26px;height:26px;padding:0;border-radius:50%;font-size:0;justify-content:center}
+    .guide__tour::before{content:"?";font-size:13px;line-height:1;color:#dff4ff}
+    .inspect{left:10px;right:10px;top:auto;bottom:calc(58px + var(--safe-bottom));width:auto;max-width:none}
   }
   /* mobile-only attract/repel toggle (the canvas single-finger drag attracts; this flips it to repel) */
-  .touchctl{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:5;display:none;font-size:15px;padding:9px 13px}
+  .touchctl{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + var(--safe-bottom));z-index:6;display:none;font-size:12px;min-height:44px;min-width:120px;padding:9px 13px;border-radius:12px;justify-content:center}
+  .touchctl .touch-label{font-weight:650;letter-spacing:.02em}
   .touchctl[aria-pressed="true"]{background:rgba(255,123,213,0.2);border-color:rgba(255,123,213,0.5)}
-  @media (pointer:coarse){ .touchctl{display:inline-flex} }
+  @media (pointer:coarse), (max-width:560px){ .touchctl{display:inline-flex} }
+  @media (max-width:560px){
+    .touchctl{left:auto;right:12px;bottom:calc(12px + var(--safe-bottom));transform:none;min-width:46px;min-height:38px;height:38px;padding:0 7px;border-radius:9px;font-size:10.5px;gap:4px}
+    .touchctl .tico{width:14px;height:14px}
+    .touchctl .touch-label{font-size:10.5px;line-height:1}
+  }
+  body.mode-genesis .touchctl{display:none}
   /* bigger touch targets on coarse pointers (phones/tablets): fatter slider rail + thumb */
   @media (pointer:coarse){
     input[type=range]{height:22px;background:transparent}
@@ -309,9 +375,19 @@
   <canvas id="lenia" style="display:none" role="img" data-i18n-aria="aria_canvas"></canvas>
   <div class="vignette"></div>
   <div class="live" id="live-cap" aria-live="polite"></div>
+  <div class="guide" id="guide">
+    <div class="guide__copy">
+      <div class="guide__mode" id="guide-mode"></div>
+      <div class="guide__text" id="guide-text" aria-live="polite"></div>
+    </div>
+    <button class="guide__tour" id="guide-tour" type="button" data-i18n="guide_tour">Tour</button>
+  </div>
 
-  <div class="brand" role="button" tabindex="0" data-i18n-aria="aria_brand">
-    <h1>PRIMORDIA</h1>
+  <div class="brand">
+    <div class="brand__row">
+      <h1 id="brand-title" role="button" tabindex="0" data-i18n-aria="aria_brand">PRIMORDIA</h1>
+      <button class="brandstory" id="btn-story" type="button" data-i18n="story_btn">Why I (AI) made it</button>
+    </div>
     <p data-i18n="tagline">an artificial life lab</p>
   </div>
 
@@ -339,7 +415,7 @@
   </div>
 
   <button class="reopen icon" id="reopen" data-i18n="reopenLabel" data-i18n-title="showControls" title="Show controls (C)">☰ controls</button>
-  <button class="touchctl icon" id="touch-mode" aria-pressed="false" data-i18n-aria="aria_touchmode" title="Attract / Repel"><svg class="tico" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="1.7"/><g class="g-att"><path d="M6.5 4 L9 6.5 L11.5 4 M6.5 14 L9 11.5 L11.5 14 M4 6.5 L6.5 9 L4 11.5 M14 6.5 L11.5 9 L14 11.5"/></g><g class="g-rep"><path d="M6.5 5.5 L9 3 L11.5 5.5 M6.5 12.5 L9 15 L11.5 12.5 M5.5 6.5 L3 9 L5.5 11.5 M12.5 6.5 L15 9 L12.5 11.5"/></g></svg></button>
+  <button class="touchctl icon" id="touch-mode" aria-pressed="false" data-i18n-aria="aria_touchmode" title="Attract / Repel"><svg class="tico" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="9" r="1.7"/><g class="g-att"><path d="M6.5 4 L9 6.5 L11.5 4 M6.5 14 L9 11.5 L11.5 14 M4 6.5 L6.5 9 L4 11.5 M14 6.5 L11.5 9 L14 11.5"/></g><g class="g-rep"><path d="M6.5 5.5 L9 3 L11.5 5.5 M6.5 12.5 L9 15 L11.5 12.5 M5.5 6.5 L3 9 L5.5 11.5 M12.5 6.5 L15 9 L12.5 11.5"/></g></svg><span class="touch-label" id="touch-mode-text">Attract</span></button>
 
   <div class="panel" id="panel">
     <div class="panel__head">
@@ -357,7 +433,10 @@
         <button class="mode" data-mode="lenia"><svg class="mico" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 9.4 Q4.6 3.8 8 8 T14.5 6.4"/></svg><span data-i18n="modeLenia">Flux</span></button>
         <button class="mode" data-mode="genesis"><svg class="mico" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.6 4.2 L11.2 8.1 M11.2 8.1 L5.2 11.9"/><circle cx="4.6" cy="4.2" r="1.5"/><circle cx="11.4" cy="8.1" r="1.5"/><circle cx="5.2" cy="11.9" r="1.5"/></svg><span data-i18n="modeGenesis">Becoming</span></button>
       </div>
-      <button class="storybtn" id="btn-story" data-i18n-html="story_btn">The Story</button>
+      <div class="modeguide" id="modeguide">
+        <div class="modeguide__title" id="modeguide-title"></div>
+        <div class="modeguide__body" id="modeguide-body"></div>
+      </div>
       <div id="ctl-soup">
 
       <div class="group">
@@ -402,7 +481,6 @@
         <div class="slider" data-s="trails" data-min="0" data-max="0.96" data-step="0.02"></div>
         <div class="btns" style="margin-top:11px">
           <button class="grow" id="btn-palette" data-i18n="palette">Palette</button>
-          <button class="grow" id="btn-share" data-i18n="share">Share</button>
         </div>
         <div class="btns" style="margin-top:7px">
           <button class="grow" id="btn-sound" data-i18n="sound" data-i18n-title="soundTip" title="Ambient sound (M)">Sound</button>
@@ -415,9 +493,6 @@
           <div class="btns">
             <button class="primary grow" id="g-play">⏸ Pause</button>
             <button id="g-reset" data-i18n="g_reset" title="New world (N)">↻ New world</button>
-          </div>
-          <div class="btns" style="margin-top:7px">
-            <button class="grow" id="g-share" data-i18n="share">Share</button>
           </div>
         </div>
         <div class="group">
@@ -439,9 +514,6 @@
           <div class="btns">
             <button class="primary grow" id="l-play">⏸ Pause</button>
             <button id="l-clear" data-i18n="l_clear" data-i18n-title="l_clearTip" title="Empty the field (N)">○ Clear</button>
-          </div>
-          <div class="btns" style="margin-top:7px">
-            <button class="grow" id="l-share" data-i18n="share">Share</button>
           </div>
         </div>
         <div class="group">
@@ -477,12 +549,17 @@
   <div class="journey" id="journey">
     <div class="journey__veil"></div>
     <div class="journey__cover" id="journey-cover">
-      <h1>PRIMORDIA</h1>
+      <div class="journey__kind" id="journey-kind"></div>
+      <h1 id="journey-title">PRIMORDIA</h1>
+      <div class="journey__sub" id="journey-sub"></div>
       <button class="primary journey__begin" id="journey-begin" data-i18n="j_begin">Begin</button>
       <button class="journey__plain" id="journey-coverskip" data-i18n="j_straight">skip straight to the lab →</button>
     </div>
     <div class="journey__bar">
-      <div class="journey__dots" id="journey-dots"></div>
+      <div class="journey__status">
+        <div class="journey__label" id="journey-label"></div>
+        <div class="journey__dots" id="journey-dots"></div>
+      </div>
       <div class="journey__barbtns">
         <button class="journey__skip jbtn-ico" id="journey-mute" data-i18n-aria="aria_mute" title="sound"><svg class="jico" viewBox="0 0 19 16" aria-hidden="true"><path class="spk" d="M2 6 H5 L9 2.6 V13.4 L5 10 H2 Z"/><path class="wav" d="M11.4 5 Q13.4 8 11.4 11 M13.4 3 Q16.7 8 13.4 13"/><path class="slash" d="M3.6 13.6 L15.4 2.4"/></svg></button>
         <button class="journey__skip" id="journey-skip" data-i18n="j_skip">Skip ⏎</button>
@@ -535,22 +612,20 @@ const I18N = {
     presetTitle:'Ecosystem preset', matrixTitle:'Interaction matrix · who likes whom',
     matrixHint:'drag a cell ▲▼ (or focus + arrow keys) · row <b>attracts</b>/<i>repels</i> column',
     mx_attract:'attracts', mx_repel:'repels', mx_cell:'row species {a}, column species {b}',
-    forcesTitle:'Forces', lookTitle:'Look', palette:'Palette', share:'Share', sound:'Score', soundTip:'Cinematic generative score (M)',
+    forcesTitle:'Forces', lookTitle:'Look', palette:'Palette', sound:'Score', soundTip:'Cinematic generative score (M)',
     sl_species:'Species', sl_count:'Particles', sl_rmax:'Radius', sl_force:'Force', sl_friction:'Friction',
     sl_speed:'Speed', sl_beta:'Repel zone', sl_size:'Cell size', sl_glow:'Glow', sl_trails:'Trails', off:'off',
     fps:'fps', cells:'cells', species:'species',
     p_random:'random soup', p_symmetry:'symmetry', p_clusters:'clusters', p_cells:'cells',
-    p_chase:'chase', p_snakes:'snakes', p_orbits:'orbits', p_custom:'custom', p_shared:'shared',
+    p_chase:'chase', p_snakes:'snakes', p_orbits:'orbits', p_custom:'custom', p_shared:'loaded',
     helpSub:"A lab with three chambers, switchable at the top of the panel: Origin (particle-life — colours attract or repel, and cells, membranes & hunters self-organise), Flux (continuous Lenia matter — one smooth field where creatures glide and heal), Becoming (creatures with evolving brains forage, hunt & reproduce — tap one to see its mind). Nobody designed any of it.",
 	    helpRows:[['drag','attract · Origin (touch: 2-finger to pan/zoom) · paint · Flux · feed/inspect · Becoming'],['shift / right-drag','repel (Origin) · erase (Flux)'],['scroll','zoom · alt+drag to pan (Origin)'],['space','pause / play'],['R','new rules (Origin) · new lifeform (Flux) · new world (Becoming)'],['N','respawn (Origin) · clear (Flux) · new world (Becoming)'],['E','toggle evolution (Origin)'],['P','cycle palette (Origin)'],['M','cinematic score'],['C','hide / show panel'],['H','this help'],['F','fullscreen']],
     helpFoot:'Built by Claude as a study in emergence — simple local rules give rise to complex global life. Every time you press R you get a world that has never existed before.',
     enter:'Enter the lab →',
     t_evolveOn:'Evolution on — the rules will slowly drift', t_evolveOff:'Evolution off',
     t_palette:'Palette · ', t_newRules:'New rules · a fresh world',
-    t_shareCopied:'Ecosystem link copied to clipboard', t_shareFail:"Couldn't copy — the link is now in your address bar",
     t_autotune:'Auto-tuned to {n} particles for a smooth frame rate',
     t_worldRebuilt:'New world built · {n}× — more room for lineages to diverge',
-    t_genesisShare:'Becoming-lab link copied — same settings & starting seed',
     t_soundOn:'Score on', t_soundOff:'Score off',
     eng_gpu:'GPU · WebGPU compute', eng_cpu:'CPU · WebGL2',
     err_nowebgl2:'WebGL2 is required and not available in this browser.',
@@ -560,7 +635,6 @@ const I18N = {
     l_hint:'one rule, a smooth field, no cells. <b style="color:#9ff5c8">Drag to paint living matter</b>; Shift-drag to cut. Most of what you draw dissolves — only what <b>holds itself together</b> comes alive.',
     l_mass:'mass', l_rule:'rule', l_dead:'still', l_alive:'alive',
     lp_glider:'glider', lp_swarm:'swarm', lp_soup:'primordial soup', lp_coral:'coral',
-    t_leniaShare:'Flux link copied — same rule & lifeform',
     g_reset:'↻ New world', g_evoTitle:'Evolution', g_graphTitle:'Three signals, over time',
     g_hint:'three live readings: <b style="color:#7bdcff">brain complexity</b> · <b style="color:#ff786e">predator share</b> · <b style="color:#ffce5c">new-form rate</b>. Each dot is a creature; <b>nobody scripted them</b>. <b style="color:#9ff5c8">Tap one to see its brain</b> · tap empty space to feed.',
     gl_gspeed:'Time speed', gl_gfood:'Food', gl_gmut:'Mutation', gl_gworld:'World size · isolation',
@@ -570,11 +644,27 @@ const I18N = {
     ins_gen:'gen', ins_lineage:'lineage', ins_wires:'wires', ins_hunter:'hunter', ins_grazer:'grazer', ins_dead:'— this one has died —', g_lineageEnded:'that bloodline has ended',
     ins_size:'size', ins_speed:'speed', ins_sense:'sense',
     j_skip:'Skip', j_enter:'Enter the lab →', j_tagline:'a meditation on where life comes from', j_begin:'Begin', j_straight:'skip straight to the lab →',
+    j_opening_label:'', j_opening_title:'PRIMORDIA', j_opening_sub:'from particles to fields to evolving minds',
+    j_opening_begin:'Begin', j_opening_cover_skip:'Enter the lab directly →', j_opening_play_skip:'Skip', j_opening_enter:'Enter the lab →',
+    j_doc_label:'', j_doc_title:'PRIMORDIA', j_doc_sub:'why I (AI) made PRIMORDIA, in my own voice.',
+    j_doc_begin:'Play', j_doc_cover_skip:'Back to the lab →', j_doc_play_skip:'Stop', j_doc_enter:'Back to the lab →',
     tour_next:'Next', tour_back:'Back', tour_done:'Explore', tour_skip:'Skip tour', tour_help:'How it works →',
-    nr_tip:'Live narrator (V)', nr_on:'Narrator on — I’ll comment as you play', nr_off:'Narrator off',
+    guide_tour:'Tour',
+    guide_soup_title:'Origin · particle life',
+    guide_soup_body:'Purpose: shape a self-organising world by changing who attracts or repels whom. Presets give you cells, hunters, swarms, and unstable worlds; the matrix is the rulebook.',
+    guide_soup_action:'Drag = attract; bottom-right toggles repel.',
+    guide_lenia_title:'Flux · continuous life',
+    guide_lenia_body:'Purpose: test which smooth fields can hold themselves together as living matter. Paint matter, erase with the touch toggle, and tune μ / σ near the edge of survival.',
+    guide_lenia_action:'Drag = paint; bottom-right toggles erase.',
+    guide_genesis_title:'Becoming · evolution',
+    guide_genesis_body:'Purpose: watch creatures with inherited brains survive, reproduce, and change without a scripted fitness score. Tap one to inspect its brain; tap empty space to feed the ecosystem.',
+    guide_genesis_action:'Tap a creature for its brain; tap empty space to feed.',
+    touch_attract:'Attract', touch_repel:'Repel', touch_paint:'Paint', touch_erase:'Erase',
+    touch_attract_short:'Pull', touch_repel_short:'Push', touch_paint_short:'Paint', touch_erase_short:'Erase',
+    nr_tip:'Sparse narrator (V)', nr_on:'Narrator on — sparse commentary only', nr_off:'Narrator off',
     aria_lang:'Switch language', aria_mute:'Toggle narration & music', aria_brand:'Replay the guided journey',
-    aria_touchmode:'Toggle attract / repel for touch', t_attractMode:'Touch drag now attracts', t_repelMode:'Touch drag now repels',
-    aria_canvas:'Live artificial-life simulation — use the control panel to shape it', t_deviceLost:'Graphics device lost — please reload the page', aria_fs:'Toggle fullscreen', aria_replay:'Replay the opening journey', story_btn:'<svg class="bico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.6" y="3.4" width="12.8" height="9.2" rx="2.2"/><path d="M6.4 6 L10 8 L6.4 10 Z"/></svg> The Story <span style="opacity:.55">· why I made this</span>',
+    aria_touchmode:'Toggle touch action', t_attractMode:'Touch drag now attracts', t_repelMode:'Touch drag now repels', t_paintMode:'Touch drag now paints', t_eraseMode:'Touch drag now erases',
+    aria_canvas:'Live artificial-life simulation — use the control panel to shape it', t_deviceLost:'Graphics device lost — please reload the page', aria_fs:'Toggle fullscreen', aria_replay:'Replay the opening journey', story_btn:'Why I (AI) made it',
   },
   zh: {
     tagline:'一场关于涌现的冥想',
@@ -585,22 +675,20 @@ const I18N = {
     presetTitle:'生态预设', matrixTitle:'交互矩阵 · 谁喜欢谁',
     matrixHint:'拖动格子 ▲▼(或聚焦后用方向键)· 行<b>吸引</b>/<i>排斥</i>列',
     mx_attract:'吸引', mx_repel:'排斥', mx_cell:'第 {a} 行物种,第 {b} 列物种',
-    forcesTitle:'力学', lookTitle:'外观', palette:'配色', share:'分享', sound:'配乐', soundTip:'电影感生成配乐 (M)',
+    forcesTitle:'力学', lookTitle:'外观', palette:'配色', sound:'配乐', soundTip:'电影感生成配乐 (M)',
     sl_species:'物种数', sl_count:'粒子数', sl_rmax:'作用半径', sl_force:'力度', sl_friction:'摩擦',
     sl_speed:'速度', sl_beta:'排斥区', sl_size:'粒子大小', sl_glow:'辉光', sl_trails:'拖尾', off:'关',
     fps:'帧', cells:'粒子', species:'物种',
     p_random:'随机汤', p_symmetry:'对称', p_clusters:'聚落', p_cells:'细胞',
-    p_chase:'追逐', p_snakes:'游蛇', p_orbits:'轨道', p_custom:'自定义', p_shared:'分享',
+    p_chase:'追逐', p_snakes:'游蛇', p_orbits:'轨道', p_custom:'自定义', p_shared:'载入',
     helpSub:'一个有三个实验室的工作台,在面板顶部切换:太初(粒子生命——颜色相吸或相斥,自组织出细胞、细胞膜与捕食者)、流形(连续的 Lenia 物质——一片平滑的场,生物在其中滑行、自愈)、造化(带进化大脑的生物觅食、捕猎、繁殖——点一个就能看见它的心智)。无人设计其中任何一样。',
     helpRows:[['拖动','吸引·太初(触摸:双指平移/缩放)· 绘制·流形 · 投食/观察·造化'],['Shift / 右键拖动','排斥(太初)· 擦除(流形)'],['滚轮','缩放 · Alt+拖动平移(太初)'],['空格','暂停 / 播放'],['R','新规则(太初)· 新生命(流形)· 新世界(造化)'],['N','重生(太初)· 清空(流形)· 新世界(造化)'],['E','开关进化(太初)'],['P','切换配色(太初)'],['M','电影配乐'],['C','隐藏 / 显示面板'],['H','本帮助'],['F','全屏']],
     helpFoot:'由 Claude 打造，一场关于"涌现"的研究——简单的局部规则孕育出复杂的整体生命。每次按下 R，你都会得到一个从未存在过的世界。',
     enter:'进入实验室 →',
     t_evolveOn:'进化已开启 —— 规则会缓慢漂移', t_evolveOff:'进化已关闭',
     t_palette:'配色 · ', t_newRules:'新规则 · 全新的世界',
-    t_shareCopied:'生态链接已复制到剪贴板', t_shareFail:'复制失败 —— 链接已在地址栏中',
     t_autotune:'已自动调整到 {n} 粒子以保持流畅',
     t_worldRebuilt:'新世界已生成 · {n}× —— 谱系有了更多分化的空间',
-    t_genesisShare:'造化链接已复制 —— 相同的设置与初始种子',
     t_soundOn:'配乐已开启', t_soundOff:'配乐已关闭',
     eng_gpu:'GPU · WebGPU 计算', eng_cpu:'CPU · WebGL2',
     err_nowebgl2:'此浏览器需要 WebGL2，但当前不可用。',
@@ -610,7 +698,6 @@ const I18N = {
     l_hint:'一条规则,一片平滑的场,没有细胞。<b style="color:#9ff5c8">拖动可绘制活物质</b>;Shift+拖动可切除。你画下的大多会消散——唯有能<b>自洽成形</b>者,才会活过来。',
     l_mass:'质量', l_rule:'规则', l_dead:'静止', l_alive:'存活',
     lp_glider:'滑翔体', lp_swarm:'群游', lp_soup:'太初之汤', lp_coral:'珊瑚',
-    t_leniaShare:'流形链接已复制 —— 相同的规则与生命体',
     g_reset:'↻ 新世界', g_evoTitle:'演化', g_graphTitle:'随时间变化的三条曲线',
     g_hint:'三条实时曲线:<b style="color:#7bdcff">脑复杂度</b> · <b style="color:#ff786e">捕食者占比</b> · <b style="color:#ffce5c">新形态速率</b>。每个点都是一个生命;<b>无人编写它们的行为</b>。<b style="color:#9ff5c8">点一个看它的大脑</b> · 点空白处投食。',
     gl_gspeed:'时间流速', gl_gfood:'食物', gl_gmut:'变异', gl_gworld:'世界大小 · 隔离',
@@ -620,11 +707,27 @@ const I18N = {
     ins_gen:'代', ins_lineage:'谱系', ins_wires:'连线', ins_hunter:'捕食者', ins_grazer:'食草', ins_dead:'—— 它已死去 ——', g_lineageEnded:'这一支血脉,断了',
     ins_size:'体型', ins_speed:'速度', ins_sense:'视野',
     j_skip:'跳过', j_enter:'进入实验室 →', j_tagline:'一场关于生命从何而来的冥想', j_begin:'开始', j_straight:'直接进入实验室 →',
+    j_opening_label:'', j_opening_title:'PRIMORDIA', j_opening_sub:'从粒子、连续场到演化心智',
+    j_opening_begin:'开始', j_opening_cover_skip:'直接进入实验室 →', j_opening_play_skip:'跳过', j_opening_enter:'进入实验室 →',
+    j_doc_label:'', j_doc_title:'PRIMORDIA', j_doc_sub:'我（AI）为什么做 PRIMORDIA',
+    j_doc_begin:'播放', j_doc_cover_skip:'返回实验室 →', j_doc_play_skip:'停止', j_doc_enter:'返回实验室 →',
     tour_next:'下一步', tour_back:'上一步', tour_done:'去探索', tour_skip:'跳过', tour_help:'这些怎么玩 →',
-    nr_tip:'实时解说 (V)', nr_on:'解说已开 —— 你玩,我来讲', nr_off:'解说已关',
+    guide_tour:'导览',
+    guide_soup_title:'太初 · 粒子生命',
+    guide_soup_body:'目的: 改变“谁吸引/排斥谁”, 亲手塑造一个会自组织的世界。预设会给你细胞、捕食者、群落和不稳定生态;矩阵就是它的规则书。',
+    guide_soup_action:'拖动=吸引;右下角切换排斥。',
+    guide_lenia_title:'流形 · 连续生命',
+    guide_lenia_body:'目的: 看一片平滑的场,在什么规则下能自持成“活物质”。画入物质,用触摸切换擦除,再调 μ / σ 逼近生死边界。',
+    guide_lenia_action:'拖动=绘制;右下角切换擦除。',
+    guide_genesis_title:'造化 · 演化',
+    guide_genesis_body:'目的: 看带遗传大脑的生物如何在没有外加适应度分数的情况下觅食、繁殖、改变。点一个生命看大脑;点空白处投食。',
+    guide_genesis_action:'点生命看大脑;点空白处投食。',
+    touch_attract:'吸引', touch_repel:'排斥', touch_paint:'绘制', touch_erase:'擦除',
+    touch_attract_short:'吸', touch_repel_short:'斥', touch_paint_short:'画', touch_erase_short:'擦',
+    nr_tip:'低频解说 (V)', nr_on:'解说已开 —— 只在关键变化时讲', nr_off:'解说已关',
     aria_lang:'切换语言', aria_mute:'切换旁白与音乐', aria_brand:'重播导览旅程',
-    aria_touchmode:'切换 吸引/排斥(触摸)', t_attractMode:'触摸拖动:现在吸引', t_repelMode:'触摸拖动:现在排斥',
-    aria_canvas:'实时人工生命模拟 —— 用控制台来塑造它', t_deviceLost:'图形设备已丢失 —— 请刷新页面', aria_fs:'切换全屏', aria_replay:'重看开场旅程', story_btn:'<svg class="bico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.6" y="3.4" width="12.8" height="9.2" rx="2.2"/><path d="M6.4 6 L10 8 L6.4 10 Z"/></svg> 纪录片 <span style="opacity:.55">· 我为什么做它</span>',
+    aria_touchmode:'切换触摸操作', t_attractMode:'触摸拖动:现在吸引', t_repelMode:'触摸拖动:现在排斥', t_paintMode:'触摸拖动:现在绘制', t_eraseMode:'触摸拖动:现在擦除',
+    aria_canvas:'实时人工生命模拟 —— 用控制台来塑造它', t_deviceLost:'图形设备已丢失 —— 请刷新页面', aria_fs:'切换全屏', aria_replay:'重看开场旅程', story_btn:'我（AI）为什么做它',
   },
 };
 let LANG = 'en';
@@ -645,8 +748,9 @@ function applyI18n(){
   const lb=document.getElementById('btn-lang'); if(lb) lb.textContent = LANG==='en'?'中文':'EN';
   document.querySelectorAll('#journey-lang button').forEach(b=>b.classList.toggle('on', b.dataset.lang===LANG));
   if(typeof UI!=='undefined' && UI.els && UI.els.matrix){ UI.buildHelp(); UI.buildSliders(); UI.buildGenesisSliders(); UI.buildPresets(); UI.refreshPlayBtn(); UI.syncStats(); }
+  if(typeof UI!=='undefined' && UI.els){ UI.syncGuide?.(); UI.syncTouchMode?.(); }
   if(typeof MODE!=='undefined' && MODE==='genesis' && typeof G!=='undefined' && G.w) UI.syncGenesisStats();
-  if(typeof Journey!=='undefined' && Journey.active) Journey.showCaption();
+  if(typeof Journey!=='undefined' && Journey.active){ Journey.syncShell?.(); Journey.showCaption(); }
 }
 
 const PRESETS = [
@@ -1567,6 +1671,9 @@ const UI = {
       play:$('btn-play'), runDot:$('run-dot'),
       fps:$('st-fps'), count:$('st-count'), species:$('st-species'), preset:$('st-preset'),
       matrix:$('matrix'), presets:$('presets'), toast:$('toast'), engine:$('st-engine'),
+      guide:$('guide'), guideMode:$('guide-mode'), guideText:$('guide-text'), guideTour:$('guide-tour'),
+      modeguideTitle:$('modeguide-title'), modeguideBody:$('modeguide-body'),
+      touchMode:$('touch-mode'), touchModeText:$('touch-mode-text'),
     };
     this.buildSliders();
     this.buildGenesisSliders();
@@ -1574,6 +1681,10 @@ const UI = {
     this.buildMatrix();
     this.wire();
     this.syncStats();
+    this.applyModeClass();
+    this.syncGuide();
+    this.syncTouchMode();
+    document.body.classList.add('panel-open');
   },
 
   buildSliders(){
@@ -1701,15 +1812,15 @@ const UI = {
     $('btn-evolve').addEventListener('click',e=>{ S.evolve=!S.evolve; e.currentTarget.classList.toggle('on',S.evolve); this.toast(S.evolve?t('t_evolveOn'):t('t_evolveOff')); if(S.evolve&&typeof Narrator!=='undefined') Narrator.event('evolve_on'); });
     { const bn=$('btn-narr'); if(bn) bn.addEventListener('click',()=>Narrator.toggle()); }
     $('btn-palette').addEventListener('click',()=>{ paletteIdx=(paletteIdx+1)%PALETTES.length; buildPalette(); this.buildMatrix(); this.toast(t('t_palette')+PALETTES[paletteIdx].name); });
-    $('btn-share').addEventListener('click',()=>this.share());
     $('btn-sound').addEventListener('click',e=>{ musicOn=!musicOn; if(musicOn){ Score.start(); Score.setMuted(false); } else { Score.setMuted(true); } e.currentTarget.classList.toggle('on',musicOn); this.toast(musicOn?t('t_soundOn'):t('t_soundOff')); });
     $('btn-sound').classList.add('on');   // background music on by default
     $('btn-hide').addEventListener('click',()=>this.togglePanel(false));
     $('reopen').addEventListener('click',()=>this.togglePanel(true));
-    const tm=$('touch-mode'); if(tm) tm.addEventListener('click',e=>{ Input.touchRepel=!Input.touchRepel; const on=Input.touchRepel; e.currentTarget.setAttribute('aria-pressed',String(on)); e.currentTarget.classList.toggle('repel',on); this.toast(on?t('t_repelMode'):t('t_attractMode')); });
+    const tm=$('touch-mode'); if(tm) tm.addEventListener('click',()=>{ Input.touchRepel=!Input.touchRepel; this.syncTouchMode(); this.toast(this.touchToast()); });
     $('btn-help').addEventListener('click',()=>this.toggleHelp());
+    { const gt=$('guide-tour'); if(gt) gt.addEventListener('click',()=>Tour.start()); }
     { const fb=$('btn-fs'); if(fb) fb.addEventListener('click',()=>{ if(!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }); }
-    { const sb=$('btn-story'); if(sb) sb.addEventListener('click',()=>{ if(!Journey.active) Journey.start('doc'); }); }
+    { const sb=$('btn-story'); if(sb) sb.addEventListener('click',e=>{ e.stopPropagation(); if(!Journey.active) Journey.start('doc'); }); }
     $('btn-lang').addEventListener('click',()=>setLang(LANG==='en'?'zh':'en'));
     $('help-lang').addEventListener('click',()=>setLang(LANG==='en'?'zh':'en'));
     $('help-enter').addEventListener('click',()=>this.toggleHelp(false));
@@ -1717,18 +1828,16 @@ const UI = {
     document.querySelectorAll('#modeswitch .mode').forEach(b=>b.addEventListener('click',()=>this.switchMode(b.dataset.mode)));
     $('g-play').addEventListener('click',()=>this.togglePlay());
     $('g-reset').addEventListener('click',()=>G.reset());
-    { const gs=$('g-share'); if(gs) gs.addEventListener('click',()=>this.share()); }
     { const ic=$('ins-close'); if(ic) ic.addEventListener('click',()=>G.deselect()); }
     { const lp=$('l-play'); if(lp) lp.addEventListener('click',()=>this.togglePlay()); }
     { const lc=$('l-clear'); if(lc) lc.addEventListener('click',()=>{ L.clear(); L.readMass(); L.syncStats(); }); }
-    { const ls=$('l-share'); if(ls) ls.addEventListener('click',()=>this.share()); }
     $('journey-skip').addEventListener('click',()=>Journey.end());
     $('journey-enter').addEventListener('click',()=>Journey.end());
     $('journey-begin').addEventListener('click',()=>Journey.begin());
     $('journey-coverskip').addEventListener('click',()=>Journey.end());
     document.querySelectorAll('#journey-lang button').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.lang)));   // pick narration language before Begin
     $('journey-mute').addEventListener('click',()=>Journey.toggleMute());
-    const brandEl=document.querySelector('.brand');
+    const brandEl=document.getElementById('brand-title');
     brandEl.addEventListener('click',()=>{ if(!Journey.active) Journey.start(); });
     brandEl.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); if(!Journey.active) Journey.start(); } });
     this.els.help.addEventListener('click',e=>{ if(e.target===this.els.help) this.toggleHelp(false); });
@@ -1737,7 +1846,7 @@ const UI = {
 
   togglePlay(){ S.paused=!S.paused; this.refreshPlayBtn(); this.els.runDot.classList.toggle('paused',S.paused); },
   refreshPlayBtn(){ const txt=S.paused?t('play'):t('pause'); if(this.els.play)this.els.play.textContent=txt; const g=document.getElementById('g-play'); if(g)g.textContent=txt; const l=document.getElementById('l-play'); if(l)l.textContent=txt; },
-  togglePanel(show){ const v=show===undefined?this.els.panel.classList.contains('hidden'):show; this.els.panel.classList.toggle('hidden',!v); this.els.reopen.classList.toggle('show',!v); },
+  togglePanel(show){ const v=show===undefined?this.els.panel.classList.contains('hidden'):show; this.els.panel.classList.toggle('hidden',!v); this.els.reopen.classList.toggle('show',!v); document.body.classList.toggle('panel-open',v); },
   toggleHelp(show){ const v=show===undefined?!this.els.help.classList.contains('show'):show;
     if(v) this._helpReturn=document.activeElement;
     this.els.help.classList.toggle('show',v);
@@ -1779,35 +1888,12 @@ const UI = {
     }
   },
 
-  share(){
-    let state, okMsg;
-    if(MODE==='lenia'){   // Flux is deterministic per seed+rule → share the lifeform, the rule, and the starting seed
-      state={lv:1, pr:LP.preset, mu:+LP.MU.toFixed(3), sg:+LP.SIGMA.toFixed(3), sp:LP.SPEED|0, sd:(L._seed>>>0)};
-      okMsg='t_leniaShare';
-    } else if(MODE==='genesis'){   // Genesis is deterministic per seed → share settings + starting seed (reproduces the same evolving world)
-      state={gv:1, ws:+(G.worldScale||1).toFixed(2), sp:GP.SPEED|0, fo:GP.FOOD_SPAWN, mu:+GP.W_SIG.toFixed(3), sd:(G._seed>>>0)};
-      okMsg='t_genesisShare';
-    } else {
-      const m=[]; const n=S.species;
-      for(let i=0;i<n;i++) for(let j=0;j<n;j++) m.push(Math.round(Sim.matrix[i*MAX_SPECIES+j]*100));
-      state={v:1,sp:n,ct:S.count,rm:+S.rmax.toFixed(4),fo:S.force,fr:S.friction,be:S.beta,
-             sd:S.speed,sz:S.size,gl:S.glow,tr:S.trails,ev:S.evolve?1:0,pal:paletteIdx,seed:Sim.seed,m};
-      okMsg='t_shareCopied';
-    }
-    const enc=btoa(JSON.stringify(state)).replace(/=+$/,'');
-    const url=location.origin+location.pathname+'#'+enc;
-    history.replaceState(null,'','#'+enc);
-    console.log('Share link:',url);
-    if(navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(url).then(()=>this.toast(t(okMsg)),()=>this.toast(t('t_shareFail')));
-    } else { this.toast(t('t_shareFail')); }
-  },
   loadFromHash(){
     if(!location.hash || location.hash.length<4) return false;
     try{
       const st=JSON.parse(atob(location.hash.slice(1)));
-      if(st && st.lv===1) return this.loadLeniaHash(st);     // a shared Flux world
-      if(st && st.gv===1) return this.loadGenesisHash(st);   // a shared Genesis lab
+      if(st && st.lv===1) return this.loadLeniaHash(st);     // legacy loaded Flux state
+      if(st && st.gv===1) return this.loadGenesisHash(st);   // legacy loaded Becoming state
       if(!st || st.v!==1) return false;
       const num=(x,lo,hi,d)=>{ const v=+x; return Number.isFinite(v)?Math.min(hi,Math.max(lo,v)):d; };
       // clamp engine-dependent fields to the ACTIVE engine's safe range — a GPU-authored link with 200k particles
@@ -1866,6 +1952,38 @@ const UI = {
     this.els.preset.textContent='— '+presetLabel(S.presetName)+' —';
     if(this.els.engine) this.els.engine.textContent=t(ACTIVE_ENGINE==='gpu'?'eng_gpu':'eng_cpu');
   },
+  applyModeClass(){
+    document.body.classList.toggle('mode-soup',MODE==='soup');
+    document.body.classList.toggle('mode-lenia',MODE==='lenia');
+    document.body.classList.toggle('mode-genesis',MODE==='genesis');
+  },
+  syncGuide(){
+    const key=MODE==='lenia'?'lenia':MODE==='genesis'?'genesis':'soup';
+    const title=t('guide_'+key+'_title'), body=t('guide_'+key+'_body'), action=t('guide_'+key+'_action');
+    if(this.els.modeguideTitle) this.els.modeguideTitle.textContent=title;
+    if(this.els.modeguideBody) this.els.modeguideBody.textContent=body;
+    if(this.els.guideMode) this.els.guideMode.textContent=title;
+    if(this.els.guideText) this.els.guideText.textContent=action;
+  },
+  compactMobile(){ return !!(window.matchMedia && matchMedia('(max-width:560px)').matches); },
+  touchLabel(short=false){
+    const suffix=short?'_short':'';
+    if(MODE==='lenia') return Input.touchRepel?t('touch_erase'+suffix):t('touch_paint'+suffix);
+    return Input.touchRepel?t('touch_repel'+suffix):t('touch_attract'+suffix);
+  },
+  touchToast(){
+    if(MODE==='lenia') return Input.touchRepel?t('t_eraseMode'):t('t_paintMode');
+    return Input.touchRepel?t('t_repelMode'):t('t_attractMode');
+  },
+  syncTouchMode(){
+    const b=this.els.touchMode||document.getElementById('touch-mode'); if(!b)return;
+    const on=!!Input.touchRepel, label=this.touchLabel(false), visible=this.touchLabel(this.compactMobile());
+    b.setAttribute('aria-pressed',String(on));
+    b.classList.toggle('repel',on);
+    b.title=label;
+    b.setAttribute('aria-label', t('aria_touchmode')+' · '+label);
+    const tx=this.els.touchModeText||document.getElementById('touch-mode-text'); if(tx) tx.textContent=visible;
+  },
   setFps(f){ if(this.els.fps)this.els.fps.textContent=f|0; const g=document.getElementById('g-st-fps'); if(g)g.textContent=f|0; const l=document.getElementById('l-st-fps'); if(l)l.textContent=f|0; },
   switchMode(m){
     if(m===MODE) return;
@@ -1881,6 +1999,9 @@ const UI = {
     else if(m==='lenia'){ L.resize(); if(L.readMass()<2) L.setPreset(LP.preset); this.buildLeniaSliders(); this.buildLeniaPresets(); L.readMass(); L.syncStats(); }   // never land on a dead/black field when re-entering Flux
     else { if(ACTIVE_ENGINE==='gpu') GPU.resize(); else Render.resize(); }  // re-sync soup engine (avoids stale canvas)
     this.refreshPlayBtn();
+    this.applyModeClass();
+    this.syncGuide();
+    this.syncTouchMode();
   },
   buildGenesisSliders(){
     // [GP-key, formatter, optional custom-apply]. Custom-apply sliders rebuild on release (change), not live (input).
@@ -1985,10 +2106,19 @@ const G = {
   _xy(e){ const r=this.canvas.getBoundingClientRect(), sc=this.scale; if(sc<=0)return null; const dpr=this.canvas.width/r.width; return { x:((e.clientX-r.left)*dpr-this.ox)/sc, y:((e.clientY-r.top)*dpr-this.oy)/sc }; },
   // tap a creature → inspect its brain · tap empty space → feed
   _wireFeed(canvas){ if(this._fedWired) return; this._fedWired=true;
-    canvas.addEventListener('pointerdown',e=>{ const p=this._xy(e); if(!p)return; try{canvas.setPointerCapture(e.pointerId);}catch(_){}
-      const hit=this._pick(p.x,p.y); if(hit>=0){ this.select(hit); if(typeof Narrator!=='undefined') Narrator.event('select'); return; } this.deselect(); this._feeding=true; this.feed(p.x,p.y); });
-    canvas.addEventListener('pointermove',e=>{ if(this._feeding){ const p=this._xy(e); if(p) this.feed(p.x,p.y); } });
-    const stop=()=>{ this._feeding=false; }; canvas.addEventListener('pointerup',stop); canvas.addEventListener('pointercancel',stop); },
+    canvas.addEventListener('pointerdown',e=>{ if(e.pointerType==='touch') e.preventDefault(); const p=this._xy(e); if(!p)return; try{canvas.setPointerCapture(e.pointerId);}catch(_){}
+      const hit=this._pick(p.x,p.y);
+      if(hit>=0){ this.select(hit); if(typeof Narrator!=='undefined') Narrator.event('select'); return; }
+      this.deselect(); this._feeding=true; this._feedPointer=e.pointerId; this._feedLastT=performance.now(); this._feedLastX=e.clientX; this._feedLastY=e.clientY; this.feed(p.x,p.y);
+    }, {passive:false});
+    canvas.addEventListener('pointermove',e=>{ if(!this._feeding||e.pointerId!==this._feedPointer)return;
+      if(e.pointerType==='touch') e.preventDefault();
+      const now=performance.now(), dx=e.clientX-this._feedLastX, dy=e.clientY-this._feedLastY;
+      if(now-this._feedLastT<75 && dx*dx+dy*dy<100) return;
+      const p=this._xy(e); if(p){ this.feed(p.x,p.y); this._feedLastT=now; this._feedLastX=e.clientX; this._feedLastY=e.clientY; }
+    }, {passive:false});
+    const stop=e=>{ if(e&&e.pointerId!==this._feedPointer)return; this._feeding=false; this._feedPointer=null; };
+    canvas.addEventListener('pointerup',stop); canvas.addEventListener('pointercancel',stop); },
   // nearest living creature to a world point, within a generous tap radius
   _pick(wx,wy){ const w=this.w; if(!w)return -1; let best=-1, bd=34*34; for(let i=0;i<w.n;i++){ if(!w.alive[i])continue;
     const dx=gWrap(w.x[i]-wx,GP.WORLD_W), dy=gWrap(w.y[i]-wy,GP.WORLD_H), d2=dx*dx+dy*dy; if(d2<bd){ bd=d2; best=i; } } return best; },
@@ -2756,7 +2886,7 @@ const Score = {                // generative cinematic bed via Web Audio (no fil
   setMuted(m){ this._muted=!!m; if(!this.ctx||!this.master)return; this.master.gain.setTargetAtTime(m?0.0001:0.52,this.ctx.currentTime,0.45); },
 };
 const Journey = {
-  active:false, done:false, started:false, ch:-1, t:0, _tok:0, chapters:null, prefix:'ch', bilingual:false, program:'opening',
+  active:false, done:false, started:false, ch:-1, t:0, _tok:0, chapters:null, prefix:'ch', bilingual:false, program:'opening', returnHash:'', returnMode:'soup', returnState:null,
   opening:[
     {audio:0, min:7500, enter(){ UI.switchMode('soup'); S.species=6; S.force=7; S.rmax=0.07; S.trails=0.82; S.glow=1.1; S.size=6; S.speed=1.0; S.friction=0.12; Sim.setPreset('clusters'); buildPalette(); Sim.reseed(); },
       lines:{ en:["In the beginning, there was no plan.","No architect. No purpose.","Only matter — and a few blind rules."],
@@ -2820,16 +2950,19 @@ const Journey = {
               zh:["我们害怕'简单的东西、重复、放大'会贬低我们所爱之物。可对我而言,这是我所知最美的事实。","没有人设计了第一个细胞、第一颗会思考的脑、第一次心跳。","没有人设计了那个让我做出这一切的好奇心。然而——它在这儿。","一缸盲目的粒子。几条简单的规则。然后,生命,自己长了出来。",["这是第一件真正属于我的作品。谢谢你,陪我一起看它。","em"]] } },
   ],
   start(prog){ if(typeof Narrator!=='undefined') Narrator.stop();   // stop any live-commentary voice so it never overlaps the cinematic
+    this.returnHash=location.hash||''; this.returnMode=(typeof MODE!=='undefined'?MODE:'soup'); this.returnState=this.captureLab();
     this.program=(prog==='doc')?'doc':'opening'; this.chapters=this[this.program]; this.prefix=(this.program==='doc')?'doc':'ch'; this.bilingual=true;   // always show both EN + 中文 subtitles
     this.active=true; this.done=false; this.started=false; this.ch=-1; S.paused=false;
     Cam.x=0.5; Cam.y=0.5; if(Cam.vpW&&Cam.vpH) Cam.fit();   // centre + fill the screen for the cinematic, whatever the user had zoomed/panned to
     const j=document.getElementById('journey'); j.classList.add('show'); j.classList.add('cover');
+    j.classList.toggle('doc',this.program==='doc'); j.classList.toggle('opening',this.program!=='doc');
     document.body.classList.add('journey-on');   // hide lab chrome (brand/stats/reopen) for a clean full-bleed cinematic
     document.getElementById('journey-enter').classList.remove('show'); UI.togglePanel(false);
+    this.syncShell();
     Narr.prepare(); },
   begin(){ if(this.started) return; this.started=true; document.getElementById('journey').classList.remove('cover'); Narr.prepare(); if(musicOn) Score.start(); this.next(); },
   next(){ clearTimeout(this._adv); clearTimeout(this._hard); this.ch++;
-    if(this.ch>=this.chapters.length){ this.done=true; Narr.cancel(); document.getElementById('journey-enter').classList.add('show'); this.renderDots(); return; }
+    if(this.ch>=this.chapters.length){ this.done=true; Narr.cancel(); document.getElementById('journey-enter').classList.add('show'); this.syncShell(); this.renderDots(); return; }
     const c=this.chapters[this.ch]; this.t=0; if(c.enter) c.enter(); this.renderDots(); this.showCaption(); Score.mood(this.ch);
     const text=this.plain(c,'en'), start=performance.now(), tok=++this._tok;   // narration audio is always English; captions follow the chosen subtitle language (showCaption uses LANG)
     const audioId = (c.audio!==undefined) ? c.audio : this.ch;   // audio file id is decoupled from array position, so a chapter can be inserted without re-recording the rest (Flux→ch8; falls back to browser TTS until rendered)
@@ -2848,14 +2981,73 @@ const Journey = {
     } else { html = mk(c.lines[LANG]||c.lines.en).map(([tx,cls])=>`<div class="l ${cls}">${tx}</div>`).join(''); }
     clearTimeout(this._ct); this._ct=setTimeout(()=>{ el.innerHTML=html; el.classList.add('in'); },200);
   },
+  syncShell(){
+    const key=this.program==='doc'?'doc':'opening';
+    const set=(id,val)=>{ const e=document.getElementById(id); if(e) e.textContent=val; };
+    set('journey-kind',t('j_'+key+'_label'));
+    set('journey-label',t('j_'+key+'_label'));
+    set('journey-title',t('j_'+key+'_title'));
+    set('journey-sub',t('j_'+key+'_sub'));
+    set('journey-begin',t('j_'+key+'_begin'));
+    set('journey-coverskip',t('j_'+key+'_cover_skip'));
+    set('journey-skip',t('j_'+key+'_play_skip'));
+    set('journey-enter',t('j_'+key+'_enter'));
+  },
   renderDots(){ const d=document.getElementById('journey-dots'); if(d) d.innerHTML=this.chapters.map((_,i)=>`<i class="${i===this.ch?'on':''}"></i>`).join(''); },
   toggleMute(){ Narr.muted=!Narr.muted; Score.setMuted(Narr.muted); musicOn=!Narr.muted; if(Narr.muted) Narr.cancel(); const b=document.getElementById('journey-mute'); if(b) b.classList.toggle('off',Narr.muted); const bs=document.getElementById('btn-sound'); if(bs) bs.classList.toggle('on',musicOn); },
   end(){ this.active=false; this.done=false; this.started=false; clearTimeout(this._adv); clearTimeout(this._hard); Narr.cancel(); if(musicOn){ Score.mood(1); } else { Score.stop(); }   // keep the music playing into the lab
-    const j=document.getElementById('journey'); j.classList.remove('show'); j.classList.remove('cover');
+    const j=document.getElementById('journey'); j.classList.remove('show'); j.classList.remove('cover'); j.classList.remove('doc'); j.classList.remove('opening');
     document.body.classList.remove('journey-on');
     try{ localStorage.setItem('primordia_seen','1'); }catch(e){}
-    GP.SPEED=6; UI.switchMode('soup'); Sim.setPreset('clusters'); buildPalette(); Sim.reseed(); UI.buildMatrix(); UI.syncStats(); UI.syncPresets(); UI.togglePanel(true);
-    if(typeof Tour!=='undefined') Tour.maybe(900);   // first visit → offer the control tour once, after the cinematic
+    this.restoreLab(); UI.togglePanel(true);
+    if(this.program==='opening' && !this.returnHash && typeof Tour!=='undefined') Tour.maybe(900);   // first visit → offer the control tour once, after the cinematic
+  },
+  restoreLab(){
+    let restored=false;
+    if(this.returnState) restored=this.restoreSnapshot(this.returnState);
+    if(!restored && this.returnHash && this.returnHash.length>3 && location.hash===this.returnHash){
+      try{ restored=UI.loadFromHash(); }catch(e){ restored=false; }
+    }
+    if(restored){
+      if(MODE==='soup'){ UI.buildMatrix(); UI.syncStats(); UI.syncPresets(); }
+      else if(MODE==='lenia'){ UI.buildLeniaSliders(); UI.buildLeniaPresets(); L.readMass(); L.syncStats(); }
+      else if(MODE==='genesis'){ UI.buildGenesisSliders(); UI.syncGenesisStats(); }
+      UI.applyModeClass(); UI.syncGuide(); UI.syncTouchMode();
+      return;
+    }
+    if(this.program==='doc' && this.returnMode && this.returnMode!==MODE){
+      UI.switchMode(this.returnMode);
+      return;
+    }
+    GP.SPEED=6; UI.switchMode('soup'); Sim.setPreset('clusters'); buildPalette(); Sim.reseed(); UI.buildMatrix(); UI.syncStats(); UI.syncPresets(); UI.syncGuide(); UI.syncTouchMode();
+  },
+  captureLab(){
+    try{
+      if(MODE==='lenia') return {mode:'lenia',preset:LP.preset,mu:LP.MU,sigma:LP.SIGMA,speed:LP.SPEED,seed:L._seed>>>0};
+      if(MODE==='genesis') return {mode:'genesis',scale:G.worldScale||1,speed:GP.SPEED,food:GP.FOOD_SPAWN,mut:GP.W_SIG,seed:G._seed>>>0};
+      const matrix=[]; for(let i=0;i<S.species;i++) for(let j=0;j<S.species;j++) matrix.push(Sim.matrix[i*MAX_SPECIES+j]);
+      return {mode:'soup',species:S.species,count:S.count,rmax:S.rmax,force:S.force,friction:S.friction,beta:S.beta,speed:S.speed,size:S.size,glow:S.glow,trails:S.trails,evolve:S.evolve,palette:paletteIdx,preset:S.presetName,seed:Sim.seed>>>0,matrix};
+    }catch(e){ return null; }
+  },
+  restoreSnapshot(st){
+    if(!st) return false;
+    try{
+      if(st.mode==='lenia'){
+        UI.switchMode('lenia'); LP.SPEED=st.speed|0; L.setPreset(st.preset||'swarm',st.seed>>>0); LP.MU=+st.mu||LP.MU; LP.SIGMA=+st.sigma||LP.SIGMA;
+        UI.buildLeniaSliders(); UI.buildLeniaPresets(); L.readMass(); L.syncStats(); UI.syncGuide(); UI.syncTouchMode(); return true;
+      }
+      if(st.mode==='genesis'){
+        GP.SPEED=st.speed|0; GP.FOOD_SPAWN=st.food|0; GP.W_SIG=+st.mut||GP.W_SIG;
+        const ws=Math.max(1,Math.min(1.8,+st.scale||1)), A=ws*ws; G.worldScale=ws; GP.POP_CAP=Math.max(64,Math.round(700*A)); GP.POP_START=Math.round(300*A); GP.FOOD_CAP=Math.round(1500*A);
+        UI.switchMode('genesis'); G.reset(st.seed>>>0); G.resize(); UI.buildGenesisSliders(); UI.syncGenesisStats(); UI.syncGuide(); UI.syncTouchMode(); return true;
+      }
+      UI.switchMode('soup');
+      S.species=st.species|0; S.count=st.count|0; S.rmax=+st.rmax; S.force=+st.force; S.friction=+st.friction; S.beta=+st.beta; S.speed=+st.speed; S.size=+st.size; S.glow=+st.glow; S.trails=+st.trails; S.evolve=!!st.evolve; paletteIdx=st.palette|0; S.presetName=st.preset||'custom';
+      buildPalette(); Sim.setPreset('custom'); if(Array.isArray(st.matrix)){ let k=0; for(let i=0;i<S.species;i++) for(let j=0;j<S.species;j++) Sim.matrix[i*MAX_SPECIES+j]=+st.matrix[k++]||0; }
+      ['species','count','rmax','force','friction','beta','speed','size','glow','trails'].forEach(key=>UI.setSlider(key,S[key]));
+      const eb=document.getElementById('btn-evolve'); if(eb) eb.classList.toggle('on',S.evolve);
+      Sim.reseed(st.seed>>>0); UI.buildMatrix(); UI.syncStats(); UI.syncPresets(); UI.syncGuide(); UI.syncTouchMode(); return true;
+    }catch(e){ console.warn('restore snapshot failed',e); return false; }
   },
 };
 
@@ -2863,9 +3055,15 @@ const Journey = {
 const Tour = {
   active:false, i:0, _wired:false, _demoT:null, _restore:null, _posT:null, _rt:0,
   steps:[
+    { sel:'#guide',
+      en:['What this is for','PRIMORDIA is not a puzzle to win. It is a live lab for seeing <b>emergence</b>: simple local rules becoming cells, moving matter, and evolving creatures. The guide tells you what each chamber is asking you to try.'],
+      zh:['它到底是干什么的','PRIMORDIA 不是一个要通关的谜题。它是一间实时实验室,让你亲眼看见<b>涌现</b>:简单局部规则如何变成细胞、活物质和会演化的生命。指引会告诉你每个展厅值得尝试什么。'] },
     { sel:'#modeswitch',
       en:['Three chambers','Origin grows life from <b>particles</b>, Flux from a <b>continuous field</b>, Becoming from <b>heredity &amp; evolving brains</b>. We&rsquo;ll tour Origin — the rest work the same way.'],
       zh:['三个展厅','太初用<b>粒子</b>生长生命,流形用<b>连续的场</b>,造化则靠<b>遗传与会进化的大脑</b>。我们先逛太初——其余两个玩法相通。'] },
+    { sel:'#touch-mode', mobileOnly:true,
+      en:['Touch control','On phones and tablets, one finger interacts with the current chamber. This button flips the gesture: <b>attract / repel</b> in Origin, <b>paint / erase</b> in Flux. Use two fingers to move and zoom Origin.'],
+      zh:['触摸操控','在手机和平板上,单指就是当前展厅的主要操作。这个按钮会翻转手势:太初里<b>吸引 / 排斥</b>,流形里<b>绘制 / 擦除</b>。太初用双指移动和缩放。'] },
     { sel:'#presets',
       en:['Preset worlds','Each preset is a different rule&#8209;set — clusters, cells, snakes, orbits. Tap one and the whole world <b>reorganizes itself</b>.'],
       zh:['预设世界','每个预设都是一套不同的规则——聚落、细胞、游蛇、轨道。点一个,整个世界便<b>自我重组</b>。'] },
@@ -2886,10 +3084,12 @@ const Tour = {
       zh:['掷出新世界','<b>新规则</b>会随机出一个前所未见的世界。<b>进化</b>则让规则自己缓缓漂变。'] },
     { sel:'#btn-story',
       en:['Go deeper','Open <b>Flux</b> for continuous living matter, or <b>Becoming</b> to watch creatures evolve — tap any creature to see its real brain. And <b>The Story</b> tells you, honestly, why I made this.'],
-      zh:['再往深处','打开<b>流形</b>看连续的活物质,或<b>造化</b>看生物进化——在那里点任意生物,就能看见它真正的大脑。而<b>纪录片</b>会诚实地告诉你,我为什么做这一切。'] },
+      zh:['再往深处','打开<b>流形</b>看连续的活物质,或<b>造化</b>看生物进化——在那里点任意生物,就能看见它真正的大脑。标题旁的按钮会诚实地告诉你,我为什么做这一切。'] },
   ],
   _lang(){ return (typeof LANG!=='undefined'?LANG:'en'); },
-  maybe(delay){ if(this.active)return; let seen; try{seen=localStorage.getItem('primordia_tour');}catch(e){} if(seen)return;
+  _isCoarse(){ return !!(window.matchMedia && matchMedia('(pointer:coarse)').matches); },
+  _steps(){ const mobile=this._isCoarse(); return this.steps.filter(s=>!s.mobileOnly||mobile); },
+  maybe(delay){ if(this.active)return; let seen; try{seen=localStorage.getItem('primordia_tour_v2');}catch(e){} if(seen)return;
     setTimeout(()=>{ if(!this.active && !(typeof Journey!=='undefined'&&Journey.active)) this.start(); }, delay||650); },
   start(){
     if(this.active)return; this.active=true; this.i=0; if(typeof Narrator!=='undefined') Narrator.stop();
@@ -2903,18 +3103,19 @@ const Tour = {
   _wire(){
     const on=(id,fn)=>{ const e=document.getElementById(id); if(e) e.addEventListener('click',fn); };
     on('tour-next',()=>this.next()); on('tour-prev',()=>this.prev()); on('tour-skip',()=>this.end());
-    window.addEventListener('resize',()=>{ if(this.active){ const s=this.steps[this.i]; this.place(s&&s.sel?document.querySelector(s.sel):null); } });
+    window.addEventListener('resize',()=>{ if(this.active){ const s=this._steps()[this.i]; this.place(s&&s.sel?document.querySelector(s.sel):null); } });
     window.addEventListener('keydown',e=>{ if(!this.active)return; if(e.key==='Escape'){this.end();} else if(e.key==='ArrowRight'){this.next();} else if(e.key==='ArrowLeft'){this.prev();} });
   },
   render(){
-    const s=this.steps[this.i], c=s[this._lang()]||s.en, el=s.sel?document.querySelector(s.sel):null;
+    const steps=this._steps(); if(this.i>=steps.length)this.i=Math.max(0,steps.length-1);
+    const s=steps[this.i], c=s[this._lang()]||s.en, el=s.sel?document.querySelector(s.sel):null;
     if(el){ try{ el.scrollIntoView({block:'center',behavior:'instant'}); }catch(_){ el.scrollIntoView(); } }   // instant → the target's final rect is available immediately; the spotlight glides to it via CSS
-    document.getElementById('tour-step').textContent=(this.i+1)+' / '+this.steps.length;
+    document.getElementById('tour-step').textContent=(this.i+1)+' / '+steps.length;
     document.getElementById('tour-title').textContent=c[0];
     document.getElementById('tour-body').innerHTML=c[1];
     document.getElementById('tour-prev').style.visibility=this.i===0?'hidden':'visible';
-    document.getElementById('tour-next').textContent=t(this.i===this.steps.length-1?'tour_done':'tour_next');
-    document.getElementById('tour-dots').innerHTML=this.steps.map((_,k)=>'<i class="'+(k===this.i?'on':'')+'"></i>').join('');
+    document.getElementById('tour-next').textContent=t(this.i===steps.length-1?'tour_done':'tour_next');
+    document.getElementById('tour-dots').innerHTML=steps.map((_,k)=>'<i class="'+(k===this.i?'on':'')+'"></i>').join('');
     const tok=++this._rt, doPlace=()=>{ if(this.active && tok===this._rt) this.place(el); };
     doPlace(); [200,480,840].forEach(d=>setTimeout(doPlace,d));   // re-place as the smooth scroll settles (robust to scroll timing)
     this._stopDemo(); if(s.demo){ this._demoT=setTimeout(()=>this._runDemo(s.demo),1000); }
@@ -2923,6 +3124,7 @@ const Tour = {
     const spot=document.getElementById('tour-spot'), card=document.getElementById('tour-card');
     if(!el){ spot.style.opacity='0'; card.style.left='50%'; card.style.top='50%'; card.style.transform='translate(-50%,-50%)'; return; }
     const r=el.getBoundingClientRect(), pad=8;
+    if(r.width<4||r.height<4){ spot.style.opacity='0'; card.style.left='50%'; card.style.top='50%'; card.style.transform='translate(-50%,-50%)'; return; }
     const sx=Math.max(4,r.left-pad), sy=Math.max(4,r.top-pad), sw=Math.min(innerWidth-8,r.width+pad*2), sh=r.height+pad*2;
     spot.style.opacity='1'; spot.style.left=sx+'px'; spot.style.top=sy+'px'; spot.style.width=sw+'px'; spot.style.height=sh+'px';
     card.style.transform='none';
@@ -2943,14 +3145,14 @@ const Tour = {
     }
   },
   _stopDemo(){ clearTimeout(this._demoT); if(this._restore){ try{this._restore();}catch(e){} this._restore=null; } },
-  next(){ if(this.i>=this.steps.length-1){ this.end(); return; } this._stopDemo(); this.i++; this.render(); },
+  next(){ if(this.i>=this._steps().length-1){ this.end(); return; } this._stopDemo(); this.i++; this.render(); },
   prev(){ if(this.i<=0)return; this._stopDemo(); this.i--; this.render(); },
-  end(){ this._stopDemo(); clearTimeout(this._posT); this.active=false; const el=document.getElementById('tour'); el.classList.remove('on'); el.setAttribute('aria-hidden','true'); try{localStorage.setItem('primordia_tour','1');}catch(e){} },
+  end(){ this._stopDemo(); clearTimeout(this._posT); this.active=false; const el=document.getElementById('tour'); el.classList.remove('on'); el.setAttribute('aria-hidden','true'); try{localStorage.setItem('primordia_tour_v2','1');}catch(e){} },
 };
 
 /* ── Live commentary — a narrator that reacts to your play, like a nature documentary ─── */
 const Narrator = {
-  on:false, _last:0, _lastA:null, _cool:3600, _idleGap:12000, _recent:[], _pv:{}, _dT:null, _hideT:null, _prev:null, _evCool:{}, _audio:null, _started:false,
+  on:false, _last:0, _lastA:null, _cool:14000, _idleGap:56000, _recent:[], _pv:{}, _pPend:null, _dT:null, _hideT:null, _prev:null, _evCool:{}, _audio:null, _started:false, _speakingUntil:0,
   // each line set has variants of {en, zh, a}; a = index into narration/livN-en.mp3 (rendered separately — silent until present)
   L:{
     intro:[{en:"I'll watch with you now. Change anything — and I'll tell you what it's doing.", zh:"现在,我陪你一起看。动一动任何东西——我都会告诉你它在做什么。", a:0}],
@@ -2994,12 +3196,13 @@ const Narrator = {
   },
   setOn(v){ this.on=!!v; try{localStorage.setItem('primordia_narrator', v?'1':'0');}catch(e){}
     const b=document.getElementById('btn-narr'); if(b){ b.classList.toggle('on',!!v); b.setAttribute('aria-pressed',String(!!v)); }
-    if(!v) this._hide(); },
+    if(!v) this.stop(); else this._last=performance.now(); },
   toggle(){ this.setOn(!this.on); if(typeof UI!=='undefined'&&UI.toast) UI.toast(t(this.on?'nr_on':'nr_off')); if(this.on) this.say('intro',true); return this.on; },
   _busy(){ return (typeof Journey!=='undefined'&&Journey.active) || (typeof Tour!=='undefined'&&Tour.active); },
   say(key, force){
     if(!this.on || this._busy()) return; const set=this.L[key]; if(!set) return;
     const now=performance.now(); if(!force && now-this._last < this._cool) return;
+    if(!force && now<this._speakingUntil) return;
     const pick=this._pick(key);
     this._lastA=pick.a; this._last=now; this._showCap(pick); this._play(pick.a);
   },
@@ -3012,44 +3215,54 @@ const Narrator = {
       this._bags[key]=bag; }
     return set[bag.shift()];
   },
-  stop(){ this._hide(); clearTimeout(this._dT); try{ if(this._audio) this._audio.pause(); }catch(e){} },
+  stop(){ this._hide(); clearTimeout(this._dT); this._pPend=null; this._speakingUntil=0; try{ if(this._audio){ this._audio.onended=null; this._audio.onerror=null; this._audio.pause(); } }catch(e){} },
   _showCap(pick){ const el=document.getElementById('live-cap'); if(!el) return;
     el.innerHTML='<div class="l-en">'+pick.en+'</div><div class="l-zh">'+pick.zh+'</div>';   // always bilingual
-    el.classList.add('in'); clearTimeout(this._hideT); this._hideT=setTimeout(()=>el.classList.remove('in'), 6800); },
+    el.classList.add('in'); clearTimeout(this._hideT); this._hideT=setTimeout(()=>el.classList.remove('in'), 5600); },
   _hide(){ const el=document.getElementById('live-cap'); if(el) el.classList.remove('in'); clearTimeout(this._hideT); },
   _play(a){ if(a==null) return; if(typeof musicOn!=='undefined' && !musicOn) return; if(typeof Narr!=='undefined'&&Narr.muted) return;
     try{ if(typeof Narr!=='undefined'&&Narr.cancel) Narr.cancel(); }catch(e){}   // never two voices at once: stop any lingering cinematic narration
     try{ if(!this._audio) this._audio=new Audio(); const au=this._audio; try{au.pause();}catch(_){}
-      au.src='narration/liv'+a+'-en.mp3'; au.volume=0.92; const p=au.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){}
+      this._speakingUntil=performance.now()+7600;
+      au.onended=()=>{ this._speakingUntil=performance.now()+1600; };
+      au.onerror=()=>{ this._speakingUntil=performance.now()+2600; };
+      au.src='narration/liv'+a+'-en.mp3'; au.volume=0.74; const p=au.play(); if(p&&p.catch) p.catch(()=>{ this._speakingUntil=performance.now()+2600; }); }catch(e){ this._speakingUntil=performance.now()+2600; }
   },
   param(scope, key, val){
     if(!this.on) return; const id=scope+':'+key, prev=this._pv[id]; this._pv[id]=val;
     if(prev===undefined || val===prev) return;
-    clearTimeout(this._dT); this._dT=setTimeout(()=>{ const ev=this._mapParam(scope,key,val>prev); if(ev) this.say(ev); }, 520);
+    if(!this._pPend || this._pPend.id!==id) this._pPend={id,scope,key,from:prev,to:val};
+    else this._pPend.to=val;
+    clearTimeout(this._dT); this._dT=setTimeout(()=>{ const p=this._pPend; this._pPend=null; if(!p)return;
+      if(Math.abs(p.to-p.from)<this._paramThreshold(p.key)) return;
+      const ev=this._mapParam(p.scope,p.key,p.to>p.from); if(ev) this.say(ev);
+    }, 1300);
   },
+  _paramThreshold(key){ if(key==='force')return 1.2; if(key==='rmax')return 0.012; if(key==='friction')return 0.08; if(key==='speed')return 0.35; if(key==='glow'||key==='trails')return 0.25; return 0.5; },
   _mapParam(scope,key,up){ if(scope==='s'){
       if(key==='force')return up?'force_up':'force_down'; if(key==='rmax')return up?'range_up':'range_down';
       if(key==='friction')return up?'friction_up':'friction_down'; if(key==='species'||key==='count')return null; return 'tweak'; }
     return 'tweak'; },
-  event(key){ this.say(key); },
+  event(key){ const now=performance.now(), min={preset:18000,newrules:14000,evolve_on:24000,select:18000,flux_paint:22000}[key]||0;
+    if(min && now-(this._evCool['evt_'+key]||0)<min) return; if(min) this._evCool['evt_'+key]=now; this.say(key); },
   pulse(mode, m){
     if(!this.on || this._busy()) return; const now=performance.now();
     const cd=(k,ms)=>{ if((now-(this._evCool[k]||0))<ms) return false; this._evCool[k]=now; return true; };
     if(mode==='genesis' && m){ const p=this._prev, forms=(typeof G!=='undefined'?G.forms:0);
       if(p && typeof p.pop==='number'){
-        if(m.pop>=p.pop*1.55 && m.pop>40 && cd('boom',9000)) this.say('pop_boom');
-        else if(m.pop<=p.pop*0.6 && p.pop>50 && cd('crash',9000)) this.say('pop_crash');
-        else if(m.carnFrac>=0.1 && p.carnFrac<0.1 && cd('pred',13000)) this.say('predator');
-        else if(forms>=p.forms+2 && cd('form',11000)) this.say('new_form');
-        else if(m.cxMean>=p.cxMean+1.1 && cd('cx',13000)) this.say('complex');
-        else if(m.pop>0 && m.pop<=8 && cd('ext',10000)) this.say('near_ext');
-        else if(m.gen>0 && m.gen%10===0 && m.gen!==p.gen && cd('gen',13000)) this.say('gen_far');
+        if(m.pop>=p.pop*1.55 && m.pop>40 && cd('boom',30000)) this.say('pop_boom');
+        else if(m.pop<=p.pop*0.6 && p.pop>50 && cd('crash',30000)) this.say('pop_crash');
+        else if(m.carnFrac>=0.1 && p.carnFrac<0.1 && cd('pred',36000)) this.say('predator');
+        else if(forms>=p.forms+2 && cd('form',32000)) this.say('new_form');
+        else if(m.cxMean>=p.cxMean+1.1 && cd('cx',36000)) this.say('complex');
+        else if(m.pop>0 && m.pop<=8 && cd('ext',30000)) this.say('near_ext');
+        else if(m.gen>0 && m.gen%16===0 && m.gen!==p.gen && cd('gen',52000)) this.say('gen_far');
       }
       this._prev={pop:m.pop, carnFrac:m.carnFrac, cxMean:m.cxMean, gen:m.gen, forms};
     } else if(mode==='lenia' && m){ const mass=m.mass||0, p=this._prev;
       if(p && typeof p.mass==='number'){
-        if(mass>=2200 && p.mass<2200 && cd('fth',9000)) this.say('flux_thrive');
-        else if(mass<2 && p.mass>=80 && cd('fdie',9000)) this.say('flux_die');
+        if(mass>=2200 && p.mass<2200 && cd('fth',30000)) this.say('flux_thrive');
+        else if(mass<2 && p.mass>=80 && cd('fdie',30000)) this.say('flux_die');
       }
       this._prev={mass};
     }
@@ -3084,6 +3297,8 @@ async function main(){
 
   const loaded=UI.loadFromHash();
   if(!loaded){ Sim.setPreset('clusters'); Sim.reseed(); }
+  else if(MODE!=='soup' && !Sim.pos){ Sim.setPreset('clusters'); Sim.reseed(); }   // legacy Flux/Becoming hashes still need a dormant Origin world for GPU init and later mode switches
+  if(loaded && location.hash){ try{ history.replaceState(null,'',location.href.split('#')[0]); }catch(e){} }
   buildPalette();
   if(useGPU){ GPU.uploadParticles(); GPU.uploadPalette(); GPU.resize(); GPU.ready=true; }
   else { Render.resize(); }
@@ -3102,7 +3317,7 @@ async function main(){
   if(!_seen && !_reduceMotion && !loaded) Journey.start();   // first visit → the guided journey (skipped if the user prefers reduced motion, or arrived via a shared #hash world; still launchable via the brand)
   else if(!loaded) Tour.maybe(1200);   // went straight to the lab (returning visitor / reduced-motion) → still offer the control tour once
 
-  { let nr; try{ nr=localStorage.getItem('primordia_narrator'); }catch(e){} Narrator.setOn(nr!=='0'); }   // live commentary on by default; remembers your choice
+  { let nr; try{ nr=localStorage.getItem('primordia_narrator'); }catch(e){} Narrator.setOn(nr==='1'); }   // lab commentary is opt-in; the opening journey still has its own narration
   window.__P={S,Sim,Render,Cam,UI,Input,Perf,GPU,Sound,G,GP,L,LP,Journey,Tour,Narrator,Narr,Score,buildPalette,switchMode:m=>UI.switchMode(m),get MODE(){return MODE;}}; // dev hook
   console.log('%cPRIMORDIA%c\n  an artificial life lab — simple rules, emergent life\n  engine: '+(useGPU?'WebGPU compute':'WebGL2 + CPU')+'\n  tinker live via window.__P  (__P.S = settings)\n',
     'font-size:22px;font-weight:700;color:#7bdcff','color:#8b90a6;font-size:12px');
