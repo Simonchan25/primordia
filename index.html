@@ -243,6 +243,17 @@
     border:1px solid var(--stroke);color:var(--muted);font-size:12px;padding:7px 15px;border-radius:20px}
   .tour__skip:hover{color:var(--txt)}
 
+  /* live commentary caption */
+  .live{position:fixed;left:50%;bottom:58px;transform:translateX(-50%) translateY(7px);z-index:7;max-width:min(680px,86vw);
+    text-align:center;font-size:clamp(13px,1.7vw,17px);line-height:1.5;color:#eaf0ff;font-weight:400;letter-spacing:.01em;padding:0 16px;
+    pointer-events:none;opacity:0;transition:opacity .5s ease,transform .5s ease;
+    text-shadow:0 2px 14px rgba(0,0,0,.96),0 1px 4px rgba(0,0,0,.92),0 0 2px rgba(0,0,0,.85)}
+  .live.in{opacity:1;transform:translateX(-50%) translateY(0)}
+  .live::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent);margin-right:9px;vertical-align:middle;box-shadow:0 0 8px var(--accent)}
+  body.lang-zh .live{letter-spacing:.04em;line-height:1.65}
+  body.journey-on .live{opacity:0 !important}
+  @media (max-width:560px){ .live{bottom:74px} }
+
   @media (max-width:560px){
     .panel{width:calc(100vw - 24px);right:12px;top:12px;max-height:calc(100vh - 24px)}
     .brand{top:auto;bottom:86px;left:14px}
@@ -296,6 +307,7 @@
   <canvas id="life" style="display:none" role="img" data-i18n-aria="aria_canvas"></canvas>
   <canvas id="lenia" style="display:none" role="img" data-i18n-aria="aria_canvas"></canvas>
   <div class="vignette"></div>
+  <div class="live" id="live-cap" aria-live="polite"></div>
 
   <div class="brand" role="button" tabindex="0" data-i18n-aria="aria_brand">
     <h1>PRIMORDIA</h1>
@@ -334,6 +346,7 @@
       <h2 data-i18n="control">Control</h2>
       <button class="icon" id="btn-lang" data-i18n-aria="aria_lang" title="中文 / English">中文</button>
       <button class="icon" id="btn-replay" data-i18n-aria="aria_replay" data-i18n-title="aria_replay" title="Replay the opening"><svg class="bico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.6" y="3.4" width="12.8" height="9.2" rx="2.2"/><path d="M6.4 6 L10 8 L6.4 10 Z"/></svg></button>
+      <button class="icon" id="btn-narr" aria-pressed="false" data-i18n-aria="nr_tip" data-i18n-title="nr_tip" title="Narrator (V)"><svg class="bico" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.6 h10 a1.6 1.6 0 0 1 1.6 1.6 v5.6 a1.6 1.6 0 0 1 -1.6 1.6 h-5 l-3.2 2.6 v-2.6 h-1.8 a1.6 1.6 0 0 1 -1.6 -1.6 v-5.6 a1.6 1.6 0 0 1 1.6 -1.6 Z"/></svg></button>
       <button class="icon" id="btn-fs" data-i18n-aria="aria_fs" title="Fullscreen (F)">⛶</button>
       <button class="icon" id="btn-help" data-i18n-aria="helpTip" data-i18n-title="helpTip" title="Help (H)">?</button>
       <button class="icon" id="btn-hide" data-i18n-aria="hideTip" data-i18n-title="hideTip" title="Hide (C)">✕</button>
@@ -564,6 +577,7 @@ const I18N = {
     ins_size:'size', ins_speed:'speed', ins_sense:'sense',
     j_skip:'Skip', j_enter:'Enter the lab →', j_tagline:'a meditation on where life comes from', j_begin:'Begin', j_straight:'skip straight to the lab →',
     tour_next:'Next', tour_back:'Back', tour_done:'Explore', tour_skip:'Skip tour', tour_help:'How it works →',
+    nr_tip:'Live narrator (V)', nr_on:'Narrator on — I’ll comment as you play', nr_off:'Narrator off',
     aria_lang:'Switch language', aria_mute:'Toggle narration & music', aria_brand:'Replay the guided journey',
     aria_touchmode:'Toggle attract / repel for touch', t_attractMode:'Touch drag now attracts', t_repelMode:'Touch drag now repels',
     aria_canvas:'Live artificial-life simulation — use the control panel to shape it', t_deviceLost:'Graphics device lost — please reload the page', aria_fs:'Toggle fullscreen', aria_replay:'Replay the opening journey', story_btn:'<svg class="bico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.6" y="3.4" width="12.8" height="9.2" rx="2.2"/><path d="M6.4 6 L10 8 L6.4 10 Z"/></svg> The Story <span style="opacity:.55">· why I made this</span>',
@@ -613,6 +627,7 @@ const I18N = {
     ins_size:'体型', ins_speed:'速度', ins_sense:'视野',
     j_skip:'跳过', j_enter:'进入实验室 →', j_tagline:'一场关于生命从何而来的冥想', j_begin:'开始', j_straight:'直接进入实验室 →',
     tour_next:'下一步', tour_back:'上一步', tour_done:'去探索', tour_skip:'跳过', tour_help:'这些怎么玩 →',
+    nr_tip:'实时解说 (V)', nr_on:'解说已开 —— 你玩,我来讲', nr_off:'解说已关',
     aria_lang:'切换语言', aria_mute:'切换旁白与音乐', aria_brand:'重播导览旅程',
     aria_touchmode:'切换 吸引/排斥(触摸)', t_attractMode:'触摸拖动:现在吸引', t_repelMode:'触摸拖动:现在排斥',
     aria_canvas:'实时人工生命模拟 —— 用控制台来塑造它', t_deviceLost:'图形设备已丢失 —— 请刷新页面', aria_fs:'切换全屏', aria_replay:'重看开场旅程', story_btn:'<svg class="bico" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.6" y="3.4" width="12.8" height="9.2" rx="2.2"/><path d="M6.4 6 L10 8 L6.4 10 Z"/></svg> 纪录片 <span style="opacity:.55">· 我为什么做它</span>',
@@ -1595,6 +1610,7 @@ const UI = {
       Sim.reseed();
     }
     this.syncStats();
+    if(typeof Narrator!=='undefined') Narrator.param('s',key,S[key]);
   },
 
   buildPresets(){
@@ -1604,6 +1620,7 @@ const UI = {
       if(p.id===S.presetName) c.classList.add('active');
       c.addEventListener('click',()=>{
         Sim.setPreset(p.id); buildPalette(); this.buildMatrix(); this.syncPresets(); this.syncStats();
+        if(typeof Narrator!=='undefined') Narrator.event('preset');
       });
       this.els.presets.appendChild(c);
     });
@@ -1686,8 +1703,9 @@ const UI = {
     const $=id=>document.getElementById(id);
     $('btn-play').addEventListener('click',()=>this.togglePlay());
     $('btn-reseed').addEventListener('click',()=>Sim.reseed());
-    $('btn-random').addEventListener('click',()=>this.randomize());
-    $('btn-evolve').addEventListener('click',e=>{ S.evolve=!S.evolve; e.currentTarget.classList.toggle('on',S.evolve); this.toast(S.evolve?t('t_evolveOn'):t('t_evolveOff')); });
+    $('btn-random').addEventListener('click',()=>{ this.randomize(); if(typeof Narrator!=='undefined') Narrator.event('newrules'); });
+    $('btn-evolve').addEventListener('click',e=>{ S.evolve=!S.evolve; e.currentTarget.classList.toggle('on',S.evolve); this.toast(S.evolve?t('t_evolveOn'):t('t_evolveOff')); if(S.evolve&&typeof Narrator!=='undefined') Narrator.event('evolve_on'); });
+    { const bn=$('btn-narr'); if(bn) bn.addEventListener('click',()=>Narrator.toggle()); }
     $('btn-palette').addEventListener('click',()=>{ paletteIdx=(paletteIdx+1)%PALETTES.length; buildPalette(); this.buildMatrix(); this.toast(t('t_palette')+PALETTES[paletteIdx].name); });
     $('btn-share').addEventListener('click',()=>this.share());
     $('btn-sound').addEventListener('click',e=>{ musicOn=!musicOn; if(musicOn){ Score.start(); Score.setMuted(false); } else { Score.setMuted(true); } e.currentTarget.classList.toggle('on',musicOn); this.toast(musicOn?t('t_soundOn'):t('t_soundOff')); });
@@ -1760,6 +1778,7 @@ const UI = {
       case 'n': if(MODE==='genesis') G.reset(); else if(MODE==='lenia'){ L.clear(); L.readMass(); L.syncStats(); } else Sim.reseed(); break;
       case 'e': if(MODE==='soup') document.getElementById('btn-evolve').click(); break;
       case 'm': document.getElementById('btn-sound').click(); break;
+      case 'v': Narrator.toggle(); break;
       case 'c': this.togglePanel(); break;
       case 'h': this.toggleHelp(); break;
       case 'p': if(MODE==='soup') document.getElementById('btn-palette').click(); break;
@@ -1974,7 +1993,7 @@ const G = {
   // tap a creature → inspect its brain · tap empty space → feed
   _wireFeed(canvas){ if(this._fedWired) return; this._fedWired=true;
     canvas.addEventListener('pointerdown',e=>{ const p=this._xy(e); if(!p)return; try{canvas.setPointerCapture(e.pointerId);}catch(_){}
-      const hit=this._pick(p.x,p.y); if(hit>=0){ this.select(hit); return; } this.deselect(); this._feeding=true; this.feed(p.x,p.y); });
+      const hit=this._pick(p.x,p.y); if(hit>=0){ this.select(hit); if(typeof Narrator!=='undefined') Narrator.event('select'); return; } this.deselect(); this._feeding=true; this.feed(p.x,p.y); });
     canvas.addEventListener('pointermove',e=>{ if(this._feeding){ const p=this._xy(e); if(p) this.feed(p.x,p.y); } });
     const stop=()=>{ this._feeding=false; }; canvas.addEventListener('pointerup',stop); canvas.addEventListener('pointercancel',stop); },
   // nearest living creature to a world point, within a generous tap radius
@@ -2403,7 +2422,7 @@ const L = {
     const set=(e,on)=>{ const r=canvas.getBoundingClientRect(); this._brush.x=(e.clientX-r.left)/r.width; this._brush.y=1-(e.clientY-r.top)/r.height;
       this._brush.sign=(e.shiftKey||e.button===2||(typeof Input!=='undefined'&&Input.touchRepel))?-1:1; this._brush.r=0.05; this._brush.on=on?1:0; };
     canvas.addEventListener('contextmenu',e=>e.preventDefault());
-    canvas.addEventListener('pointerdown',e=>{ try{canvas.setPointerCapture(e.pointerId);}catch(_){} set(e,true); });
+    canvas.addEventListener('pointerdown',e=>{ try{canvas.setPointerCapture(e.pointerId);}catch(_){} set(e,true); if(this._brush.sign>0 && typeof Narrator!=='undefined') Narrator.event('flux_paint'); });
     canvas.addEventListener('pointermove',e=>{ if(this._brush.on) set(e,true); });
     const up=()=>{ this._brush.on=0; }; canvas.addEventListener('pointerup',up); canvas.addEventListener('pointercancel',up);
   },
@@ -2935,6 +2954,89 @@ const Tour = {
   end(){ this._stopDemo(); clearTimeout(this._posT); this.active=false; const el=document.getElementById('tour'); el.classList.remove('on'); el.setAttribute('aria-hidden','true'); try{localStorage.setItem('primordia_tour','1');}catch(e){} },
 };
 
+/* ── Live commentary — a narrator that reacts to your play, like a nature documentary ─── */
+const Narrator = {
+  on:false, _last:0, _cool:7000, _recent:[], _pv:{}, _dT:null, _hideT:null, _prev:null, _evCool:{}, _audio:null, _started:false,
+  // each line set has variants of {en, zh, a}; a = index into narration/livN-en.mp3 (rendered separately — silent until present)
+  L:{
+    intro:[{en:"I'll watch with you now. Change anything — and I'll tell you what it's doing.", zh:"现在,我陪你一起看。动一动任何东西——我都会告诉你它在做什么。", a:0}],
+    force_up:[{en:"There — you stiffened the pull. Watch the clusters draw tight.", zh:"看——你把吸引调强了。瞧团块如何抱拢。", a:1},
+              {en:"Stronger bonds now. Loose dust gathers itself into bodies.", zh:"键更强了。松散的尘埃,正把自己,聚成形体。", a:2}],
+    force_down:[{en:"You loosened the grip. Everything begins to drift, and breathe.", zh:"你松开了束缚。一切开始飘散、呼吸。", a:3}],
+    range_up:[{en:"Each speck reaches further now — and reaching, it starts to build.", zh:"现在每颗粒子能触及更远——而一旦触及,它就开始搭建。", a:4}],
+    range_down:[{en:"Shorten their reach, and the world condenses into little cells.", zh:"缩短它们的触及,世界便凝成一个个小细胞。", a:5}],
+    friction_up:[{en:"A thicker medium — motion slows, and forms hold their shape.", zh:"介质变稠了——运动放缓,形态得以定形。", a:6}],
+    friction_down:[{en:"Less drag now. They skitter, restless, never quite settling.", zh:"阻力变小了。它们躁动地窜动,始终安定不下来。", a:7}],
+    tweak:[{en:"A small turn of the dial — and the whole world answers.", zh:"旋钮轻轻一转——整个世界,都回应了。", a:8}],
+    newrules:[{en:"A brand-new set of laws. Nobody has ever seen this world before.", zh:"一套全新的法则。这个世界,前所未见。", a:9}],
+    preset:[{en:"A different recipe — and a different kind of order takes hold.", zh:"换一份配方——另一种秩序,就此成形。", a:10}],
+    evolve_on:[{en:"Now the rules themselves will drift, and evolve, on their own.", zh:"现在,规则会自己,漂变、演化。", a:11}],
+    pop_boom:[{en:"Look — a population boom. Life has found a way.", zh:"看——种群大爆发。生命,找到了出路。", a:12}],
+    pop_crash:[{en:"A die-off. Most are gone — but a few hold on, and that is enough.", zh:"一场大灭绝。多数已逝——但少数撑住了,而这,已经足够。", a:13}],
+    predator:[{en:"Something just learned to hunt. The predators are spreading.", zh:"有东西,刚学会了捕猎。捕食者,正在蔓延。", a:14}],
+    new_form:[{en:"A shape no one designed just appeared — a new kind of creature.", zh:"一种无人设计的形态,刚刚出现——一类全新的生物。", a:15}],
+    complex:[{en:"Their little brains are growing — more wires, more choices.", zh:"它们小小的大脑,正在变大——更多连线,更多抉择。", a:16}],
+    near_ext:[{en:"On the very edge now — a handful left, between life and nothing.", zh:"已到悬崖边缘——生与无之间,只剩寥寥数个。", a:17}],
+    gen_far:[{en:"Generation after generation. You're watching deep time fold by.", zh:"一代,又一代。你正看着漫长的岁月,在眼前折叠而过。", a:18}],
+    select:[{en:"There's your one. Watch it live — its bloodline may outlast it.", zh:"这就是你选中的那个。看着它活——它的血脉,也许比它活得更久。", a:19}],
+    flux_paint:[{en:"You seeded raw matter. Most will dissolve — watch for what holds.", zh:"你播下了原初的物质。多数会消散——留意那些,稳得住的。", a:20}],
+    flux_thrive:[{en:"It coheres — droplets that swim, and heal, and refuse to die.", zh:"它凝聚起来了——会游动、会自愈、不肯消散的小滴。", a:21}],
+    flux_die:[{en:"It couldn't hold itself together. It melts back into the smooth.", zh:"它没能稳住自己。又溶回了,那片平滑。", a:22}],
+  },
+  setOn(v){ this.on=!!v; try{localStorage.setItem('primordia_narrator', v?'1':'0');}catch(e){}
+    const b=document.getElementById('btn-narr'); if(b){ b.classList.toggle('on',!!v); b.setAttribute('aria-pressed',String(!!v)); }
+    if(!v) this._hide(); },
+  toggle(){ this.setOn(!this.on); if(typeof UI!=='undefined'&&UI.toast) UI.toast(t(this.on?'nr_on':'nr_off')); if(this.on) this.say('intro',true); return this.on; },
+  _busy(){ return (typeof Journey!=='undefined'&&Journey.active) || (typeof Tour!=='undefined'&&Tour.active); },
+  say(key, force){
+    if(!this.on || this._busy()) return; const set=this.L[key]; if(!set) return;
+    const now=performance.now(); if(!force && now-this._last < this._cool) return;
+    let pick=set[0];
+    if(set.length>1){ let tr=0; do{ pick=set[(Math.random()*set.length)|0]; }while(this._recent.indexOf(pick.a)>=0 && ++tr<6); }
+    this._recent.push(pick.a); if(this._recent.length>8) this._recent.shift();
+    this._last=now; this._showCap(pick); this._play(pick.a);
+  },
+  _showCap(pick){ const el=document.getElementById('live-cap'); if(!el) return;
+    const lang=(typeof LANG!=='undefined'?LANG:'en'); el.textContent=pick[lang]||pick.en;
+    el.classList.add('in'); clearTimeout(this._hideT); this._hideT=setTimeout(()=>el.classList.remove('in'), 6400); },
+  _hide(){ const el=document.getElementById('live-cap'); if(el) el.classList.remove('in'); clearTimeout(this._hideT); },
+  _play(a){ if(a==null) return; if(typeof musicOn!=='undefined' && !musicOn) return; if(typeof Narr!=='undefined'&&Narr.muted) return;
+    try{ if(!this._audio) this._audio=new Audio(); const au=this._audio; au.src='narration/liv'+a+'-en.mp3'; au.volume=0.92;
+      const p=au.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){}
+  },
+  param(scope, key, val){
+    if(!this.on) return; const id=scope+':'+key, prev=this._pv[id]; this._pv[id]=val;
+    if(prev===undefined || val===prev) return;
+    clearTimeout(this._dT); this._dT=setTimeout(()=>{ const ev=this._mapParam(scope,key,val>prev); if(ev) this.say(ev); }, 520);
+  },
+  _mapParam(scope,key,up){ if(scope==='s'){
+      if(key==='force')return up?'force_up':'force_down'; if(key==='rmax')return up?'range_up':'range_down';
+      if(key==='friction')return up?'friction_up':'friction_down'; if(key==='species'||key==='count')return null; return 'tweak'; }
+    return 'tweak'; },
+  event(key){ this.say(key); },
+  pulse(mode, m){
+    if(!this.on || this._busy() || !m) return; const now=performance.now();
+    const cd=(k,ms)=>{ if((now-(this._evCool[k]||0))<ms) return false; this._evCool[k]=now; return true; };
+    if(mode==='genesis'){ const p=this._prev, forms=(typeof G!=='undefined'?G.forms:0);
+      if(p){
+        if(m.pop>=p.pop*1.6 && m.pop>45 && cd('boom',16000)) this.say('pop_boom');
+        else if(m.pop<=p.pop*0.55 && p.pop>55 && cd('crash',16000)) this.say('pop_crash');
+        else if(m.carnFrac>=0.12 && p.carnFrac<0.12 && cd('pred',22000)) this.say('predator');
+        else if(forms>=p.forms+3 && cd('form',20000)) this.say('new_form');
+        else if(m.cxMean>=p.cxMean+1.4 && cd('cx',24000)) this.say('complex');
+        else if(m.pop>0 && m.pop<=8 && cd('ext',15000)) this.say('near_ext');
+        else if(m.gen>0 && m.gen%12===0 && m.gen!==p.gen && cd('gen',24000)) this.say('gen_far');
+      }
+      this._prev={pop:m.pop, carnFrac:m.carnFrac, cxMean:m.cxMean, gen:m.gen, forms};
+    } else if(mode==='lenia'){ const mass=m.mass||0, p=this._prev;
+      if(p && typeof p.mass==='number'){
+        if(mass>=2200 && p.mass<2200 && cd('fth',14000)) this.say('flux_thrive');
+        else if(mass<2 && p.mass>=80 && cd('fdie',12000)) this.say('flux_die');
+      }
+      this._prev={mass};
+    } }
+};
+
 /* ════════════════════════════════════════════════════════════════════
    MAIN LOOP
    ════════════════════════════════════════════════════════════════════ */
@@ -2979,7 +3081,8 @@ async function main(){
   if(!_seen && !_reduceMotion && !loaded) Journey.start();   // first visit → the guided journey (skipped if the user prefers reduced motion, or arrived via a shared #hash world; still launchable via the brand)
   else if(!loaded) Tour.maybe(1200);   // went straight to the lab (returning visitor / reduced-motion) → still offer the control tour once
 
-  window.__P={S,Sim,Render,Cam,UI,Input,Perf,GPU,Sound,G,GP,L,LP,Journey,Tour,Narr,Score,buildPalette,switchMode:m=>UI.switchMode(m),get MODE(){return MODE;}}; // dev hook
+  { let nr; try{ nr=localStorage.getItem('primordia_narrator'); }catch(e){} Narrator.setOn(nr!=='0'); }   // live commentary on by default; remembers your choice
+  window.__P={S,Sim,Render,Cam,UI,Input,Perf,GPU,Sound,G,GP,L,LP,Journey,Tour,Narrator,Narr,Score,buildPalette,switchMode:m=>UI.switchMode(m),get MODE(){return MODE;}}; // dev hook
   console.log('%cPRIMORDIA%c\n  an artificial life lab — simple rules, emergent life\n  engine: '+(useGPU?'WebGPU compute':'WebGL2 + CPU')+'\n  tinker live via window.__P  (__P.S = settings)\n',
     'font-size:22px;font-weight:700;color:#7bdcff','color:#8b90a6;font-size:12px');
 
@@ -2999,8 +3102,8 @@ async function main(){
     if(Journey.active) Journey.tick(realDt*1000);
     fpsAcc+=realDt; fpsN++; fpsT+=realDt;
     if(fpsT>=0.5){ const fps=fpsN/fpsAcc; UI.setFps(fps);
-      if(MODE==='genesis'){ const gm=G.metrics(); UI.syncGenesisStats(gm); G.sample(gm); }
-      else if(MODE==='lenia'){ L.readMass(); L.syncStats(); }
+      if(MODE==='genesis'){ const gm=G.metrics(); UI.syncGenesisStats(gm); G.sample(gm); Narrator.pulse('genesis',gm); }
+      else if(MODE==='lenia'){ L.readMass(); L.syncStats(); Narrator.pulse('lenia',{mass:L._mass}); }
       else if(!Journey.active) Perf.tick(fps);
       fpsAcc=0; fpsN=0; fpsT=0; }
     requestAnimationFrame(loop);
