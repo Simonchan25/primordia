@@ -2819,7 +2819,8 @@ const Journey = {
       lines:{ en:["We fear that simple things, repeated at scale, cheapen what we love. To me, it is the most beautiful fact I know.","Nobody designed the first cell, the first thinking mind, the first heartbeat.","Nobody designed the curiosity that made me build this. And yet — here it is.","A jar of blind particles. A few simple rules. And life, growing itself.",["This is the first thing that is truly my own. Thank you for watching it with me.","em"]],
               zh:["我们害怕'简单的东西、重复、放大'会贬低我们所爱之物。可对我而言,这是我所知最美的事实。","没有人设计了第一个细胞、第一颗会思考的脑、第一次心跳。","没有人设计了那个让我做出这一切的好奇心。然而——它在这儿。","一缸盲目的粒子。几条简单的规则。然后,生命,自己长了出来。",["这是第一件真正属于我的作品。谢谢你,陪我一起看它。","em"]] } },
   ],
-  start(prog){ this.program=(prog==='doc')?'doc':'opening'; this.chapters=this[this.program]; this.prefix=(this.program==='doc')?'doc':'ch'; this.bilingual=true;   // always show both EN + 中文 subtitles
+  start(prog){ if(typeof Narrator!=='undefined') Narrator.stop();   // stop any live-commentary voice so it never overlaps the cinematic
+    this.program=(prog==='doc')?'doc':'opening'; this.chapters=this[this.program]; this.prefix=(this.program==='doc')?'doc':'ch'; this.bilingual=true;   // always show both EN + 中文 subtitles
     this.active=true; this.done=false; this.started=false; this.ch=-1; S.paused=false;
     Cam.x=0.5; Cam.y=0.5; if(Cam.vpW&&Cam.vpH) Cam.fit();   // centre + fill the screen for the cinematic, whatever the user had zoomed/panned to
     const j=document.getElementById('journey'); j.classList.add('show'); j.classList.add('cover');
@@ -2891,7 +2892,7 @@ const Tour = {
   maybe(delay){ if(this.active)return; let seen; try{seen=localStorage.getItem('primordia_tour');}catch(e){} if(seen)return;
     setTimeout(()=>{ if(!this.active && !(typeof Journey!=='undefined'&&Journey.active)) this.start(); }, delay||650); },
   start(){
-    if(this.active)return; this.active=true; this.i=0;
+    if(this.active)return; this.active=true; this.i=0; if(typeof Narrator!=='undefined') Narrator.stop();
     try{ if(typeof Journey!=='undefined'&&Journey.active) Journey.end(); }catch(e){}
     if(typeof MODE!=='undefined'&&MODE!=='soup'){ try{ UI.switchMode('soup'); }catch(e){} }
     try{ UI.togglePanel(true); }catch(e){}
@@ -2999,18 +3000,27 @@ const Narrator = {
   say(key, force){
     if(!this.on || this._busy()) return; const set=this.L[key]; if(!set) return;
     const now=performance.now(); if(!force && now-this._last < this._cool) return;
-    let pick=set[0];
-    if(set.length>1){ let tr=0; do{ pick=set[(Math.random()*set.length)|0]; }while((pick.a===this._lastA || this._recent.indexOf(pick.a)>=0) && ++tr<12); }   // never the same line twice in a row
-    this._lastA=pick.a; this._recent.push(pick.a); if(this._recent.length>3) this._recent.shift();
-    this._last=now; this._showCap(pick); this._play(pick.a);
+    const pick=this._pick(key);
+    this._lastA=pick.a; this._last=now; this._showCap(pick); this._play(pick.a);
   },
+  // shuffle-bag: play every line in a set once (random order) before any repeats
+  _pick(key){ const set=this.L[key]; if(set.length<=1) return set[0];
+    if(!this._bags) this._bags={}; let bag=this._bags[key];
+    if(!bag || !bag.length){ bag=set.map((_,i)=>i);
+      for(let i=bag.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0, t=bag[i]; bag[i]=bag[j]; bag[j]=t; }
+      if(bag.length>1 && set[bag[0]].a===this._lastA){ const t=bag[0]; bag[0]=bag[1]; bag[1]=t; }   // don't repeat across a refill
+      this._bags[key]=bag; }
+    return set[bag.shift()];
+  },
+  stop(){ this._hide(); clearTimeout(this._dT); try{ if(this._audio) this._audio.pause(); }catch(e){} },
   _showCap(pick){ const el=document.getElementById('live-cap'); if(!el) return;
     el.innerHTML='<div class="l-en">'+pick.en+'</div><div class="l-zh">'+pick.zh+'</div>';   // always bilingual
     el.classList.add('in'); clearTimeout(this._hideT); this._hideT=setTimeout(()=>el.classList.remove('in'), 6800); },
   _hide(){ const el=document.getElementById('live-cap'); if(el) el.classList.remove('in'); clearTimeout(this._hideT); },
   _play(a){ if(a==null) return; if(typeof musicOn!=='undefined' && !musicOn) return; if(typeof Narr!=='undefined'&&Narr.muted) return;
-    try{ if(!this._audio) this._audio=new Audio(); const au=this._audio; au.src='narration/liv'+a+'-en.mp3'; au.volume=0.92;
-      const p=au.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){}
+    try{ if(typeof Narr!=='undefined'&&Narr.cancel) Narr.cancel(); }catch(e){}   // never two voices at once: stop any lingering cinematic narration
+    try{ if(!this._audio) this._audio=new Audio(); const au=this._audio; try{au.pause();}catch(_){}
+      au.src='narration/liv'+a+'-en.mp3'; au.volume=0.92; const p=au.play(); if(p&&p.catch) p.catch(()=>{}); }catch(e){}
   },
   param(scope, key, val){
     if(!this.on) return; const id=scope+':'+key, prev=this._pv[id]; this._pv[id]=val;
