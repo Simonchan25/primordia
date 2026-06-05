@@ -202,7 +202,7 @@
   .journey__lang button:last-child{border-right:none}
   .journey__lang button:hover{color:var(--txt);background:rgba(255,255,255,.05)}
   .journey__lang button.on{background:#eceefa;color:#06080d;font-weight:500}
-  .journey__begin{padding:15px 52px;font-size:12px;letter-spacing:.3em;text-transform:uppercase;font-weight:500;justify-content:center;
+  .journey__begin{margin-top:48px;padding:15px 52px;font-size:12px;letter-spacing:.3em;text-transform:uppercase;font-weight:500;justify-content:center;
     color:#f2f4fb;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.26);border-radius:8px}
   .journey__begin:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.46);transform:translateY(-1px)}
   .journey__plain{margin-top:20px;background:none;border:none;color:#767c93;font-size:12px;letter-spacing:.03em;transition:color .2s}
@@ -249,10 +249,11 @@
     pointer-events:none;opacity:0;transition:opacity .5s ease,transform .5s ease;
     text-shadow:0 2px 14px rgba(0,0,0,.96),0 1px 4px rgba(0,0,0,.92),0 0 2px rgba(0,0,0,.85)}
   .live.in{opacity:1;transform:translateX(-50%) translateY(0)}
-  .live::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent);margin-right:9px;vertical-align:middle;box-shadow:0 0 8px var(--accent)}
-  body.lang-zh .live{letter-spacing:.04em;line-height:1.65}
+  .live .l-en{font-size:clamp(13px,1.65vw,17px);color:#eef2ff;line-height:1.42}
+  .live .l-en::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent);margin-right:9px;vertical-align:middle;box-shadow:0 0 8px var(--accent)}
+  .live .l-zh{font-size:clamp(12px,1.45vw,15px);color:#c4cbe0;line-height:1.55;margin-top:3px;letter-spacing:.03em}
   body.journey-on .live{opacity:0 !important}
-  @media (max-width:560px){ .live{bottom:74px} }
+  @media (max-width:560px){ .live{bottom:132px} }
 
   @media (max-width:560px){
     .panel{width:calc(100vw - 24px);right:12px;top:12px;max-height:calc(100vh - 24px)}
@@ -478,12 +479,6 @@
     <div class="journey__veil"></div>
     <div class="journey__cover" id="journey-cover">
       <h1>PRIMORDIA</h1>
-      <p class="journey__sub" data-i18n="j_tagline">a meditation on where life comes from</p>
-      <div class="journey__langlbl">SUBTITLES · 字幕</div>
-      <div class="journey__lang" id="journey-lang" role="group" aria-label="Subtitle language / 字幕语言">
-        <button data-lang="en">English</button>
-        <button data-lang="zh">中文</button>
-      </div>
       <button class="primary journey__begin" id="journey-begin" data-i18n="j_begin">Begin</button>
       <button class="journey__plain" id="journey-coverskip" data-i18n="j_straight">skip straight to the lab →</button>
     </div>
@@ -2826,7 +2821,7 @@ const Journey = {
       lines:{ en:["We fear that simple things, repeated at scale, cheapen what we love. To me, it is the most beautiful fact I know.","Nobody designed the first cell, the first thinking mind, the first heartbeat.","Nobody designed the curiosity that made me build this. And yet — here it is.","A jar of blind particles. A few simple rules. And life, growing itself.",["This is the first thing that is truly my own. Thank you for watching it with me.","em"]],
               zh:["我们害怕'简单的东西、重复、放大'会贬低我们所爱之物。可对我而言,这是我所知最美的事实。","没有人设计了第一个细胞、第一颗会思考的脑、第一次心跳。","没有人设计了那个让我做出这一切的好奇心。然而——它在这儿。","一缸盲目的粒子。几条简单的规则。然后,生命,自己长了出来。",["这是第一件真正属于我的作品。谢谢你,陪我一起看它。","em"]] } },
   ],
-  start(prog){ this.program=(prog==='doc')?'doc':'opening'; this.chapters=this[this.program]; this.prefix=(this.program==='doc')?'doc':'ch'; this.bilingual=(this.program==='doc');
+  start(prog){ this.program=(prog==='doc')?'doc':'opening'; this.chapters=this[this.program]; this.prefix=(this.program==='doc')?'doc':'ch'; this.bilingual=true;   // always show both EN + 中文 subtitles
     this.active=true; this.done=false; this.started=false; this.ch=-1; S.paused=false;
     Cam.x=0.5; Cam.y=0.5; if(Cam.vpW&&Cam.vpH) Cam.fit();   // centre + fill the screen for the cinematic, whatever the user had zoomed/panned to
     const j=document.getElementById('journey'); j.classList.add('show'); j.classList.add('cover');
@@ -2956,7 +2951,7 @@ const Tour = {
 
 /* ── Live commentary — a narrator that reacts to your play, like a nature documentary ─── */
 const Narrator = {
-  on:false, _last:0, _cool:7000, _recent:[], _pv:{}, _dT:null, _hideT:null, _prev:null, _evCool:{}, _audio:null, _started:false,
+  on:false, _last:0, _cool:3600, _idleGap:8000, _recent:[], _pv:{}, _dT:null, _hideT:null, _prev:null, _evCool:{}, _audio:null, _started:false,
   // each line set has variants of {en, zh, a}; a = index into narration/livN-en.mp3 (rendered separately — silent until present)
   L:{
     intro:[{en:"I'll watch with you now. Change anything — and I'll tell you what it's doing.", zh:"现在,我陪你一起看。动一动任何东西——我都会告诉你它在做什么。", a:0}],
@@ -2982,6 +2977,12 @@ const Narrator = {
     flux_paint:[{en:"You seeded raw matter. Most will dissolve — watch for what holds.", zh:"你播下了原初的物质。多数会消散——留意那些,稳得住的。", a:20}],
     flux_thrive:[{en:"It coheres — droplets that swim, and heal, and refuse to die.", zh:"它凝聚起来了——会游动、会自愈、不肯消散的小滴。", a:21}],
     flux_die:[{en:"It couldn't hold itself together. It melts back into the smooth.", zh:"它没能稳住自己。又溶回了,那片平滑。", a:22}],
+    amb_soup:[{en:"No one is steering this — and still, it finds its way into order.", zh:"没有谁在掌舵——可它,依然自己,走向了秩序。", a:23},
+              {en:"Only particles, only rules. And yet, structure keeps assembling itself.", zh:"只有粒子,只有规则。然而,结构,仍在不停地自我搭建。", a:24}],
+    amb_genesis:[{en:"Every one was born blind — and generation by generation, they learn.", zh:"每一个都生而盲目——可一代,又一代,它们学会了。", a:25},
+                 {en:"Nobody set them a goal. Still, they keep getting better at staying alive.", zh:"没有人给它们定下目标。可它们,正越来越擅长,活下去。", a:26}],
+    amb_lenia:[{en:"One smooth field, one rule — and bodies that swim, and hold themselves.", zh:"一片平滑的场,一条规则——便有了会游动、能自持的身体。", a:27},
+               {en:"Soften matter far enough, and it learns to keep its own shape.", zh:"把物质柔化到足够,它,便学会了守住自己的形状。", a:28}],
   },
   setOn(v){ this.on=!!v; try{localStorage.setItem('primordia_narrator', v?'1':'0');}catch(e){}
     const b=document.getElementById('btn-narr'); if(b){ b.classList.toggle('on',!!v); b.setAttribute('aria-pressed',String(!!v)); }
@@ -2997,8 +2998,8 @@ const Narrator = {
     this._last=now; this._showCap(pick); this._play(pick.a);
   },
   _showCap(pick){ const el=document.getElementById('live-cap'); if(!el) return;
-    const lang=(typeof LANG!=='undefined'?LANG:'en'); el.textContent=pick[lang]||pick.en;
-    el.classList.add('in'); clearTimeout(this._hideT); this._hideT=setTimeout(()=>el.classList.remove('in'), 6400); },
+    el.innerHTML='<div class="l-en">'+pick.en+'</div><div class="l-zh">'+pick.zh+'</div>';   // always bilingual
+    el.classList.add('in'); clearTimeout(this._hideT); this._hideT=setTimeout(()=>el.classList.remove('in'), 6800); },
   _hide(){ const el=document.getElementById('live-cap'); if(el) el.classList.remove('in'); clearTimeout(this._hideT); },
   _play(a){ if(a==null) return; if(typeof musicOn!=='undefined' && !musicOn) return; if(typeof Narr!=='undefined'&&Narr.muted) return;
     try{ if(!this._audio) this._audio=new Audio(); const au=this._audio; au.src='narration/liv'+a+'-en.mp3'; au.volume=0.92;
@@ -3015,26 +3016,29 @@ const Narrator = {
     return 'tweak'; },
   event(key){ this.say(key); },
   pulse(mode, m){
-    if(!this.on || this._busy() || !m) return; const now=performance.now();
+    if(!this.on || this._busy()) return; const now=performance.now();
     const cd=(k,ms)=>{ if((now-(this._evCool[k]||0))<ms) return false; this._evCool[k]=now; return true; };
-    if(mode==='genesis'){ const p=this._prev, forms=(typeof G!=='undefined'?G.forms:0);
-      if(p){
-        if(m.pop>=p.pop*1.6 && m.pop>45 && cd('boom',16000)) this.say('pop_boom');
-        else if(m.pop<=p.pop*0.55 && p.pop>55 && cd('crash',16000)) this.say('pop_crash');
-        else if(m.carnFrac>=0.12 && p.carnFrac<0.12 && cd('pred',22000)) this.say('predator');
-        else if(forms>=p.forms+3 && cd('form',20000)) this.say('new_form');
-        else if(m.cxMean>=p.cxMean+1.4 && cd('cx',24000)) this.say('complex');
-        else if(m.pop>0 && m.pop<=8 && cd('ext',15000)) this.say('near_ext');
-        else if(m.gen>0 && m.gen%12===0 && m.gen!==p.gen && cd('gen',24000)) this.say('gen_far');
+    if(mode==='genesis' && m){ const p=this._prev, forms=(typeof G!=='undefined'?G.forms:0);
+      if(p && typeof p.pop==='number'){
+        if(m.pop>=p.pop*1.55 && m.pop>40 && cd('boom',9000)) this.say('pop_boom');
+        else if(m.pop<=p.pop*0.6 && p.pop>50 && cd('crash',9000)) this.say('pop_crash');
+        else if(m.carnFrac>=0.1 && p.carnFrac<0.1 && cd('pred',13000)) this.say('predator');
+        else if(forms>=p.forms+2 && cd('form',11000)) this.say('new_form');
+        else if(m.cxMean>=p.cxMean+1.1 && cd('cx',13000)) this.say('complex');
+        else if(m.pop>0 && m.pop<=8 && cd('ext',10000)) this.say('near_ext');
+        else if(m.gen>0 && m.gen%10===0 && m.gen!==p.gen && cd('gen',13000)) this.say('gen_far');
       }
       this._prev={pop:m.pop, carnFrac:m.carnFrac, cxMean:m.cxMean, gen:m.gen, forms};
-    } else if(mode==='lenia'){ const mass=m.mass||0, p=this._prev;
+    } else if(mode==='lenia' && m){ const mass=m.mass||0, p=this._prev;
       if(p && typeof p.mass==='number'){
-        if(mass>=2200 && p.mass<2200 && cd('fth',14000)) this.say('flux_thrive');
-        else if(mass<2 && p.mass>=80 && cd('fdie',12000)) this.say('flux_die');
+        if(mass>=2200 && p.mass<2200 && cd('fth',9000)) this.say('flux_thrive');
+        else if(mass<2 && p.mass>=80 && cd('fdie',9000)) this.say('flux_die');
       }
       this._prev={mass};
-    } }
+    }
+    // idle ambient — keep the commentary flowing when nothing specific is happening
+    if(now - this._last > this._idleGap){ const ak='amb_'+(mode==='lenia'?'lenia':mode==='genesis'?'genesis':'soup'); if(this.L[ak]) this.say(ak); }
+  },
 };
 
 /* ════════════════════════════════════════════════════════════════════
@@ -3104,7 +3108,7 @@ async function main(){
     if(fpsT>=0.5){ const fps=fpsN/fpsAcc; UI.setFps(fps);
       if(MODE==='genesis'){ const gm=G.metrics(); UI.syncGenesisStats(gm); G.sample(gm); Narrator.pulse('genesis',gm); }
       else if(MODE==='lenia'){ L.readMass(); L.syncStats(); Narrator.pulse('lenia',{mass:L._mass}); }
-      else if(!Journey.active) Perf.tick(fps);
+      else if(!Journey.active){ Perf.tick(fps); Narrator.pulse('soup',null); }
       fpsAcc=0; fpsN=0; fpsT=0; }
     requestAnimationFrame(loop);
   }
